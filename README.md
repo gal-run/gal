@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/Scheduler-Systems/gal-run/issues"><img src="https://img.shields.io/github/issues/Scheduler-Systems/gal-run" alt="GitHub issues"></a>
   <a href="https://gal.run"><img src="https://img.shields.io/badge/docs-gal.run-blue" alt="Documentation"></a>
+  <a href="https://status.scheduler-systems.com"><img src="https://img.shields.io/badge/status-scheduler--systems-green" alt="Service status"></a>
 </p>
 
 # GAL - Governance Agentic Layer
@@ -14,6 +15,20 @@ The easiest way to govern your AI coding agents.
 GAL provides centralized configuration management and governance for AI coding agents (Claude Code, Cursor, Windsurf, GitHub Copilot, and more) without disrupting your developers or requiring an architecture overhaul.
 
 **[Get started free at app.gal.run](https://app.gal.run)**
+
+## Service Status
+
+GAL service health is published through the Scheduler Systems status page:
+
+- **Status page:** [status.scheduler-systems.com](https://status.scheduler-systems.com)
+- **Machine-readable status:** [status.scheduler-systems.com/status.json](https://status.scheduler-systems.com/status.json)
+- **Component map:** [docs/status-components.md](docs/status-components.md)
+
+Customer-facing status components currently include GAL API, GAL Code Gateway,
+GLM Gateway, Agent Network, GAL-T, extension services, CLI distribution, and
+release/update services. When GAL APIs report degraded service, product and
+client surfaces should show service-degradation messaging instead of implying
+user misconfiguration.
 
 ## CLI
 
@@ -256,6 +271,7 @@ Check service health at **[status.gal.run](https://status.gal.run)** — see [ST
 
 - **Issues**: Use this repository for bug reports and feature requests
 - **Discussions**: Community support and questions
+- **Status**: Check [status.scheduler-systems.com](https://status.scheduler-systems.com) for service incidents
 - **Email**: support@scheduler-systems.com
 - **Enterprise**: For enterprise inquiries, contact sales@scheduler-systems.com
 
