@@ -18,7 +18,7 @@ jobs:
       issues: write
     steps:
       - name: Assign default milestone if missing
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;
@@ -41,7 +41,7 @@ jobs:
       issues: write
     steps:
       - name: Backfill open issues missing milestones
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const defaultTitle = 'Backlog Triage';
