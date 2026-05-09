@@ -248,6 +248,10 @@ Full documentation at [docs.gal.run](https://docs.gal.run)
 
 Access your organization's dashboard at [app.gal.run](https://app.gal.run)
 
+## Service Status
+
+Check service health at **[status.gal.run](https://status.gal.run)** — see [STATUS.md](STATUS.md) for component mapping.
+
 ## Support
 
 - **Issues**: Use this repository for bug reports and feature requests
