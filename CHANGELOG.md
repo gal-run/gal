@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.62] - 2026-05-03
+
+- See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/0.1.62) for details
+
+## [0.0.674] - 2026-05-03
+
+- See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/0.0.674) for details
+- Improved CLI session management with automatic token refresh
+- Added model variant selection to CLI commands
+- Added swarm worker dispatch configuration flags
+- Enhanced dependency resolution for multi-repository workspaces
+- Various CI and dependency updates
+
+## [0.0.668] - 2026-05-03
+
+- See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/0.0.668) for details
+
 ## [0.0.667] - 2026-05-02
 
 - See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/0.0.667) for details
