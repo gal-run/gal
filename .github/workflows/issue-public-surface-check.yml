@@ -22,6 +22,14 @@ jobs:
             // Keep in sync with gate.yml — same patterns, applied to issue text
             const internalPatterns = [
               /gal-run-private/i,
+              /gal-private/i,
+              /gal-run\/gal-cli/,
+              /gal-run\/gal-vscode-extension/,
+              /gal-run\/gal-browser-extension/,
+              /gal-run\/agent-network/,
+              /gal-run\/gal-t/,
+              /gal-run\/gal-api/,
+              /gal-run\/gal-code/,
               /Scheduler-Systems\/infra/,
               /arc-linux/i,
               /ci-standard-runc/i,

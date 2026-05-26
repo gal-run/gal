@@ -26,7 +26,7 @@ jobs:
           if grep -RInE \
             --exclude='gate.yml' \
             --exclude='issue-public-surface-check.yml' \
-            'Scheduler-Systems/infra|gal-run-private|arc-linux|ci-standard-runc|docker-dind-x64|macos-host|bare-high-arm64|ARC_APP_ID|ARC_PRIVATE_KEY|gs://gal' \
+            'Scheduler-Systems/infra|gal-run-private|gal-private|gal-run/gal-cli|gal-run/gal-vscode-extension|gal-run/gal-browser-extension|gal-run/agent-network|gal-run/gal-t|gal-run/gal-api|gal-run/gal-code|arc-linux|ci-standard-runc|docker-dind-x64|macos-host|bare-high-arm64|ARC_APP_ID|ARC_PRIVATE_KEY|gs://gal' \
             .github README.md CHANGELOG.md; then
             echo "::error::Public repo contains internal-only references. Remove private repo links, private runner labels, secret names, and internal infrastructure details."
             exit 1
