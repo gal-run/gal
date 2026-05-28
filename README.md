@@ -286,3 +286,18 @@ GAL is proprietary software. See [LICENSE](LICENSE) for details.
 ---
 
 **Note**: This repository is for documentation, issues, and community engagement. The GAL source code is not open source.
+
+## Architecture (May 2026)
+
+GAL has been migrated from a TypeScript monolith to a polyglot architecture:
+
+| Component | Language | Repo |
+|-----------|----------|------|
+| API Gateway + 12 microservices | Go | `gal-run/go-services` |
+| CLI | Rust | `gal-run/gal-cli-rs` |
+| Dashboard, Admin, Website | TypeScript (Next.js) | `gal-run/gal-dashboard`, etc. |
+| AI Terminal | Rust | `gal-run/gal-app` |
+| Governance ML | Python | `gal-run/gal-model` |
+| Agent Research | Rust | `gal-run/super-agent` through `agent-civilization` |
+
+The CLI is a single 5.8MB binary with zero npm dependencies. 53 commands + 3 MCP servers.
