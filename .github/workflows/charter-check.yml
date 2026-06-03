@@ -1,0 +1,26 @@
+name: charter-check
+# Anti-drift gate: validates governance/REGISTRY.yaml self-consistency on every PR.
+# (Org-wide per-repo charter validation runs in the gal-cli hook / a scheduled org job
+#  with all repos checked out under one root; see governance/DEFINITION-OF-MOAT.md.)
+on:
+  pull_request:
+    paths:
+      - "governance/**"
+      - ".gal/charter.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "governance/**"
+      - ".gal/charter.yaml"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - run: python governance/charters.py check
