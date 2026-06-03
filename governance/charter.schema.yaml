@@ -1,0 +1,13 @@
+# Schema for a per-repo .gal/charter.yaml (informational; enforced by charters.py).
+# Every GAL org repo must commit one of these at .gal/charter.yaml.
+
+repo: string            # "group/name", must match an entry in REGISTRY.yaml
+tier: enum              # core | integrate | experimental | archive
+moat: bool              # true only for governance moat (see DEFINITION-OF-MOAT.md)
+purpose: string         # one line
+owner: string           # accountable human (not "TBD" once assigned)
+
+# Conditionally required:
+integrates: string      # REQUIRED when tier == integrate (the product used instead of rebuilding)
+review_by: date         # REQUIRED when tier == experimental (YYYY-MM-DD, must be in the future)
+competes_with: string   # optional: the commodity product this would otherwise duplicate

@@ -1,0 +1,7 @@
+# Generated from gal/governance/REGISTRY.yaml — edit the registry, then re-stamp.
+# First dogfood charter: the governance hub governs itself.
+repo: cli/gal
+tier: core
+moat: true
+purpose: Governance docs + contracts hub (home of the repo registry + Definition of Moat).
+owner: TBD
