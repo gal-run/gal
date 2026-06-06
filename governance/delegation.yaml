@@ -1,0 +1,89 @@
+# =============================================================================
+# DELEGATION MANDATE — how the enterprise OWNER delegates authority to the agent org.
+#
+# Shay is the enterprise OWNER, not the operator-of-last-resort. He sets the mandate +
+# risk limits ONCE, appoints/replaces the board, and READS the board's report. He does NOT
+# approve operations or most executive decisions — the agent org (board + C-suite officers)
+# decides within the limits below. Escalation flows agent → officer → board → owner; only
+# the bright-line `owner_reserved` set ever reaches the owner.
+#
+# SAFE BY DEFAULT: while `status: proposed`, this mandate is INERT — every decision still
+# routes to the owner (today's behavior). The OWNER flipping `status: granted` (his single
+# act) is what activates delegation. Enforced by agent_toolkit/authority.py (default-deny:
+# anything not explicitly delegated, or any owner-reserved flag, escalates to the owner).
+#
+# apiVersion: gal/v1 · kind: DelegationMandate · companion to capabilities.yaml (what each
+# agent may DO) — this is who may DECIDE what, and up to what limit.
+# =============================================================================
+apiVersion: gal/v1
+kind: DelegationMandate
+status: granted                  # GRANTED by the owner (Shay) on 2026-06-06, by direct instruction.
+owner: shay
+granted_by: shay                 # status==granted AND granted_by==owner → the router is now LIVE:
+                                 # officers decide within their limits; the bright line still → owner.
+                                 # (A stray status flip without this signature would stay inert.)
+granted_on: "2026-06-06"
+# NOTE: editing THIS FILE is `change_mandate` — owner-reserved. It must not be merged by an agent
+# officer; a diff under docs/governance/ routes to the owner (authority.constitution_paths()).
+
+# ---- The owner's mandate: the risk envelope the whole org operates within. Owner sets these.
+# (Starting proposals — conservative. Adjust the numbers; they are the owner's risk appetite.)
+mandate:
+  weekly_token_budget: 5540000           # the fleet salary cap (already enforced by the CFO)
+  max_officer_spend_usd: 0               # ZERO — no spend is delegated yet (owner set 2026-06-06).
+  max_board_spend_usd: 0                 # ZERO — EVERY spend authorization → owner until agents earn
+                                         # it per the trust ladder. Agents may still PROPOSE spend.
+                                         # (Raising these is a change_mandate — owner-reserved.)
+  values:                                # inviolable — officers decide WITHIN these
+    - revenue_first
+    - safety_gates_inviolable            # the HARD GATES never auto-fire (see owner_reserved)
+    - never_mix_human_and_agent_identity # capabilities.yaml Rule #1
+    - human_in_loop_on_outward_actions   # the HITL list (hitl.py)
+    - default_deny_escalates_up          # unknown/over-limit → up the chain, never auto-approve
+
+# ---- Decision lanes: who DECIDES what, within what limit, escalating to whom.
+#      `decider` is an EXISTING roster officer (an agent). `*` = role to staff via HR.
+authorities:
+  spend:
+    decider: cfo
+    limit: "amount_usd <= mandate.max_officer_spend_usd"
+    escalates_to: [board, owner]
+  set_budget:
+    decider: board
+    limit: "within mandate.weekly_token_budget and <= max_board_spend_usd"
+    escalates_to: [owner]
+  hire_fire:
+    decider: hr_ops_manager
+    limit: "within weekly budget AND passes the scorecard (firing_criteria)"
+    escalates_to: [board, owner]
+  merge_to_main:
+    decider: cto
+    limit: "PR passes the capability gate + tests AND is docs/schema/test-only class — EXCLUDING
+            docs/governance/** (the constitution = change_mandate, owner-reserved)"
+    escalates_to: [owner]
+  deploy_prod:
+    decider: cto
+    limit: "staging-verified, non-breaking, and NOT billing/security/paying-customer surface"
+    escalates_to: [board, owner]
+  outward_message:
+    decider: ceo
+    limit: "routine, non-binding, not to a paying customer"
+    escalates_to: [owner]
+  oss_contribution:
+    decider: cto
+    limit: "non-binding contribution to an approved repo; reviewed"
+    escalates_to: [owner]
+  go_live:
+    decider: board
+    limit: "agent passed probation (2 clean reviews) per the trust ladder"
+    escalates_to: [owner]
+
+# ---- The bright line: ALWAYS the owner. Never delegable to any agent, ever.
+#      (Also force-detected by flags in authority.py, so a mislabeled `kind` can't slip past.)
+owner_reserved:
+  - change_mandate                 # this file / the values / the limits — the constitution
+  - entity_or_captable             # equity, incorporation, binding major contracts
+  - bet_the_company_spend          # any single spend above max_board_spend_usd
+  - live_billing_or_pricing        # real money / paying customers (standing HARD GATE)
+  - security_rules_first_deploy    # the credentialed prod-replay IDOR sign-off (HARD GATE)
+  - appoint_or_replace_board       # who governs — the owner's call alone

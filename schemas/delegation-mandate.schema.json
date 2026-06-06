@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/delegation-mandate.schema.json",
+  "title": "GAL Delegation Mandate",
+  "description": "The enterprise OWNER's delegation of authority to the agent org: who DECIDES what, within what limit, escalating to whom; the bright-line set reserved to the owner. Enforced by `gal delegation route`. The mandate is INERT (every decision → owner) until the owner sets status: granted AND granted_by == owner. Booleans MUST be canonical true/false.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "status", "owner", "authorities", "owner_reserved"],
+  "properties": {
+    "apiVersion": { "const": "gal/v1" },
+    "kind": { "const": "DelegationMandate" },
+    "status": { "enum": ["proposed", "granted"], "description": "Only the owner flips this to granted." },
+    "owner": { "type": "string", "minLength": 1 },
+    "granted_by": { "type": "string", "description": "Must equal `owner` for the mandate to be live (the router enforces this)." },
+    "granted_on": { "type": "string" },
+    "mandate": {
+      "type": "object",
+      "description": "The owner's risk envelope. Officers decide within these.",
+      "additionalProperties": false,
+      "properties": {
+        "weekly_token_budget": { "type": "integer", "minimum": 0 },
+        "max_officer_spend_usd": { "type": "number", "minimum": 0, "description": "An officer may authorize spend up to this; above → board → owner." },
+        "max_board_spend_usd": { "type": "number", "minimum": 0, "description": "The board may authorize up to this; above = bet-the-company = owner." },
+        "values": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "authorities": {
+      "type": "object",
+      "description": "Decision lanes. Each `decider` is an agent-officer (or the board).",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decider", "escalates_to"],
+        "properties": {
+          "decider": { "type": "string", "minLength": 1 },
+          "limit": { "type": "string" },
+          "escalates_to": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        }
+      }
+    },
+    "owner_reserved": {
+      "type": "array",
+      "description": "The bright line — always the owner, never delegable. Also force-detected by flags in the router.",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}
