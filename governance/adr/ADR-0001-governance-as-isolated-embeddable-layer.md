@@ -51,7 +51,7 @@ The PEP/PDP shape already exists — this is consolidation, not green-field:
 ### The gap this ADR closes
 
 Governance is real as artifacts but **governs nothing at runtime** today:
-- **Three incompatible governance models** for the same concept: qa-agent-platform `agent_toolkit`
+- **Three incompatible governance models** for the same concept: agent-workforce `agent_toolkit`
   (`capabilities.yaml` + `hitl.py`), `gal-agents` (`governance.py` `ActionClass` + `card.py`), and
   the `agent-network` Go structs. No shared schema.
 - The intended single PDP (`governance-svc /enforcement/check`) is **called by nobody**.
@@ -80,7 +80,7 @@ of them *is* one host.
 ## Roadmap (executable)
 
 1. **Converge to one contract.** Adopt one schema — the `capability-manifest` + Agent Card — as the
-   single governance contract across qa-agent-platform, `gal-agents`, and `agent-network`. Merge the
+   single governance contract across agent-workforce, `gal-agents`, and `agent-network`. Merge the
    in-flight `gal capability validate` (gal-cli-rs) and the manifest schema off their worktrees to
    mainline as the canonical authority.
 2. **Make the PDP real.** Finish `governance-svc.enforcementCheck` to evaluate real action rules
@@ -90,7 +90,7 @@ of them *is* one host.
    behind the existing `store` interface; detach the `lib/` JWT+telemetry shims.
 4. **Ship two reference PEP adapters first** (where we already have reach):
    - **MCP** — promote `gal-mcp` as the primary "governance over MCP" product.
-   - **LangGraph** — harden qa-agent-platform `agent_toolkit` into the canonical LangGraph PEP that
+   - **LangGraph** — harden agent-workforce `agent_toolkit` into the canonical LangGraph PEP that
      *calls* the PDP; then a **Claude Agent SDK** `PreToolUse` hook.
 5. **Dogfood on our own fleet.** Wire the PEP into all 42 agents (not 1), set `GAL_GOVERNANCE_ENDPOINT`,
    and make the capability gate enforce at **runtime**, not just CI-lint. "If GAL can't keep itself
@@ -120,4 +120,4 @@ Verified evidence: `gal-run/cli/gal/governance/{DEFINITION-OF-MOAT.md,REGISTRY.y
 `gal-run/backend/go-services/governance-svc/internal/domain/types.go`;
 `gal-run/core/gal-agents/{README.md,package.json,src/managed-runtime.ts}`;
 `gal-run/cli/gal-cli-rs/src/commands/governance.rs`; `gal-run/gal-cli/vendor/gal-mcp/src/tools/`;
-Scheduler-Systems/qa-agent-platform `agent_toolkit/{governance.py,hitl.py,policy.py}`.
+Scheduler-Systems/agent-workforce `agent_toolkit/{governance.py,hitl.py,policy.py}`.
