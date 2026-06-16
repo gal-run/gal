@@ -4,8 +4,6 @@
  * This is the platform-agnostic source of truth for AI agent configurations.
  * The GAL CLI reads this format and converts it to platform-specific formats
  * (Claude Code, Cursor, Copilot, Gemini CLI, Codex, Windsurf).
- *
- * @see https://github.com/Scheduler-Systems/gal-run-private/issues/666
  */
 
 /**

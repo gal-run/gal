@@ -450,15 +450,15 @@ function OrphanedClaimWarning({ count }: OrphanedClaimWarningProps) {
           </p>
           <p className="text-xs leading-relaxed mt-2" style={{ color: 'var(--text-secondary)' }}>
             <strong>Resolution:</strong> Run reconciliation via API or wait for automatic cleanup
-            (runs periodically). See{' '}
+            (runs periodically). See the{' '}
             <a
-              href="https://github.com/Scheduler-Systems/gal-run-private/issues/2039"
+              href="https://gal.run/docs"
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:opacity-80"
               style={{ color: 'var(--status-info)' }}
             >
-              #2039
+              documentation
             </a>{' '}
             for details.
           </p>

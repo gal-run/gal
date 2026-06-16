@@ -55,7 +55,7 @@ describe('browser profile extension bridge', () => {
               {
                 tabId: 7,
                 title: 'GitHub',
-                url: 'https://github.com/Scheduler-Systems/gal-run-private',
+                url: 'https://github.com/your-org/your-repo',
                 hostname: 'github.com',
                 active: false,
                 captureState: 'ready',
@@ -72,7 +72,7 @@ describe('browser profile extension bridge', () => {
         {
           tabId: 7,
           title: 'GitHub',
-          url: 'https://github.com/Scheduler-Systems/gal-run-private',
+          url: 'https://github.com/your-org/your-repo',
           hostname: 'github.com',
           active: false,
           captureState: 'ready',

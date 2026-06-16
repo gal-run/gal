@@ -82,7 +82,6 @@ export type PageAudience = "public" | "partners" | "internal";
 /**
  * Audience tier alias - used by hierarchical evaluation in @gal/core.
  * Semantically identical to PageAudience but named for the tier context.
- * Addresses: https://github.com/Scheduler-Systems/gal-run-private/issues/3118
  */
 export type AudienceTier = PageAudience;
 

@@ -67,7 +67,7 @@ interface AgentSessionHeaderProps {
   agent?: SessionAgent
   /** Current session status */
   status: SessionStatus
-  /** Repository context (e.g. "Scheduler-Systems/gal-run-private") */
+  /** Repository context (e.g. "your-org/your-repo") */
   projectContext?: string
   /** Branch name */
   branch?: string

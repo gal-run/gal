@@ -27,8 +27,6 @@
  *
  * The service caches rate cards in memory with a 5-minute TTL.
  * If Firestore is unavailable, it falls back to DEFAULT_RATE_CARD.
- *
- * @see https://github.com/Scheduler-Systems/gal-run-private/issues/6296
  */
 
 // =============================================================================

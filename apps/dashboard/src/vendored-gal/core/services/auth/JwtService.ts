@@ -21,8 +21,6 @@ export interface UserSession {
    * was issued. It does NOT include Firestore role-overrides (e.g. a developer
    * promoted to admin via the Team page). For permission checks, use the shared
    * RoleResolver (apps/api/src/middleware/role-resolver.ts) instead.
-   *
-   * @see https://github.com/Scheduler-Systems/gal-run-private/issues/2325
    */
   adminOrganizations: string[]
   /** Runtime flag set by RoleResolver middleware */

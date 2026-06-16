@@ -609,7 +609,7 @@ export type ProcessFrequency = 'daily' | 'weekly' | 'per-issue' | 'event-driven'
 export interface ProcessMatchingRules {
   /** GitHub labels that indicate this process (e.g., ["bug", "sentry"]) */
   labels?: string[]
-  /** Repository patterns (e.g., ["gal-run-private", "infra"]) */
+  /** Repository patterns (e.g., ["your-org/your-repo", "infra"]) */
   repoPatterns?: string[]
   /** Title keyword patterns (e.g., ["fix", "bug", "sentry", "error"]) */
   titlePatterns?: string[]
@@ -709,7 +709,7 @@ export interface WorkItemExecutionContext {
   projectId?: string
   /** Schedule ID if dispatched on a schedule (e.g., "schedule-17") */
   scheduleId?: string
-  /** Project/repository context (e.g., "Scheduler-Systems/gal-run-private") */
+  /** Project/repository context (e.g., "your-org/your-repo") */
   projectContext?: string
   /** GitHub issue or PR number */
   githubNumber?: number

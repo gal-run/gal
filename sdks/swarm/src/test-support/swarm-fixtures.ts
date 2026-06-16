@@ -105,10 +105,10 @@ export function hotStartContract() {
     maxWarmWorkers: 400,
     runnerLabels: ['agents-standard-runc-x64', 'agents-medium-runc-x64'],
     ownership: {
-      githubRepository: 'gal-run/gal-swarm',
-      stratusService: 'stratus-github-runner-warm-pool',
-      gitopsPath: 'clusters/stratus/github-runners/warm-pool',
-      owner: 'StratusCloudLabs/stratus',
+      githubRepository: 'your-org/your-repo',
+      stratusService: 'github-runner-warm-pool',
+      gitopsPath: 'clusters/example/github-runners/warm-pool',
+      owner: 'your-org/gitops',
     },
   })
 }
@@ -179,7 +179,7 @@ export function basePlan(): GalSwarmPlan {
       },
     ],
     permissions: {
-      allowedRepos: ['gal-run/gal-private', 'gal-run/agent-network'],
+      allowedRepos: ['your-org/your-repo', 'gal-run/agent-network'],
       allowedSecrets: ['runner-token'],
       allowedNetworks: ['github.com', 'api.gal.run'],
       allowedTools: ['gh', 'pnpm', 'docker'],

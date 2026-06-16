@@ -21,7 +21,7 @@ describe('APIClient.generateApprovedConfigProposal (#2823, #2987)', () => {
     } as any)
 
     const result = await api.generateApprovedConfigProposal('Scheduler-Systems', {
-      repository: 'Scheduler-Systems/gal-run-private',
+      repository: 'your-org/your-repo',
       filePath: 'AGENTS.md',
       prompt: 'Harden for production',
     } as any)
@@ -32,7 +32,7 @@ describe('APIClient.generateApprovedConfigProposal (#2823, #2987)', () => {
         method: 'POST',
         body: JSON.stringify({
           clientSurface: 'dashboard',
-          repository: 'Scheduler-Systems/gal-run-private',
+          repository: 'your-org/your-repo',
           filePath: 'AGENTS.md',
           prompt: 'Harden for production',
         }),
@@ -55,7 +55,7 @@ describe('APIClient.generateApprovedConfigProposal (#2823, #2987)', () => {
 
     await expect(
       api.generateApprovedConfigProposal('Scheduler-Systems', {
-        repository: 'Scheduler-Systems/gal-run-private',
+        repository: 'your-org/your-repo',
         filePath: '.claude/settings.json',
       } as any),
     ).resolves.toEqual({
@@ -69,7 +69,7 @@ describe('APIClient.generateApprovedConfigProposal (#2823, #2987)', () => {
 
     await expect(
       api.generateApprovedConfigProposal('Scheduler-Systems', {
-        repository: 'Scheduler-Systems/gal-run-private',
+        repository: 'your-org/your-repo',
         filePath: 'AGENTS.md',
       } as any),
     ).resolves.toEqual({

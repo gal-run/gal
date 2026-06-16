@@ -24,13 +24,13 @@ describe('APIClient approved-config action contracts', () => {
 
     const preview = await api.getConfigContent(
       'Scheduler-Systems',
-      'Scheduler-Systems/infra',
+      'your-org/infra',
       '.claude/commands/deploy.md',
     )
 
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      'http://localhost:3000/organizations/Scheduler-Systems/config-content?repo=Scheduler-Systems%2Finfra&path=.claude%2Fcommands%2Fdeploy.md',
+      'http://localhost:3000/organizations/Scheduler-Systems/config-content?repo=your-org%2Finfra&path=.claude%2Fcommands%2Fdeploy.md',
       {},
     )
     expect(preview).toEqual({
@@ -40,7 +40,7 @@ describe('APIClient approved-config action contracts', () => {
 
     fetchSpy.mockResolvedValueOnce({ ok: false } as any)
     await expect(
-      api.getConfigContent('Scheduler-Systems', 'Scheduler-Systems/infra', '.claude/commands/deploy.md'),
+      api.getConfigContent('Scheduler-Systems', 'your-org/infra', '.claude/commands/deploy.md'),
     ).resolves.toBeNull()
   })
 
@@ -59,7 +59,7 @@ describe('APIClient approved-config action contracts', () => {
       commandRefs: [
         {
           name: 'deploy.md',
-          sourceRepo: 'Scheduler-Systems/infra',
+          sourceRepo: 'your-org/infra',
           sourcePath: '.claude/commands/deploy.md',
         },
       ],
@@ -74,7 +74,7 @@ describe('APIClient approved-config action contracts', () => {
           commandRefs: [
             {
               name: 'deploy.md',
-              sourceRepo: 'Scheduler-Systems/infra',
+              sourceRepo: 'your-org/infra',
               sourcePath: '.claude/commands/deploy.md',
             },
           ],
@@ -105,7 +105,7 @@ describe('APIClient approved-config action contracts', () => {
           type: 'command',
           name: 'deploy',
           preferredInstance: {
-            repo: 'Scheduler-Systems/infra',
+            repo: 'your-org/infra',
             path: '.claude/commands/deploy.md',
           },
         },
@@ -115,7 +115,7 @@ describe('APIClient approved-config action contracts', () => {
           {
             type: 'command',
             name: 'deploy',
-            preferredRepo: 'Scheduler-Systems/infra',
+            preferredRepo: 'your-org/infra',
             preferredPath: '.claude/commands/deploy.md',
           },
         ],
@@ -133,7 +133,7 @@ describe('APIClient approved-config action contracts', () => {
               type: 'command',
               name: 'deploy',
               preferredInstance: {
-                repo: 'Scheduler-Systems/infra',
+                repo: 'your-org/infra',
                 path: '.claude/commands/deploy.md',
               },
             },
@@ -143,7 +143,7 @@ describe('APIClient approved-config action contracts', () => {
               {
                 type: 'command',
                 name: 'deploy',
-                preferredRepo: 'Scheduler-Systems/infra',
+                preferredRepo: 'your-org/infra',
                 preferredPath: '.claude/commands/deploy.md',
               },
             ],

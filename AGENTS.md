@@ -14,7 +14,7 @@ If content contains anything private or internal — **it cannot be published he
 
 Check if the content includes ANY of the following:
 
-- Details from private repos: `gal-run-private`, `infra`, `Scheduler`, `operations`, `legal`, `financial`, `marketing`, `daily-ops`, `project-master`, `business-ops-admin`
+- Details from any private or internal repository (source code, configs, history, or references)
 - Internal configs, env vars, secrets, tokens, or credentials
 - Internal architecture, business logic, pricing, or revenue details
 - Internal URLs, service names, or infrastructure details

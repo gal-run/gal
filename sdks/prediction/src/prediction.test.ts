@@ -604,7 +604,7 @@ describe('GitHub dependency ingestion', () => {
         kind: 'review',
         blockerKind: 'review',
         requiredAgentCapabilities: ['github', 'review'],
-        repository: 'StratusCloudLabs/stratus',
+        repository: 'acme/gitops',
       }),
     )
     expect(byId.get('agent-network-ci')?.ciProfiles).toEqual([
@@ -819,7 +819,7 @@ function baseGitHubDependencySource(): GalPredictionGitHubDependencySource {
       },
       {
         id: 'stratus-3279',
-        repository: 'StratusCloudLabs/stratus',
+        repository: 'acme/gitops',
         title: 'Connect beefy issue to runtime repo',
         kind: 'pull_request',
         state: 'blocked',

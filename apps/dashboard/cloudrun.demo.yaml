@@ -37,10 +37,10 @@ env:
   - variable: NEXT_PUBLIC_GITHUB_APP_SLUG
     value: "gal-by-scheduler-systems"
   - variable: NEXT_PUBLIC_BACKGROUND_AGENT_GITHUB_REPO
-    value: "Scheduler-Systems/gal-run-private"
+    value: "your-org/your-repo"
   - variable: NEXT_PUBLIC_SENTRY_DSN
     value: "https://70a6200574eac6579500fc534c97bb48@o451026097555456.ingest.de.sentry.io/4510923099078736"
   - variable: NEXT_PUBLIC_ENVIRONMENT
     value: "demo"
   - variable: NEXT_PUBLIC_ADMIN_ORGS
-    value: "Scheduler-Systems"
+    value: "your-org"

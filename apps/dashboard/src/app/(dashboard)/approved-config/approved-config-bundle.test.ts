@@ -17,7 +17,7 @@ describe('appendConfigToBundle', () => {
       configType: 'command',
       configName: 'deploy',
       matchingConfig: {
-        repo: 'Scheduler-Systems/infra',
+        repo: 'your-org/infra',
         path: '.claude/commands/deploy.md',
       },
       configContent: null,
@@ -28,7 +28,7 @@ describe('appendConfigToBundle', () => {
       {
         name: 'deploy.md',
         content: '',
-        sourceRepo: 'Scheduler-Systems/infra',
+        sourceRepo: 'your-org/infra',
         sourcePath: '.claude/commands/deploy.md',
         hash: 'hash-cmd',
       },
@@ -41,7 +41,7 @@ describe('appendConfigToBundle', () => {
       configType: 'settings',
       configName: 'settings',
       matchingConfig: {
-        repo: 'Scheduler-Systems/gal-run-private',
+        repo: 'your-org/your-repo',
         path: '.claude/settings.json',
       },
       configContent: undefined,
@@ -50,7 +50,7 @@ describe('appendConfigToBundle', () => {
 
     expect(withSettings.settings).toEqual({
       content: '',
-      sourceRepo: 'Scheduler-Systems/gal-run-private',
+      sourceRepo: 'your-org/your-repo',
       sourcePath: '.claude/settings.json',
       hash: 'hash-settings',
     })
@@ -60,7 +60,7 @@ describe('appendConfigToBundle', () => {
       configType: 'instructions',
       configName: 'AGENTS',
       matchingConfig: {
-        repo: 'Scheduler-Systems/gal-run-private',
+        repo: 'your-org/your-repo',
         path: 'AGENTS.md',
       },
       configContent: '',
@@ -69,7 +69,7 @@ describe('appendConfigToBundle', () => {
 
     expect(withInstructions.instructions).toEqual({
       content: '',
-      sourceRepo: 'Scheduler-Systems/gal-run-private',
+      sourceRepo: 'your-org/your-repo',
       sourcePath: 'AGENTS.md',
       hash: 'hash-instructions',
     })

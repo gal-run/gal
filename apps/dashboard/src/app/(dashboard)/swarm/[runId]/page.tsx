@@ -180,7 +180,7 @@ export default function SwarmRunDetailPage() {
                     {plan.stratusOperations.map((op, i) => (
                       <div key={`${op.type}-${i}`} className="flex items-center justify-between gap-3 py-2 text-sm first:pt-0 last:pb-0" style={{ borderColor: 'var(--border-subtle)', borderBottomWidth: i < plan.stratusOperations.length - 1 ? 1 : 0 }}>
                         <span className="font-medium">{op.type}</span>
-                        {op.workflow ? (
+                        {op.workflow && buildWorkflowHref(op.workflow) ? (
                           <a
                             href={buildWorkflowHref(op.workflow)!}
                             target="_blank"
@@ -191,6 +191,8 @@ export default function SwarmRunDetailPage() {
                             <ExternalLink className="h-3 w-3 shrink-0" />
                             <span className="truncate">{extractWorkflowName(op.workflow)}</span>
                           </a>
+                        ) : op.workflow ? (
+                          <span className="truncate" style={{ color: 'var(--text-secondary)' }}>{extractWorkflowName(op.workflow)}</span>
                         ) : (
                           <span style={{ color: 'var(--text-secondary)' }}>{op.taskType ?? '—'}</span>
                         )}
@@ -363,9 +365,10 @@ function formatProvider(plan: GalSwarmRunStatus['plan']): string {
 
 function buildWorkflowHref(workflow?: string): string | null {
   if (!workflow) return null
+  // Only link out when the backend provides an absolute URL; relative
+  // workflow paths are not resolvable to a public location.
   if (/^https?:\/\//.test(workflow)) return workflow
-  const workflowPath = workflow.split('/').map(encodeURIComponent).join('/')
-  return `https://github.com/StratusCloudLabs/stratus/actions/workflows/${workflowPath}`
+  return null
 }
 
 function formatTimestamp(ts?: string): string {

@@ -26,8 +26,6 @@
  * - time window (1h, 24h, 7d, 30d)
  * - webhook configurations
  * - deduplication settings
- *
- * @see https://github.com/Scheduler-Systems/gal-run-private/issues/6297
  */
 
 // =============================================================================

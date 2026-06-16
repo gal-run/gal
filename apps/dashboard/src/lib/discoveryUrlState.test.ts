@@ -15,7 +15,7 @@ const commandGroup = {
   platform: 'claude',
   instances: [
     {
-      repo: 'gal-run-private',
+      repo: 'repo-c',
       path: '.claude/commands/sdlc/4-implement/run.md',
       content: '',
       lastModified: '2026-04-11T00:00:00.000Z',
@@ -63,7 +63,7 @@ const subagentGroup = {
   platform: 'claude',
   instances: [
     {
-      repo: 'gal-run-private',
+      repo: 'repo-c',
       path: '.claude/agents/meta/meta-agent.md',
       content: '',
       lastModified: '2026-04-11T00:00:00.000Z',

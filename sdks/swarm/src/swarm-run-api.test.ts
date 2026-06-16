@@ -160,7 +160,7 @@ describe('GAL swarm run API contract', () => {
         objective: 'Start paid capacity',
         source: 'dashboard',
         mode: 'apply',
-        approvalEvidenceUrl: 'https://github.com/StratusCloudLabs/stratus/milestone/20',
+        approvalEvidenceUrl: 'https://github.com/example-org/gitops/milestone/20',
         target: {
           provider: 'stratus',
           computeProfileId: 'runpod-qwen3-coder-30b-fp8',
@@ -188,7 +188,7 @@ describe('GAL swarm run API contract', () => {
       objective: 'Start Stratus milestone swarm',
       source: 'gal-code',
       mode: 'apply',
-      approvalEvidenceUrl: 'https://github.com/StratusCloudLabs/stratus/milestone/20',
+      approvalEvidenceUrl: 'https://github.com/example-org/gitops/milestone/20',
       executionApproval: {
         approved: true,
         approvedBy: 'example-org',
@@ -216,7 +216,7 @@ describe('GAL swarm run API contract', () => {
     expect(plan.status).toBe('ready_for_apply')
     expect(plan.executionApproval).toMatchObject({
       approved: true,
-      approvalEvidenceUrl: 'https://github.com/StratusCloudLabs/stratus/milestone/20',
+      approvalEvidenceUrl: 'https://github.com/example-org/gitops/milestone/20',
       approvedBy: 'example-org',
     })
     expect(plan.preflightChecks.map((check) => check.id)).toContain('serverless-fallback')
@@ -324,7 +324,7 @@ describe('GAL swarm run API contract', () => {
       objective: 'Drain idle capacity',
       source: 'gal-code',
       mode: 'apply',
-      approvalEvidenceUrl: 'https://github.com/StratusCloudLabs/stratus/milestone/20',
+      approvalEvidenceUrl: 'https://github.com/example-org/gitops/milestone/20',
       executionApproval: {
         approved: true,
       },

@@ -11,13 +11,11 @@
  *   different prefixes: ADMIN_ORGS, NEXT_PUBLIC_ADMIN_ORGS, VITE_ADMIN_ORGS).
  * - The parser normalises a comma-separated string into a trimmed array.
  * - All comparisons are **case-insensitive** to fix the long-standing CLI bug.
- * - The default list is `["Scheduler-Systems"]`.
- *
- * Addresses: https://github.com/Scheduler-Systems/gal-run-private/issues/2618
+ * - The default list is `["your-org"]` — override via the ADMIN_ORGS env var.
  */
 
 /** The canonical default admin org list. */
-export const DEFAULT_ADMIN_ORGS: readonly string[] = ['Scheduler-Systems']
+export const DEFAULT_ADMIN_ORGS: readonly string[] = ['your-org']
 
 /**
  * Parse a comma-separated admin-orgs string into a trimmed array.
@@ -29,8 +27,8 @@ export const DEFAULT_ADMIN_ORGS: readonly string[] = ['Scheduler-Systems']
  * @example
  * ```ts
  * parseAdminOrgs('Acme , Contoso')  // ['Acme', 'Contoso']
- * parseAdminOrgs(undefined)          // ['Scheduler-Systems']
- * parseAdminOrgs('')                 // ['Scheduler-Systems']
+ * parseAdminOrgs(undefined)          // ['your-org']
+ * parseAdminOrgs('')                 // ['your-org']
  * ```
  */
 export function parseAdminOrgs(envValue: string | undefined): string[] {
@@ -53,9 +51,9 @@ export function parseAdminOrgs(envValue: string | undefined): string[] {
  *
  * @example
  * ```ts
- * isAdminOrg('scheduler-systems', ['Scheduler-Systems'])  // true
- * isAdminOrg('SCHEDULER-SYSTEMS', ['Scheduler-Systems'])  // true
- * isAdminOrg('random-org',        ['Scheduler-Systems'])  // false
+ * isAdminOrg('your-org', ['your-org'])  // true
+ * isAdminOrg('YOUR-ORG', ['your-org'])  // true
+ * isAdminOrg('random-org', ['your-org'])  // false
  * ```
  */
 export function isAdminOrg(orgName: string, adminOrgs: readonly string[]): boolean {

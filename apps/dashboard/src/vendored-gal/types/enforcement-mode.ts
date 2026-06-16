@@ -5,9 +5,6 @@
  * AI coding agents. The primary use case is "background agents only" mode,
  * which restricts local sessions to orchestration activities and requires
  * all implementation work to go through the background agent queue.
- *
- * @see https://github.com/Scheduler-Systems/gal-run-private/issues/4702
- * @see https://github.com/Scheduler-Systems/gal-run-private/issues/4672
  */
 
 /**

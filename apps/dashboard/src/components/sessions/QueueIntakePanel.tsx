@@ -361,7 +361,7 @@ export const QueueIntakePanel: FC<QueueIntakePanelProps> = ({ orgName }) => {
                   setRepoSearch('')
                 }
               }}
-              placeholder={discoveredRepos.length > 0 ? 'Search repositories...' : 'e.g. gal-run-private'}
+              placeholder={discoveredRepos.length > 0 ? 'Search repositories...' : 'e.g. your-org/your-repo'}
               className="w-full px-3 py-1.5 text-sm rounded-md focus:outline-none pr-8"
               style={{
                 backgroundColor: 'var(--surface-overlay)',

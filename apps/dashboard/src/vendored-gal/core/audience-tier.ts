@@ -6,10 +6,6 @@
  *
  * Higher tiers inherit access to all lower-tier features:
  *   internal > partners > public
- *
- * Addresses:
- *   - https://github.com/Scheduler-Systems/gal-run-private/issues/3118
- *   - https://github.com/Scheduler-Systems/gal-run-private/issues/3140
  */
 
 import type { PageAudience } from '@gal/types'
