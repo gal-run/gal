@@ -26,7 +26,7 @@ import (
 // rules), repo-svc fetches it over HTTP, mirroring the existing gal-rag
 // integration. The data source is isolated in fetchApprovedConfig so a
 // reviewer can swap it (e.g. for a direct shared-store read) without changing
-// the handler logic. See gal-run/go-services#50.
+// the handler logic.
 //
 // Org is taken from the JWT context (auth.OrgID), not the request body — the
 // caller can only pull config for the org their token authorizes. Platform is

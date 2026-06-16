@@ -79,7 +79,7 @@ func TestJobLifecycle(t *testing.T) {
 	// Enqueue.
 	jobID, err := ingest.Enqueue(ctx, st, ingest.EnqueueRequest{
 		OrgID:      "test-org",
-		RepoScope:  "gal-run/go-services",
+		RepoScope:  "example-org/example-repo",
 		SourceKind: "memory_entry",
 		SourceType: "memory",
 		Content:    "hello world integration test",
@@ -130,7 +130,7 @@ func TestDLQPromotion(t *testing.T) {
 
 	jobID, err := ingest.Enqueue(ctx, st, ingest.EnqueueRequest{
 		OrgID:      "test-org",
-		RepoScope:  "gal-run/go-services",
+		RepoScope:  "example-org/example-repo",
 		SourceKind: "github_file",
 		SourceType: "go",
 		Content:    "package main",
@@ -177,7 +177,7 @@ func TestDeduplication(t *testing.T) {
 
 	req := ingest.EnqueueRequest{
 		OrgID:      "test-org",
-		RepoScope:  "gal-run/go-services",
+		RepoScope:  "example-org/example-repo",
 		SourceKind: "github_file",
 		SourceType: "go",
 		Content:    "package dedup",

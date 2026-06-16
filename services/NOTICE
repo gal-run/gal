@@ -10,4 +10,4 @@ License at http://www.apache.org/licenses/LICENSE-2.0
 These are the open self-hostable services (the PDP, auth, gateway, MCP, RAG,
 sync client) of the gal governance kernel. The managed control plane (billing,
 cross-tenant aggregator, multi-tenant ops) is the separate, proprietary
-gal-cloud and is not covered by this license. See CARVE.md.
+gal-cloud and is not covered by this license.

@@ -28,7 +28,7 @@ import (
 
 const (
 	testOrg       = "test-org"
-	testRepoScope = "gal-run/go-services"
+	testRepoScope = "example-org/example-repo"
 	testColl      = "gal_rag_chunks"
 	voyageDim     = 512
 )

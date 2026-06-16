@@ -1602,7 +1602,7 @@ export function QueueTabContent() {
             action: 'auth_refresh',
             reason: 'Claude OAuth expired during queue canary',
             preventedByIssueNumber: 4554,
-            actorLogin: 'karabil',
+            actorLogin: 'test-user',
             createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
           },
         ],

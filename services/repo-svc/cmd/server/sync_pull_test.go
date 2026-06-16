@@ -56,7 +56,7 @@ func doSyncPull(svc *repoService, org, authz string) *httptest.ResponseRecorder 
 }
 
 func TestSyncPull_HappyPath(t *testing.T) {
-	body := `{"platform":"claude","hash":"abc","version":"3","approved_at":"2026-06-03","approved_by":"karabil"}`
+	body := `{"platform":"claude","hash":"abc","version":"3","approved_at":"2026-06-03","approved_by":"test-user"}`
 	svc, _ := newSyncPullTestService(t, http.StatusOK, body, "Bearer tok123")
 
 	rec := doSyncPull(svc, "ZenuxLabs", "Bearer tok123")
