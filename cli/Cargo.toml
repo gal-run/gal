@@ -6,7 +6,7 @@ members = ["."]
 
 [package]
 name = "gal-cli"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 description = "gal - open governance platform CLI"
 license = "Apache-2.0"
@@ -21,3 +21,68 @@ path = "src/main.rs"
 # so the published OSS crate contains zero commercial code.
 default = ["ee"]
 ee = []
+
+[dependencies]
+# CLI framework
+clap = { version = "4", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Terminal UI
+indicatif = "0.17"
+colored = "2"
+dialoguer = "0.11"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Config
+dirs = "5"
+toml = "0.8"
+
+# JWT
+jsonwebtoken = "9"
+
+# PTY (replaces node-pty)
+portable-pty = "0.8"
+
+# Browser automation (replaces Playwright)
+chromiumoxide = "0.9"
+chromiumoxide_types = "0.9"
+futures = "0.3"
+
+# Base64 encoding/decoding
+base64 = "0.22"
+
+# UUID generation
+uuid = { version = "1", features = ["v4"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# URL handling
+url = "2"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Async trait
+async-trait = "0.1"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Link-time optimization
+strip = true        # Strip symbols
+codegen-units = 1   # Better optimization
