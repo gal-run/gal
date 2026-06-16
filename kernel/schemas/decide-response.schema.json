@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal/v1/decision-result.schema.json",
+  "title": "gal DecisionResult",
+  "description": "Runtime decide() result. Adopts the governance charter's 4-value action (adds 'human_required' to the implemented allowed|denied|audit). Invariant the PDP guarantees: allowed=true iff action in {allowed, audit}; allowed=false iff action in {denied, human_required}.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "allowed", "action", "reason"],
+  "properties": {
+    "apiVersion": { "const": "gal/v1" },
+    "kind": { "const": "DecisionResult" },
+    "allowed": {
+      "type": "boolean",
+      "description": "Permit flag. FAIL-CLOSED: on any PDP/transport error the PEP MUST synthesize allowed=false."
+    },
+    "action": {
+      "enum": ["allowed", "denied", "audit", "human_required"],
+      "description": "allowed=permit; denied=block; audit=permit-but-record (the report_only probation posture); human_required=block pending human approval (HITL, e.g. the 'never send without approval' bright line)."
+    },
+    "reason": { "type": "string" },
+    "policy_id": { "type": "string" },
+    "policy_name": { "type": "string" },
+    "decision_id": {
+      "type": "string",
+      "description": "Correlation id for the audit trail."
+    },
+    "obligations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Side-duties the PEP MUST fulfil when permitting (e.g. 'record_audit', 'redact_pii', 'notify'). Additive extension beyond the current charter; empty/absent if none."
+    },
+    "cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional caching hint for the PEP/local decision cache.",
+      "properties": {
+        "cacheable": { "type": "boolean" },
+        "ttl_seconds": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

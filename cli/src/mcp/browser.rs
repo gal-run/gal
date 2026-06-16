@@ -1,0 +1,457 @@
+//! Browser MCP Server
+//!
+//! Ported from `chrome-extension-gal-server.ts`. Provides headless browser
+//! automation via Chrome DevTools Protocol (CDP) using the `chromiumoxide` crate.
+//!
+//! Tools:
+//! - launch_browser: Launch a headless Chrome instance
+//! - navigate: Navigate to a URL
+//! - screenshot: Take a screenshot
+//! - click: Click an element by selector
+//! - type_text: Type text into an element
+//! - get_text: Get text content of an element
+//! - get_page_text: Get all visible text on the page
+//! - execute_script: Run JavaScript in the page
+//! - close_browser: Close the browser
+
+use crate::mcp::{
+    param_bool_or, param_str, param_u64_or, ContentItem, McpServer, Tool, ToolResult,
+};
+use futures::StreamExt;
+use serde_json::Value;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tracing::warn;
+
+// =============================================================================
+// Browser Session
+// =============================================================================
+
+struct BrowserInstance {
+    #[allow(dead_code)]
+    browser: chromiumoxide::Browser,
+    page: chromiumoxide::Page,
+}
+
+pub struct BrowserMcpServer {
+    browser: Arc<Mutex<Option<BrowserInstance>>>,
+}
+
+impl BrowserMcpServer {
+    pub fn new() -> Self {
+        Self {
+            browser: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    async fn get_browser(&self) -> Result<tokio::sync::MutexGuard<'_, Option<BrowserInstance>>, String> {
+        let guard = self.browser.lock().await;
+        if guard.is_none() {
+            return Err("No active browser. Call launch_browser first.".to_string());
+        }
+        Ok(guard)
+    }
+
+    async fn close_browser_inner(&self) {
+        let mut guard = self.browser.lock().await;
+        if let Some(instance) = guard.take() {
+            drop(instance); // Drop closes the browser
+        }
+    }
+}
+
+// =============================================================================
+// Tool Definitions
+// =============================================================================
+
+fn tools_list() -> Vec<Tool> {
+    vec![
+        Tool {
+            name: "browser_launch".to_string(),
+            description: "Launch a headless Chrome instance for browser automation.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"headless":{"type":"boolean","description":"Run in headless mode (default: true)"},"start_url":{"type":"string","description":"Optional page to open after launch"},"width":{"type":"number","description":"Window width (default: 1280)"},"height":{"type":"number","description":"Window height (default: 720)"}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_navigate".to_string(),
+            description: "Navigate the browser to a URL.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"url":{"type":"string","description":"URL to navigate to"}},"required":["url"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_screenshot".to_string(),
+            description: "Capture a screenshot of the current page as a PNG.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"output_path":{"type":"string","description":"Optional path to save screenshot. If not provided, returns base64."}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_click".to_string(),
+            description: "Click an element on the page by CSS selector.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"selector":{"type":"string","description":"CSS selector for the element to click"}},"required":["selector"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_type_text".to_string(),
+            description: "Type text into an input element identified by CSS selector.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"selector":{"type":"string","description":"CSS selector for the input element"},"text":{"type":"string","description":"Text to type into the element"},"clear_first":{"type":"boolean","description":"Clear the element before typing (default: true)"}},"required":["selector","text"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_get_text".to_string(),
+            description: "Get the text content of an element by CSS selector.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"selector":{"type":"string","description":"CSS selector for the element"}},"required":["selector"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_get_page_text".to_string(),
+            description: "Get all visible text content from the current page.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
+        },
+        Tool {
+            name: "browser_execute_script".to_string(),
+            description: "Execute JavaScript in the context of the current page.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"script":{"type":"string","description":"JavaScript code to execute"}},"required":["script"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_close".to_string(),
+            description: "Close the browser and release all resources.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
+        },
+    ]
+}
+
+// =============================================================================
+// McpServer trait implementation
+// =============================================================================
+
+#[async_trait::async_trait]
+impl McpServer for BrowserMcpServer {
+    fn list_tools(&self) -> Vec<Tool> {
+        tools_list()
+    }
+
+    async fn call_tool(&self, name: &str, args: Value) -> Option<ToolResult> {
+        match name {
+            "browser_launch" => Some(self.handle_launch(args).await),
+            "browser_navigate" => Some(self.handle_navigate(args).await),
+            "browser_screenshot" => Some(self.handle_screenshot(args).await),
+            "browser_click" => Some(self.handle_click(args).await),
+            "browser_type_text" => Some(self.handle_type_text(args).await),
+            "browser_get_text" => Some(self.handle_get_text(args).await),
+            "browser_get_page_text" => Some(self.handle_get_page_text().await),
+            "browser_execute_script" => Some(self.handle_execute_script(args).await),
+            "browser_close" => Some(self.handle_close().await),
+            _ => None,
+        }
+    }
+}
+
+// =============================================================================
+// Tool Handlers
+// =============================================================================
+
+impl BrowserMcpServer {
+    async fn handle_launch(&self, args: Value) -> ToolResult {
+        // Close existing browser if any
+        self.close_browser_inner().await;
+
+        let headless = param_bool_or(&args, "headless", true);
+        let start_url = param_str(&args, "start_url");
+        let width = param_u64_or(&args, "width", 1280) as u32;
+        let height = param_u64_or(&args, "height", 720) as u32;
+
+        let mut config_builder = chromiumoxide::BrowserConfig::builder()
+            .window_size(width, height);
+        if !headless {
+            config_builder = config_builder.with_head();
+        }
+        let config = match config_builder.build() {
+            Ok(c) => c,
+            Err(e) => return ToolResult::error(format!("Failed to build browser config: {}", e)),
+        };
+
+        match chromiumoxide::Browser::launch(config).await {
+            Ok((mut browser, mut handler)) => {
+                // Spawn the handler in the background
+                tokio::spawn(async move {
+                    loop {
+                        match handler.next().await {
+                            Some(_event) => {}
+                            None => break,
+                        }
+                    }
+                });
+
+                // Create a new page
+                let page = match browser.new_page("about:blank").await {
+                    Ok(p) => p,
+                    Err(e) => {
+                        let _ = browser.close().await;
+                        return ToolResult::error(format!("Failed to create page: {}", e));
+                    }
+                };
+
+                // Navigate to start URL if provided
+                if let Some(url) = &start_url {
+                    if let Err(e) = page.goto(url).await {
+                        warn!("Failed to navigate to start URL: {}", e);
+                    }
+                }
+
+                let mut guard = self.browser.lock().await;
+                *guard = Some(BrowserInstance {
+                    browser,
+                    page,
+                });
+
+                ToolResult::json(&serde_json::json!({
+                    "success": true,
+                    "headless": headless,
+                    "start_url": start_url,
+                }))
+            }
+            Err(e) => ToolResult::error(format!("Failed to launch browser: {}", e)),
+        }
+    }
+
+    async fn handle_navigate(&self, args: Value) -> ToolResult {
+        let url = match param_str(&args, "url") {
+            Some(u) => u,
+            None => return ToolResult::error("url is required"),
+        };
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+        match instance.page.goto(&url).await {
+            Ok(_) => {
+                // Wait a moment for the page to render
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                ToolResult::json(&serde_json::json!({
+                    "success": true,
+                    "url": url,
+                }))
+            }
+            Err(e) => ToolResult::error(format!("Navigation failed: {}", e)),
+        }
+    }
+
+    async fn handle_screenshot(&self, args: Value) -> ToolResult {
+        let output_path = param_str(&args, "output_path");
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+        match instance.page.screenshot(chromiumoxide::page::ScreenshotParams::builder().build()).await {
+            Ok(data) => {
+                if let Some(path) = &output_path {
+                    match std::fs::write(path, &data) {
+                        Ok(_) => ToolResult::json(&serde_json::json!({
+                            "success": true,
+                            "path": path,
+                        })),
+                        Err(e) => ToolResult::error(format!("Failed to save screenshot: {}", e)),
+                    }
+                } else {
+                    let encoded = base64::Engine::encode(
+                        &base64::engine::general_purpose::STANDARD,
+                        &data,
+                    );
+                    ToolResult::with_content(vec![ContentItem::image(encoded, "image/png")])
+                }
+            }
+            Err(e) => ToolResult::error(format!("Screenshot failed: {}", e)),
+        }
+    }
+
+    async fn handle_click(&self, args: Value) -> ToolResult {
+        let selector = match param_str(&args, "selector") {
+            Some(s) => s,
+            None => return ToolResult::error("selector is required"),
+        };
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+
+        // Find the element and click it
+        match instance.page.find_element(&selector).await {
+            Ok(element) => match element.click().await {
+                Ok(_) => {
+                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+                    ToolResult::json(&serde_json::json!({
+                        "success": true,
+                        "selector": selector,
+                    }))
+                }
+                Err(e) => ToolResult::error(format!("Click failed: {}", e)),
+            },
+            Err(e) => ToolResult::error(format!("Element not found with selector '{}': {}", selector, e)),
+        }
+    }
+
+    async fn handle_type_text(&self, args: Value) -> ToolResult {
+        let selector = match param_str(&args, "selector") {
+            Some(s) => s,
+            None => return ToolResult::error("selector is required"),
+        };
+        let text = match param_str(&args, "text") {
+            Some(t) => t,
+            None => return ToolResult::error("text is required"),
+        };
+        let clear_first = param_bool_or(&args, "clear_first", true);
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+
+        match instance.page.find_element(&selector).await {
+            Ok(element) => {
+                if clear_first {
+                    // Clear the field first by clicking to focus
+                    let _ = element.click().await;
+                }
+
+                match element.click().await {
+                    Ok(_) => {
+                        // Type the text using JavaScript for reliability
+                        let js = format!(
+                            r#"
+                            (() => {{
+                                const el = document.querySelector({:?});
+                                if (el) {{
+                                    el.value = {:?};
+                                    el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                    el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                                    return true;
+                                }}
+                                return false;
+                            }})()
+                            "#,
+                            selector, text
+                        );
+
+                        match instance.page.evaluate_function(&js).await {
+                            Ok(_) => ToolResult::json(&serde_json::json!({
+                                "success": true,
+                                "selector": selector,
+                            })),
+                            Err(e) => ToolResult::error(format!("Type text failed: {}", e)),
+                        }
+                    }
+                    Err(e) => ToolResult::error(format!("Failed to focus element: {}", e)),
+                }
+            }
+            Err(e) => ToolResult::error(format!("Element not found with selector '{}': {}", selector, e)),
+        }
+    }
+
+    async fn handle_get_text(&self, args: Value) -> ToolResult {
+        let selector = match param_str(&args, "selector") {
+            Some(s) => s,
+            None => return ToolResult::error("selector is required"),
+        };
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+
+        let js = format!(
+            r#"
+            (() => {{
+                const el = document.querySelector({:?});
+                return el ? el.textContent || el.innerText || '' : '';
+            }})()
+            "#,
+            selector
+        );
+
+        match instance.page.evaluate_function(&js).await {
+            Ok(result) => {
+                // The result should be a string
+                let text = result
+                    .value()
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_default();
+
+                ToolResult::success(text)
+            }
+            Err(e) => ToolResult::error(format!("Failed to get text: {}", e)),
+        }
+    }
+
+    async fn handle_get_page_text(&self) -> ToolResult {
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+
+        let js = r#"
+            (() => {
+                const body = document.body;
+                if (!body) return '';
+                return body.innerText || '';
+            })()
+        "#;
+
+        // Chromiumoxide evaluate_function returns a Value, we need to parse it
+        match instance.page.evaluate_function(js).await {
+            Ok(result) => {
+                let text = result
+                    .value()
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_default();
+                ToolResult::success(text)
+            }
+            Err(e) => ToolResult::error(format!("Failed to get page text: {}", e)),
+        }
+    }
+
+    async fn handle_execute_script(&self, args: Value) -> ToolResult {
+        let script = match param_str(&args, "script") {
+            Some(s) => s,
+            None => return ToolResult::error("script is required"),
+        };
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+
+        let instance = guard.as_ref().unwrap();
+
+        match instance.page.evaluate_function(&script).await {
+            Ok(result) => {
+                let value = result
+                    .value()
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| "null".to_string());
+                ToolResult::json(&serde_json::json!({
+                    "success": true,
+                    "result": value,
+                }))
+            }
+            Err(e) => ToolResult::error(format!("Script execution failed: {}", e)),
+        }
+    }
+
+    async fn handle_close(&self) -> ToolResult {
+        self.close_browser_inner().await;
+        ToolResult::json(&serde_json::json!({
+            "success": true,
+        }))
+    }
+}

@@ -1,0 +1,31 @@
+GAL Commercial License (Enterprise Edition)
+============================================
+
+Copyright 2026 Scheduler Systems Ltd. All rights reserved.
+
+This license governs all code located inside any directory named "ee" within
+the gal monorepo (for example: services/governance/ee/, sdks/swarm/src/ee/,
+cli/src/ee/, apps/dashboard/src/ee/). License is determined by LOCATION:
+
+  * Code OUTSIDE any "ee" directory is licensed under the Apache License,
+    Version 2.0 (see the root LICENSE file).
+  * Code INSIDE any "ee" directory is the Enterprise Edition and is licensed
+    ONLY under this Commercial License to customers holding a valid, current
+    GAL commercial subscription.
+
+You may NOT copy, modify, distribute, sublicense, or use Enterprise Edition
+code except as expressly permitted by a signed GAL Commercial License
+Agreement.
+
+Runtime gate: Enterprise Edition code compiles but is functionally INERT
+without a valid signed license key, verified through the gal kernel capability
+check (gal_license_allows / GAL_CAP_EE_FEATURE). Services, CLI, and dashboard
+read the key from environment/secret and self-disable when it is absent.
+
+OSS builds (-tags oss / GAL_OSS=1 / cargo --no-default-features) DROP all
+Enterprise Edition code from the artifact entirely. Published OSS packages
+therefore contain zero commercial code.
+
+For commercial licensing, contact: sales@scheduler-systems.com
+
+See docs/EE.md for the full convention.

@@ -1,0 +1,54 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GAL Swarm</title>
+  <desc id="desc">GAL Swarm branded README banner with a forecast to evidence control lane.</desc>
+  <rect width="1280" height="360" rx="24" fill="#050505"/>
+  <rect x="1" y="1" width="1278" height="358" rx="23" stroke="#202020" stroke-width="2"/>
+
+  <g opacity="0.16">
+    <path d="M64 72H1216" stroke="#00FF2A" stroke-width="1"/>
+    <path d="M64 144H1216" stroke="#00FF2A" stroke-width="1"/>
+    <path d="M64 216H1216" stroke="#00FF2A" stroke-width="1"/>
+    <path d="M64 288H1216" stroke="#00FF2A" stroke-width="1"/>
+  </g>
+
+  <rect x="72" y="62" width="104" height="104" rx="22" fill="#0B0B0B" stroke="#2A2A2A"/>
+  <g transform="translate(88 78) scale(2)">
+    <rect width="36" height="36" rx="8" fill="#050505"/>
+    <path d="M8 12L18 6L28 12V18L18 12L8 18V12Z" fill="#00FF2A"/>
+    <path d="M8 18L18 12L28 18V24L18 18L8 24V18Z" fill="#00FF2A" fill-opacity="0.7"/>
+    <path d="M8 24L18 18L28 24V30L18 24L8 30V24Z" fill="#00FF2A" fill-opacity="0.4"/>
+  </g>
+
+  <text x="216" y="102" fill="#F7F7F7" font-family="Arial" font-size="56" font-weight="800">GAL Swarm</text>
+  <text x="218" y="141" fill="#00FF2A" font-family="Arial" font-size="22" font-weight="700">Governed burst-compute planning for agent waves</text>
+  <text x="218" y="181" fill="#B7B7B7" font-family="Arial" font-size="18">Plan capacity, hand off to Stratus, and close with evidence.</text>
+
+  <g transform="translate(116 238)" font-family="Arial">
+    <line x1="0" y1="24" x2="1048" y2="24" stroke="#00FF2A" stroke-width="2" stroke-opacity="0.65"/>
+    <g fill="#050505" stroke="#00FF2A" stroke-width="2">
+      <circle cx="0" cy="24" r="9"/>
+      <circle cx="210" cy="24" r="9"/>
+      <circle cx="420" cy="24" r="9"/>
+      <circle cx="630" cy="24" r="9"/>
+      <circle cx="840" cy="24" r="9"/>
+      <circle cx="1048" cy="24" r="9"/>
+    </g>
+    <g fill="#F7F7F7" font-size="15" font-weight="700">
+      <text x="0" y="62" text-anchor="middle">Forecast</text>
+      <text x="210" y="62" text-anchor="middle">Plan</text>
+      <text x="420" y="62" text-anchor="middle">Preflight</text>
+      <text x="630" y="62" text-anchor="middle">Decision</text>
+      <text x="840" y="62" text-anchor="middle">Stratus</text>
+      <text x="1048" y="62" text-anchor="middle">Evidence</text>
+    </g>
+  </g>
+
+  <g transform="translate(1012 74)" font-family="Arial" font-size="14" font-weight="700">
+    <rect x="0" y="0" width="148" height="34" rx="17" fill="#0B0B0B" stroke="#2A2A2A"/>
+    <text x="74" y="22" fill="#F7F7F7" text-anchor="middle">Private</text>
+    <rect x="0" y="46" width="148" height="34" rx="17" fill="#0B0B0B" stroke="#2A2A2A"/>
+    <text x="74" y="68" fill="#F7F7F7" text-anchor="middle">Stratus</text>
+    <rect x="0" y="92" width="148" height="34" rx="17" fill="#0B0B0B" stroke="#2A2A2A"/>
+    <text x="74" y="114" fill="#F7F7F7" text-anchor="middle">Node &gt;= 20</text>
+  </g>
+</svg>

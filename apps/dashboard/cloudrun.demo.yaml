@@ -1,0 +1,46 @@
+# Cloud Run configuration for the GAL live demo (demo.gal.run)
+# Demo environment Cloud Run configuration for the GAL live demo (demo.gal.run)
+#
+# Key differences from cloudrun.yaml (production):
+#  - NEXT_PUBLIC_DEMO_MODE=true  → bypasses auth, injects demo user
+#  - NEXT_PUBLIC_ENVIRONMENT=demo
+#  - minInstances=1 (always warm for demo visitors)
+#  - maxInstances=3 (limit costs — demo is read-only)
+
+scripts:
+  buildCommand: rm -rf apps/dashboard-next/.next && pnpm --filter @gal/types build && pnpm --filter @gal/telemetry build && pnpm --filter @gal/core build && pnpm --filter @scheduler-systems/gal-run-mcp build && pnpm --filter gal-dashboard-next build && test -d apps/dashboard-next/.next/static || (echo "ERROR: .next/static missing — build failed" && exit 1) && cp -r apps/dashboard-next/.next/static apps/dashboard-next/.next/standalone/apps/dashboard-next/.next/static && cp -r apps/dashboard-next/public apps/dashboard-next/.next/standalone/apps/dashboard-next/public
+  runCommand: node apps/dashboard-next/.next/standalone/apps/dashboard-next/server.js
+
+runConfig:
+  minInstances: 1
+  maxInstances: 3
+  cpu: 1
+  memoryMiB: 1024
+  concurrency: 80
+  serviceAccount: cloud-run-prod@gal-run.iam.gserviceaccount.com
+
+env:
+  - variable: NEXT_PUBLIC_DEMO_MODE
+    value: "true"
+  - variable: NEXT_PUBLIC_API_URL
+    value: "https://api.gal.run"
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "${NEXT_PUBLIC_FIREBASE_API_KEY}"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "gal-run.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "gal-run"
+  - variable: NEXT_PUBLIC_FIREBASE_DATABASE_URL
+    value: "https://gal-run-eu-rtdb.europe-west1.firebasedatabase.app"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "gal-run.firebasestorage.app"
+  - variable: NEXT_PUBLIC_GITHUB_APP_SLUG
+    value: "gal-by-scheduler-systems"
+  - variable: NEXT_PUBLIC_BACKGROUND_AGENT_GITHUB_REPO
+    value: "your-org/your-repo"
+  - variable: NEXT_PUBLIC_SENTRY_DSN
+    value: "https://70a6200574eac6579500fc534c97bb48@o451026097555456.ingest.de.sentry.io/4510923099078736"
+  - variable: NEXT_PUBLIC_ENVIRONMENT
+    value: "demo"
+  - variable: NEXT_PUBLIC_ADMIN_ORGS
+    value: "your-org"

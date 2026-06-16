@@ -1,0 +1,38 @@
+# deploy/docker-compose.yml - self-host stub.
+# "self-host today": bring up the OSS governance + gateway + auth services
+# against a local Postgres. Per-service images publish to
+# ghcr.io/gal-run/<svc>:<ver>; this compose pins :dev placeholders.
+#
+# Real images are built per service from deploy/Dockerfile.<svc> (skeleton).
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gal
+      POSTGRES_PASSWORD: gal
+      POSTGRES_DB: gal
+    ports:
+      - "5432:5432"
+
+  governance:
+    image: ghcr.io/gal-run/governance:dev
+    # build: { context: .., dockerfile: deploy/Dockerfile.service, args: { SVC: governance } }
+    environment:
+      # ee features stay inert unless a valid signed key is supplied.
+      GAL_LICENSE_KEY: ""
+      GAL_OSS: "1"
+    depends_on: [postgres]
+
+  gateway:
+    image: ghcr.io/gal-run/gateway:dev
+    environment:
+      GAL_LICENSE_KEY: ""
+    ports:
+      - "8080:8080"
+    depends_on: [governance]
+
+  auth:
+    image: ghcr.io/gal-run/auth:dev
+    depends_on: [postgres]

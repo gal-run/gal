@@ -5,18 +5,18 @@ on:
     paths:
       - ".github/workflows/reference-assets.yml"
       - "docs/**"
-      - "examples/**"
-      - "reference/**"
-      - "schemas/**"
+      - "apps/console/examples/**"
+      - "apps/console/reference/**"
+      - "apps/console/schemas/**"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/reference-assets.yml"
       - "docs/**"
-      - "examples/**"
-      - "reference/**"
-      - "schemas/**"
+      - "apps/console/examples/**"
+      - "apps/console/reference/**"
+      - "apps/console/schemas/**"
 
 jobs:
   validate:
@@ -31,9 +31,9 @@ jobs:
       - name: Validate JSON schemas
         run: |
           set -euo pipefail
-          jq empty schemas/*.schema.json
+          jq empty apps/console/schemas/*.schema.json
 
       - name: Run reference resolver tests
         run: |
           set -euo pipefail
-          node --test reference/*.test.mjs
+          node --test apps/console/reference/*.test.mjs

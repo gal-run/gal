@@ -1,0 +1,40 @@
+# --- secrets / credentials (publish-safety: never track these) ---
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+*.env
+secrets/
+**/secret_ref*
+*credentials*
+*.token
+.netrc
+
+# --- Rust (when implementation lands) ---
+/target/
+**/*.rs.bk
+Cargo.lock        # library crate: keep unlocked; remove this line if a binary
+
+# --- build / tooling ---
+/build/
+/dist/
+node_modules/
+__pycache__/
+*.pyc
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# --- C build artifacts (never commit; DWARF embeds absolute local paths) ---
+*.o
+*.a
+*.dSYM/
+/test/test_kernel
+/test/test_shell
+*-asan

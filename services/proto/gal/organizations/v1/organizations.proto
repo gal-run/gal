@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package gal.organizations.v1;
+
+option go_package = "github.com/gal-run/gal/services/gen/proto/gal/organizations/v1;organizationsv1";
+
+// Organization represents a GAL organization (workspace) that groups users,
+// repositories, policies, and agent configurations.
+message Organization {
+  // Unique organization name (slug, e.g. "Scheduler-Systems").
+  string name = 1;
+
+  // Human-readable display name.
+  string display_name = 2;
+
+  // GitHub organization or user login that owns this workspace.
+  string github_login = 3;
+
+  // When the organization was created in GAL.
+  string created_at = 4;
+
+  // When the organization was last synced.
+  string last_synced_at = 5;
+
+  // Active policy name applied to this org.
+  string policy_name = 6;
+
+  // Number of repositories tracked by GAL for this org.
+  int32 tracked_repo_count = 7;
+
+  // Number of team members in this org.
+  int32 member_count = 8;
+
+  // Whether the org has an active GitHub App installation.
+  bool github_installed = 9;
+
+  // Subscription tier (e.g. "free", "team", "enterprise").
+  string tier = 10;
+}
+
+// ListOrganizationsRequest is an empty request — the user identity is
+// extracted from the JWT in the request context.
+message ListOrganizationsRequest {}
+
+// ListOrganizationsResponse returns all organizations the authenticated
+// user has access to.
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+// SyncOrganizationsRequest triggers a lightweight sync of organization
+// metadata from GitHub (no full repo/config scan).
+message SyncOrganizationsRequest {
+  // Optional: specific org to sync. If empty, syncs all user's orgs.
+  string org_name = 1;
+}
+
+// SyncOrganizationsResponse acknowledges the sync request.
+message SyncOrganizationsResponse {
+  string status = 1;    // "accepted"
+  string message = 2;
+}
+
+// OrganizationService provides organization and workspace management.
+service OrganizationService {
+  // ListOrganizations returns all organizations the authenticated user
+  // belongs to, or a public listing for unauthenticated requests.
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+
+  // SyncOrganizations triggers a metadata refresh from GitHub.
+  rpc SyncOrganizations(SyncOrganizationsRequest) returns (SyncOrganizationsResponse);
+}

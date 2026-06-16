@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+/server
+backfill-enterprise-slug
+
+# nested git worktrees (work lives on their own branches)
+worktrees/

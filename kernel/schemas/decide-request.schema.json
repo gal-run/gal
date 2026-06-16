@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal/v1/decision-request.schema.json",
+  "title": "gal DecisionRequest",
+  "description": "Runtime decide() request: a PEP asks the PDP whether an agent may exercise a capability at a scope. Vocabulary deliberately matches the gal/v1 CapabilityManifest (agent->identity, capability='verb:noun', scope). Adopts the governance charter contract; supersedes the leaner implemented EnforcementCheckRequest{action,repo,context}.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "agent", "capability", "scope"],
+  "properties": {
+    "apiVersion": { "const": "gal/v1" },
+    "kind": { "const": "DecisionRequest" },
+    "agent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identity name from the manifest `identities` (the agent/NHI acting). The PDP resolves it to a declared agent identity; an unknown or human-tier id is denied (no tier-mixing)."
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^(read|post|propose|write|git|message|send):.+$",
+      "description": "verb:noun, matching the manifest vocabulary. Verb prefix MUST be one of the 7 allow-listed verbs (read/post/propose/write/git/message/send) -- this regex fixes the stale 5-verb schema. Sub-rules (send-allowlist, message-target, email-channel draft-only bright line) are validator-enforced, not schema-expressible."
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete target (repo, channel, resource). A bare wildcard ('', '*', 'all', 'any') is denied."
+    },
+    "action": {
+      "type": "string",
+      "description": "Optional concrete operation instance being attempted (refines capability)."
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Free-form decision context (repo, args, env, request_id, ...). Additive; the PDP ignores unknown keys."
+    }
+  }
+}

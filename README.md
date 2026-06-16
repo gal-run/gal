@@ -1,288 +1,124 @@
 <p align="center">
-  <img src="hero-banner.png" alt="GAL - Governance Agentic Layer" width="700">
+  <img src="hero-banner.png" alt="gal - open governance platform" width="700">
 </p>
 
 <p align="center">
-  <a href="https://github.com/Scheduler-Systems/gal-run/issues"><img src="https://img.shields.io/github/issues/Scheduler-Systems/gal-run" alt="GitHub issues"></a>
   <a href="https://gal.run"><img src="https://img.shields.io/badge/docs-gal.run-blue" alt="Documentation"></a>
   <a href="https://status.scheduler-systems.com"><img src="https://img.shields.io/badge/status-scheduler--systems-green" alt="Service status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-brightgreen" alt="License"></a>
 </p>
 
-# GAL - Governance Agentic Layer
+# gal — open governance platform; kernel at head; self-host today
 
-The easiest way to govern your AI coding agents.
-
-GAL provides centralized configuration management and governance for AI coding agents (Claude Code, Cursor, Windsurf, GitHub Copilot, and more) without disrupting your developers or requiring an architecture overhaul.
-
-**[Get started free at app.gal.run](https://app.gal.run)**
-
-## Service Status
-
-GAL service health is published through the Scheduler Systems status page:
-
-- **Status page:** [status.scheduler-systems.com](https://status.scheduler-systems.com)
-- **Machine-readable status:** [status.scheduler-systems.com/status.json](https://status.scheduler-systems.com/status.json)
-- **Component map:** [docs/status-components.md](docs/status-components.md)
-
-Customer-facing status components currently include GAL API, GAL Code Gateway,
-GLM Gateway, Agent Network, GAL-T, extension services, CLI distribution, and
-release/update services. When GAL APIs report degraded service, product and
-client surfaces should show service-degradation messaging instead of implying
-user misconfiguration.
-
-## CLI
-
-Install:
+gal governs AI agents from a small, auditable core. A pure-C **reference
+monitor** sits at the head of the repo behind a **frozen ABI**; every other
+surface — Go services, TypeScript SDKs and MCP servers, the Rust CLI, the
+dashboard — binds to that one contract. gal is Apache-2.0, open core, and you
+can **self-host the whole platform today**.
 
 ```bash
-curl -fsSL https://gal.run/install.sh | bash
+# self-host the OSS platform
+docker compose -f deploy/docker-compose.yml up
 ```
 
-Local mode:
+## Why kernel at head
+
+The reference monitor (`kernel/`, pure C — a clean copy of the public
+`gal-run/gal-kernel`) is the single contract the entire monorepo binds to. Its
+ABI — `kernel/include/gal_decide.h` — is frozen and append-only, so consumers in
+any language **embed it via the C ABI**. Builds run in **ABI order**: the kernel
+is built first, then everything downstream (the Go cgo binding, codegen
+consumers, the rest).
+
+## Monorepo layout
+
+| Path        | Lang  | What                                                              | Ships as |
+|-------------|-------|-------------------------------------------------------------------|----------|
+| `kernel/`   | C     | pure-C reference monitor (core + JSON shell) + frozen C ABI + tests | source (embedded via C ABI) + header |
+| `services/` | Go    | governance, auth, gateway, mcp-gateway, dispatch, repo, sdlc, team, swarm, gal-rag | `ghcr.io/gal-run/<svc>` images |
+| `sdks/`     | TS    | agents-schema, agent-network, swarm, prediction, contracts        | npm `@gal-run/*` |
+| `mcp/`      | TS    | mcp-chrome, mcp-terminal, mcp-ide, mcp-vision                     | npm `@gal-run/mcp-*` |
+| `apps/`     | TS/JS | `dashboard/` (Next.js, deployed), `console/` (relocated legacy app) | deployed |
+| `cli/`      | Rust  | `gal-cli`                                                         | crates.io + Homebrew tap |
+| `deploy/`   | —     | Dockerfiles, helm/argocd/IaC, docker-compose                     | — |
+| `docs/`     | —     | architecture, ABI spec, EE policy, runbooks                      | — |
+| `tools/`    | —     | license-fence, codegen, ci helpers                               | — |
+
+## Build
+
+The root `justfile` (mirrored by a thin `Makefile`) delegates to each
+ecosystem's native tool — no Bazel.
 
 ```bash
-# Discover your existing AI agent configs
-gal scan
-
-# Standardize them into ~/.gal/config.yaml
-gal approve --local
-
-# Distribute the canonical GAL config to your agents
-gal sync
+just kernel     # make/cc  -> compile pure-C core (frozen C ABI header)
+just services   # go build (single go.mod / go.work)
+just sdks        # npm + turbo (affected-only, remote-cached)
+just mcp
+just apps
+just cli        # cargo
+just fence      # license-by-location check
+just all        # everything, in ABI order (kernel header first)
+just all-oss    # OSS-only: drops all ee/ code from every artifact
 ```
 
-Org sync:
+CI is path-filtered (GitHub Actions, ubuntu-latest only): each language builds
+only when its paths change; the license fence runs always. An ABI header change
+is the one intentional cross-language fan-out (it rebuilds the Go cgo binding).
+Every commit message must contain `[ci]`.
+
+## Install the CLI
 
 ```bash
-gal auth login
-gal sync --pull
-```
+# Homebrew
+brew install gal-run/tap/gal
 
-Update:
+# crates.io
+cargo install gal-cli
+```
 
 ```bash
-gal update
-
-# or with your package manager
-brew upgrade gal
-npm install -g @scheduler-systems/gal-run@latest
-pnpm add -g @scheduler-systems/gal-run@latest
+gal scan              # discover existing AI agent configs
+gal approve --local   # standardize into ~/.gal/config.yaml
+gal sync              # distribute the canonical config to your agents
 ```
 
-## MCP Server
+## MCP servers
 
-GAL exposes an MCP server so your AI coding agent can access governance tools directly. Connect your agent to `https://api.gal.run/mcp`:
+gal publishes MCP servers as standalone npm packages: `@gal-run/mcp-chrome`,
+`@gal-run/mcp-terminal`, `@gal-run/mcp-ide`, `@gal-run/mcp-vision`. The hosted
+governance MCP endpoint is `https://api.gal.run/mcp` (OAuth on first use):
 
 ```json
 {
   "mcpServers": {
-    "gal": {
-      "type": "streamable-http",
-      "url": "https://api.gal.run/mcp"
-    }
+    "gal": { "type": "streamable-http", "url": "https://api.gal.run/mcp" }
   }
 }
 ```
 
-Authentication is handled automatically via OAuth — your MCP client will be redirected to sign in on first use.
-
-MCP client compatibility is broader than local CLI config support. The list below covers clients that can connect to GAL over MCP; the local CLI support matrix is listed separately under Supported Agents.
-
-### MCP Client configuration
-
-<details>
-  <summary>Amp</summary>
-
-Follow the <a href="https://ampcode.com/manual#mcp">Amp MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>Claude Code</summary>
-
-Add to `.mcp.json` in your project root:
-
-```json
-{
-  "mcpServers": {
-    "gal": {
-      "type": "streamable-http",
-      "url": "https://api.gal.run/mcp"
-    }
-  }
-}
-```
-
-Or via CLI:
-
-```bash
-claude mcp add gal --type streamable-http https://api.gal.run/mcp
-```
-
-</details>
-
-<details>
-  <summary>Cline</summary>
-
-Follow the <a href="https://docs.cline.bot/mcp/configuring-mcp-servers">Cline MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>Codex</summary>
-
-Follow the <a href="https://developers.openai.com/codex/mcp/#configure-with-the-cli">Codex MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>Copilot CLI</summary>
-
-Start Copilot CLI and run `/mcp add`, then configure:
-
-- **Server name:** `gal`
-- **Server Type:** `Remote (streamable-http)`
-- **URL:** `https://api.gal.run/mcp`
-
-</details>
-
-<details>
-  <summary>Copilot / VS Code</summary>
-
-Add to your VS Code MCP settings (`.vscode/mcp.json`):
-
-```json
-{
-  "servers": {
-    "gal": {
-      "type": "streamable-http",
-      "url": "https://api.gal.run/mcp"
-    }
-  }
-}
-```
-
-Or follow the <a href="https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_add-an-mcp-server">VS Code MCP guide</a>.
-
-</details>
-
-<details>
-  <summary>Cursor</summary>
-
-Go to `Cursor Settings` > `MCP` > `Add new MCP server`. Use the config provided above.
-
-</details>
-
-<details>
-  <summary>Gemini CLI</summary>
-
-Follow the <a href="https://github.com/google-gemini/gemini-cli/blob/main/docs/tools/mcp-server.md">Gemini CLI MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>Gemini Code Assist</summary>
-
-Follow the <a href="https://cloud.google.com/gemini/docs/codeassist/use-agentic-chat-pair-programmer#configure-mcp-servers">Gemini Code Assist MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>JetBrains AI Assistant & Junie</summary>
-
-Go to `Settings | Tools | AI Assistant | Model Context Protocol (MCP)` > `Add`. Use the config provided above.
-
-For Junie: `Settings | Tools | Junie | MCP Settings` > `Add`.
-
-</details>
-
-<details>
-  <summary>Kiro</summary>
-
-Open the IDE Activity Bar or go to `Settings` > `MCP Servers`. Use the config provided above.
-
-</details>
-
-<details>
-  <summary>Warp</summary>
-
-Go to `Settings | AI | Manage MCP Servers` > `+ Add`. Follow the <a href="https://docs.warp.dev/knowledge-and-collaboration/mcp#adding-an-mcp-server">Warp MCP guide</a> and use the config provided above.
-
-</details>
-
-<details>
-  <summary>Windsurf</summary>
-
-Follow the <a href="https://docs.windsurf.com/windsurf/cascade/mcp#mcp-config-json">Windsurf MCP guide</a> and use the config provided above.
-
-</details>
-
-## Local Model
-
-The current local CLI model is:
-
-- Workspace-scoped GAL config under `~/.gal/config.yaml`
-- Repo-scoped overrides under `<repo>/.gal/config.yaml`
-- Project overrides take precedence over workspace defaults
-- Incremental publication of more local CLI source into this repository
-
-See [docs/workspace-model.md](docs/workspace-model.md) for the current scope model and public extraction plan.
-
-## Features
-
-- **Local Scan**: Discover AI agent configs on your machine without auth or cloud setup
-- **Local Standardize**: Merge discovered configs into a canonical `~/.gal/config.yaml`
-- **Local Sync**: Distribute the canonical GAL config across Claude, Cursor, Copilot, Gemini, Codex, Windsurf, and more
-- **MCP Server**: Connect any AI coding agent to your org's governance policies
-- **Centralized Management**: One dashboard to manage configs for Claude Code, Cursor, Windsurf, and more
-- **Policy Enforcement**: Define and enforce organization-wide standards
-- **GitHub Integration**: Native GitHub App for repository discovery and org-backed sync
-
-## Supported Agents
-
-<!-- SUPPORTED_AGENTS_START -->
-This table is for local CLI support. MCP client compatibility is broader and is documented separately in the MCP section above.
-
-| Agent | Config Files | Local Scan | Local Sync | Memory |
-|-------|-------------|-----------|-----------|--------|
-| Claude Code | `.claude/`, `CLAUDE.md` | ✓ | ✓ | Native |
-| Cursor | `.cursor/rules/`, `.cursorrules` | ✓ | ✓ | Via GAL |
-| GitHub Copilot | `.github/copilot-instructions.md` | ✓ | ✓ | Via GAL |
-| Gemini CLI | `.gemini/`, `GEMINI.md` | ✓ | ✓ | Via GAL |
-| Codex (OpenAI) | `AGENTS.md` | ✓ | ✓ | Via GAL |
-| Windsurf | `.windsurfrules`, `.codeium/windsurf/memories/` | ✓ | ✓ | Native |
-| Antigravity | `.gemini/antigravity/` | ✓ | ✓ | Native |
-| Amp | `AGENTS.md` | ✓ | ✓ | Via GAL |
-<!-- SUPPORTED_AGENTS_END -->
-
-## Documentation
-
-Full documentation at [docs.gal.run](https://docs.gal.run)
-
-## Dashboard
-
-Access your organization's dashboard at [app.gal.run](https://app.gal.run)
-
-## Service Status
-
-Check service health at **[status.gal.run](https://status.gal.run)** — see [STATUS.md](STATUS.md) for component mapping.
-
-## Support
-
-- **Issues**: Use this repository for bug reports and feature requests
-- **Discussions**: Community support and questions
-- **Status**: Check [status.scheduler-systems.com](https://status.scheduler-systems.com) for service incidents
-- **Email**: support@scheduler-systems.com
-- **Enterprise**: For enterprise inquiries, contact sales@scheduler-systems.com
+## Open core
+
+Code outside any `ee/` directory is **Apache-2.0** (see [`LICENSE`](LICENSE) and
+[`NOTICE`](NOTICE)). Per-component `ee/` directories hold commercial Enterprise
+Edition code ([`LICENSE.ee`](LICENSE.ee)), which is inert without a valid signed
+license key and is dropped entirely from OSS builds. See [`docs/EE.md`](docs/EE.md).
+
+**gal-cloud** is the hosted, managed offering — the same kernel + services with
+EE features enabled and operated for you. Architecture:
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Migration plan:
+[`docs/MIGRATION.md`](docs/MIGRATION.md).
+
+## Status & support
+
+- **Status:** [status.scheduler-systems.com](https://status.scheduler-systems.com) — component map in [`STATUS.md`](STATUS.md) / [docs/status-components.md](docs/status-components.md)
+- **Issues:** use this repository for bug reports and feature requests
+- **Email:** support@scheduler-systems.com — enterprise: sales@scheduler-systems.com
 
 ## About
 
-GAL is built by [Scheduler Systems](https://scheduler-systems.com), which builds developer tools, scheduling software, and AI governance products.
+gal is built by [Scheduler Systems](https://scheduler-systems.com).
 
 ## License
 
-GAL is licensed under the Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
-
----
-
-**Note**: This repository is for documentation, issues, and community engagement. The GAL source code is not open source.
+Apache-2.0 (default) — [`LICENSE`](LICENSE) + [`NOTICE`](NOTICE).
+Enterprise Edition (`ee/`) — [`LICENSE.ee`](LICENSE.ee).

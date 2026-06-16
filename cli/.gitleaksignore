@@ -1,0 +1,12 @@
+# Test fixtures in capture.rs redact_string tests (fake/example secrets).
+# Triaged 2026-06-15: all inside #[cfg(test)]; not real secrets.
+d0003bc5001890a6ba990d41adb664f3ac710991:src/commands/capture.rs:private-key:1218
+d0003bc5001890a6ba990d41adb664f3ac710991:src/commands/capture.rs:gcp-api-key:986
+d0003bc5001890a6ba990d41adb664f3ac710991:src/commands/capture.rs:jwt:969
+d0003bc5001890a6ba990d41adb664f3ac710991:src/commands/capture.rs:generic-api-key:1002
+d0003bc5001890a6ba990d41adb664f3ac710991:src/commands/capture.rs:generic-api-key:1180
+096c9a64d8ad6195dbf471bef99896150efa03f2:src/commands/capture.rs:jwt:969
+096c9a64d8ad6195dbf471bef99896150efa03f2:src/commands/capture.rs:generic-api-key:1002
+096c9a64d8ad6195dbf471bef99896150efa03f2:src/commands/capture.rs:generic-api-key:1180
+096c9a64d8ad6195dbf471bef99896150efa03f2:src/commands/capture.rs:private-key:1218
+096c9a64d8ad6195dbf471bef99896150efa03f2:src/commands/capture.rs:gcp-api-key:986

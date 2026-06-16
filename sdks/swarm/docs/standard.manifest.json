@@ -1,0 +1,40 @@
+{
+  "standard": {
+    "name": "prompt-to-binary",
+    "version": "1",
+    "source": "GravitonChips/prompt-to-binary"
+  },
+  "sdk": {
+    "name": "prompt-to-binary-sdk",
+    "version": "1",
+    "contract": "stable request/result/provenance surface for swarm plan submission"
+  },
+  "framework": {
+    "name": "prompt-to-binary-framework",
+    "version": "1",
+    "contract": "adoption layer — scaffold + verify. swarm plans are requirements, run requests are source, preflight checks are verification gates"
+  },
+  "policy": {
+    "preferredArtifactOrder": [
+      "requirements",
+      "source",
+      "ir",
+      "bytecode",
+      "assembly",
+      "native"
+    ],
+    "allowAssembly": true,
+    "allowNativeBinary": false
+  },
+  "repo": {
+    "name": "gal-swarm",
+    "boundary": "Swarm orchestration for GPU-backed agent bursts. SDK, not artifact generator.",
+    "docs": {
+      "api": "docs/api/gal-api-swarm-microservice.md",
+      "architecture": "docs/standard/architecture.md",
+      "requirements": "docs/standard/requirements.md",
+      "testing": "docs/standard/testing.md",
+      "adr": "docs/adr"
+    }
+  }
+}
