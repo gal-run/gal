@@ -1,0 +1,29 @@
+# deploy/Dockerfile.service - build one gal Go service into a container image.
+# Published per-service as ghcr.io/gal-run/<svc>:<ver>.
+#
+# Builds the kernel lib first (cgo links libgal_decide), then `go build` the
+# named service. Pass SVC=<governance|auth|gateway|...>. Set GAL_OSS=1 to
+# produce an OSS image with all ee/ code dropped (-tags oss).
+ARG SVC=gateway
+
+FROM gcc:13 AS kernel
+WORKDIR /src/kernel
+COPY kernel/ ./
+RUN make lib
+
+FROM golang:1.23 AS build
+ARG SVC
+ARG GAL_OSS=0
+WORKDIR /src
+COPY --from=kernel /src/kernel/libgal_decide.a kernel/libgal_decide.a
+COPY --from=kernel /src/kernel/libgal_decide.so kernel/libgal_decide.so
+COPY kernel/include kernel/include
+COPY services/ services/
+WORKDIR /src/services
+RUN if [ "$GAL_OSS" = "1" ]; then TAGS="-tags oss"; else TAGS=""; fi; \
+    CGO_ENABLED=1 go build $TAGS -o /out/svc ./cmd/${SVC}
+
+FROM gcc:13-slim
+COPY --from=kernel /src/kernel/libgal_decide.so /usr/lib/
+COPY --from=build /out/svc /usr/local/bin/svc
+ENTRYPOINT ["/usr/local/bin/svc"]
