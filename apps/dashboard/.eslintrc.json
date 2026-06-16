@@ -1,0 +1,14 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-img-element": "warn",
+    "@next/next/no-html-link-for-pages": "warn",
+    "react/no-unescaped-entities": "warn",
+    "react/jsx-no-comment-textnodes": "warn",
+    "sonarjs/cognitive-complexity": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "react-hooks/set-state-in-effect": "off",
+    "security/detect-unsafe-regex": "off"
+  }
+}

@@ -1,13 +1,48 @@
-GAL Commercial License (Enterprise Edition)
+GAL Enterprise License
+Copyright (c) 2026 Scheduler Systems Ltd. All rights reserved.
 
-Copyright 2026 Scheduler Systems Ltd. All rights reserved.
+This directory ("src/ee/", the "Enterprise Software") and all files within
+it are NOT covered by the Apache License, Version 2.0 that governs the rest
+of this repository. The Enterprise Software is licensed, not sold, under the
+terms of this GAL Enterprise License (the "License").
 
-The software in this directory (any "ee" directory within the gal monorepo)
-is the Enterprise Edition of gal and is NOT licensed under the Apache License,
-Version 2.0. It is licensed only to customers holding a valid GAL commercial
-subscription, under the GAL Commercial License Agreement.
+The Enterprise Software is provided as SOURCE-VISIBLE software: you may read,
+inspect, and build it for evaluation, development, and testing purposes. You
+MAY NOT use the Enterprise Software in production, nor provide it as a hosted
+or managed service to third parties, without a valid paid GAL Enterprise
+subscription or commercial license agreement from Scheduler Systems Ltd.
 
-Enterprise Edition dashboard features read the license key from env/secret and
-self-disable when absent (see docs/EE.md).
+1. GRANT (NON-PRODUCTION). Subject to this License, Scheduler Systems Ltd
+   grants you a non-exclusive, non-transferable, revocable license to use,
+   copy, and modify the Enterprise Software solely for the purposes of
+   internal evaluation, development, and testing in a non-production
+   environment.
 
-For commercial licensing, contact: sales@scheduler-systems.com
+2. PRODUCTION USE REQUIRES A PAID LICENSE. Any use of the Enterprise
+   Software in production — including but not limited to running it with a
+   GAL Enterprise license key enabled, serving it to end users, or operating
+   it as part of a commercial offering — requires a valid, current paid
+   license from Scheduler Systems Ltd.
+
+3. RESTRICTIONS. You may not (a) remove or alter any license notices;
+   (b) sublicense, sell, rent, lease, or distribute the Enterprise Software
+   except as expressly permitted; (c) use the Enterprise Software to provide
+   a competing commercial product or service; or (d) circumvent the license
+   key mechanism (see src/ee/license.ts) for production use.
+
+4. SEPARABILITY. The Apache-2.0-licensed portions of this repository
+   (everything OUTSIDE src/ee/) remain fully usable under Apache-2.0
+   independently of the Enterprise Software. The default build of this
+   project — with no GAL Enterprise license key configured — is a
+   single-tenant application that does not enable the Enterprise Software.
+
+5. NO WARRANTY. THE ENTERPRISE SOFTWARE IS PROVIDED "AS IS", WITHOUT
+   WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+   WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NON-INFRINGEMENT.
+
+6. LIMITATION OF LIABILITY. IN NO EVENT SHALL SCHEDULER SYSTEMS LTD BE
+   LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR IN
+   CONNECTION WITH THE ENTERPRISE SOFTWARE OR ITS USE.
+
+For commercial licensing inquiries, contact: licensing@scheduler-systems.com
