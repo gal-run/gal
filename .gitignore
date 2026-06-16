@@ -18,3 +18,11 @@ services/**/*.test
 dist/
 .next/
 .turbo/
+
+# build artifacts
+services/**/server
+services/**/*.test
+**/dist/
+**/target/
+**/.next/
+node_modules/
