@@ -23,17 +23,18 @@ docker compose -f deploy/docker-compose.yml up
 
 ## Why kernel at head
 
-The reference monitor (`kernel/`, pure C) is the single contract the entire
-monorepo binds to. Its ABI — `kernel/include/gal/gal_decide.h` — is frozen and
-append-only, so consumers in any language can rely on it. Builds run in **ABI
-order**: the kernel header is produced first, then everything downstream (the
-Go cgo binding, codegen consumers, the rest).
+The reference monitor (`kernel/`, pure C — a clean copy of the public
+`gal-run/gal-kernel`) is the single contract the entire monorepo binds to. Its
+ABI — `kernel/include/gal_decide.h` — is frozen and append-only, so consumers in
+any language **embed it via the C ABI**. Builds run in **ABI order**: the kernel
+is built first, then everything downstream (the Go cgo binding, codegen
+consumers, the rest).
 
 ## Monorepo layout
 
 | Path        | Lang  | What                                                              | Ships as |
 |-------------|-------|-------------------------------------------------------------------|----------|
-| `kernel/`   | C     | reference monitor + frozen ABI + conformance tests                | source + prebuilt `libgal_decide` + header |
+| `kernel/`   | C     | pure-C reference monitor (core + JSON shell) + frozen C ABI + tests | source (embedded via C ABI) + header |
 | `services/` | Go    | governance, auth, gateway, mcp-gateway, dispatch, repo, sdlc, team, swarm, gal-rag | `ghcr.io/gal-run/<svc>` images |
 | `sdks/`     | TS    | agents-schema, agent-network, swarm, prediction, contracts        | npm `@gal-run/*` |
 | `mcp/`      | TS    | mcp-chrome, mcp-terminal, mcp-ide, mcp-vision                     | npm `@gal-run/mcp-*` |
@@ -49,7 +50,7 @@ The root `justfile` (mirrored by a thin `Makefile`) delegates to each
 ecosystem's native tool — no Bazel.
 
 ```bash
-just kernel     # make/cc  -> libgal_decide.{a,so} + header
+just kernel     # make/cc  -> compile pure-C core (frozen C ABI header)
 just services   # go build (single go.mod / go.work)
 just sdks        # npm + turbo (affected-only, remote-cached)
 just mcp

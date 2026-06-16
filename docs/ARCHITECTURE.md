@@ -6,22 +6,37 @@ binds to. Everything else is downstream of it.
 
 ## Kernel at head
 
-`kernel/` is a pure-C reference monitor exposing a **frozen ABI** in
-`kernel/include/gal/gal_decide.h`. The Makefile produces `libgal_decide.a`,
-`libgal_decide.so`, and installs the header. The header is treated as
-append-only: enum values and struct layouts already shipped never change;
-new capabilities append, new fields go behind a new versioned struct. ABI
-conformance tests (`kernel/tests/abi_conformance.c`) pin the contract.
+`kernel/` is a clean copy of the public `gal-run/gal-kernel` reference monitor —
+a small pure-C decision core that every other component **embeds via the C ABI**.
+It is the ground truth at the head of the monorepo; all other surfaces are
+downstream of it.
 
-Because the kernel is at head, `just all` builds it **first** so every cgo and
-codegen consumer sees the current header. An ABI header change is the single
-intentional cross-language fan-out (it rebuilds the Go cgo binding).
+- `kernel/include/gal_kernel.h` — the bare core API: a typed request goes in, a
+  verdict comes out. No heap, no I/O, no parsing in the core (seL4/SQLite
+  discipline; see `kernel/KERNEL-C-GUIDELINES.md`).
+- `kernel/include/gal_decide.h` — the **consumer ABI**: `decide(agent, capability,
+  scope, action) → { effect, reason, obligations }`, JSON in / JSON out,
+  implemented by the shell. This is the header downstream consumers (Go cgo,
+  generated TS/Rust bindings) bind to. Treated as append-only: enum values and
+  struct layouts already shipped never change; new capabilities append.
+- `kernel/src/gal_kernel.c` — the decision core (fail-closed, default-deny).
+- `kernel/src/gal_decide.c` — the shell that parses untrusted JSON (`third_party/jsmn.h`),
+  calls the core, and serializes the result.
+- `kernel/schemas/` — the `gal/v1` wire schemas (DecisionRequest / DecisionResult).
+- `kernel/test/` — unit tests (`test_kernel.c`) and JSON-shell tests (`test_shell.c`)
+  that pin the behavior; `make -C kernel asan` runs both under ASan+UBSan.
+
+The kernel builds with its **own** `Makefile` (cc, `-std=c11 -Wall -Wextra
+-Werror`): `make -C kernel all` compiles the core, `make -C kernel test` builds
+and runs both suites. Because the kernel is at head, `just all` builds it
+**first** so every consumer sees the current ABI. A change to `kernel/include/**`
+is the single intentional cross-language fan-out (it rebuilds the Go cgo binding).
 
 ## Component map
 
 | Surface     | Lang  | Tool          | What                                                                 | Distribution |
 |-------------|-------|---------------|----------------------------------------------------------------------|--------------|
-| `kernel/`   | C     | make / cc     | reference monitor + frozen ABI + conformance tests                   | source + prebuilt `libgal_decide` + header release asset |
+| `kernel/`   | C     | make / cc     | pure-C reference monitor (core + JSON shell) + frozen C ABI (`include/gal_decide.h`) + unit/shell tests | source (embedded via C ABI by consumers) + header release asset |
 | `services/` | Go    | go build      | governance, auth, gateway, mcp-gateway, dispatch, repo, sdlc, team, swarm, gal-rag; one `go.mod`/`go.work`; `pkg/abi` cgo binds the kernel; one binary per `cmd/<svc>` | per-service `ghcr.io/gal-run/<svc>:<ver>` images |
 | `sdks/`     | TS    | npm + turbo   | agents-schema, agent-network, swarm, prediction, contracts           | npm `@gal-run/*` (changesets) |
 | `mcp/`      | TS    | npm + turbo   | mcp-chrome, mcp-terminal, mcp-ide, mcp-vision                        | npm `@gal-run/mcp-*` (changesets) |

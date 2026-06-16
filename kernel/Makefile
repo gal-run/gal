@@ -1,48 +1,38 @@
-# kernel/Makefile - pure-C reference monitor.
-# Produces libgal_decide.a + libgal_decide.so and installs the frozen header.
-# This is the ground truth that cgo + codegen consumers bind to.
+# gal kernel — pure-C build. Safe-C discipline: -Werror, sanitizers, cppcheck.
+# See KERNEL-C-GUIDELINES.md.
 
 CC      ?= cc
-CFLAGS  ?= -std=c11 -Wall -Wextra -Werror -O2 -fPIC -Iinclude
-AR      ?= ar
-PREFIX  ?= dist
+CFLAGS  ?= -std=c11 -Wall -Wextra -Werror -O2 -Iinclude -Ithird_party
+KSRC    := src/gal_kernel.c
+SSRC    := src/gal_kernel.c src/gal_decide.c
+KTEST   := test/test_kernel
+STEST   := test/test_shell
 
-SRC      := src/gal_decide.c
-OBJ      := $(SRC:.c=.o)
-HEADER   := include/gal/gal_decide.h
+.PHONY: all test asan cppcheck clean
 
-STATIC   := libgal_decide.a
-SHARED   := libgal_decide.so
-TEST_BIN := abi_conformance
+all:
+	$(CC) $(CFLAGS) -c $(KSRC) -o /dev/null
 
-.PHONY: all lib test install clean
+# Build + run unit tests (kernel core + JSON shell).
+test:
+	$(CC) $(CFLAGS) $(KSRC) test/test_kernel.c -o $(KTEST)
+	./$(KTEST)
+	$(CC) $(CFLAGS) $(SSRC) test/test_shell.c -o $(STEST)
+	./$(STEST)
 
-all: lib
+# AddressSanitizer + UndefinedBehaviorSanitizer on both test suites.
+asan:
+	$(CC) -std=c11 -Wall -Wextra -Werror -g -O1 -Iinclude -Ithird_party -fsanitize=address,undefined \
+		$(KSRC) test/test_kernel.c -o $(KTEST)-asan
+	./$(KTEST)-asan
+	$(CC) -std=c11 -Wall -Wextra -Werror -g -O1 -Iinclude -Ithird_party -fsanitize=address,undefined \
+		$(SSRC) test/test_shell.c -o $(STEST)-asan
+	./$(STEST)-asan
 
-lib: $(STATIC) $(SHARED)
-
-$(STATIC): $(OBJ)
-	$(AR) rcs $@ $^
-
-$(SHARED): $(OBJ)
-	$(CC) $(CFLAGS) -shared -o $@ $^
-
-%.o: %.c $(HEADER)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# ABI conformance: the kernel's own contract test.
-test: $(TEST_BIN)
-	./$(TEST_BIN)
-
-$(TEST_BIN): tests/abi_conformance.c $(STATIC)
-	$(CC) $(CFLAGS) tests/abi_conformance.c $(STATIC) -o $@
-
-# Release layout: prebuilt libs + header, consumed by cgo and as a release asset.
-install: lib
-	mkdir -p $(PREFIX)/lib $(PREFIX)/include/gal
-	cp $(STATIC) $(SHARED) $(PREFIX)/lib/
-	cp $(HEADER) $(PREFIX)/include/gal/
+# Static analysis (jsmn vendored header suppressed — not our code).
+cppcheck:
+	cppcheck --std=c11 --enable=warning,style,performance,portability \
+		--suppress='*:third_party/*' --error-exitcode=1 -Iinclude -Ithird_party src test
 
 clean:
-	rm -f $(OBJ) $(STATIC) $(SHARED) $(TEST_BIN)
-	rm -rf $(PREFIX)
+	rm -f $(KTEST) $(STEST) $(KTEST)-asan $(STEST)-asan src/*.o

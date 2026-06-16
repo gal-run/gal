@@ -42,7 +42,8 @@ This guarantees OSS artifacts never link commercial code.
 `ee/` code **compiles** but is **inert** without a valid signed license key.
 The gal kernel performs the capability check
 (`gal_license_allows(ctx, GAL_CAP_EE_FEATURE)` in
-`kernel/include/gal/gal_decide.h`). Services, CLI, and dashboard read the key
+a future additive extension of the kernel ABI, `kernel/include/gal_decide.h`).
+Services, CLI, and dashboard read the key
 from environment/secret (`GAL_LICENSE_KEY`) and self-disable EE features when
 the key is absent or invalid.
 

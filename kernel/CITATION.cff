@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+title: "gal — the governance kernel"
+message: "If you use gal or build on it, please cite it."
+type: software
+authors:
+  - name: "Scheduler Systems Ltd"
+abstract: >-
+  gal is a reference monitor for agentic systems: a minimal, tamper-proof,
+  verifiable governance kernel in C. A thin enforcement point at each layer
+  (agents, frameworks, CLIs, OS, GPUs) asks the kernel one decision —
+  decide(agent, capability, scope, action) — and enforces the verdict.
+repository-code: "https://github.com/gal-run/gal-kernel"
+license: Apache-2.0
+version: "0.1.0"
+date-released: "2026-06-15"
+keywords:
+  - governance
+  - reference-monitor
+  - ai-agents
+  - policy-enforcement
+  - access-control

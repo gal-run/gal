@@ -17,15 +17,19 @@ default:
     @just --list
 
 # ---- kernel (C, at head) --------------------------------------------------
+# The kernel is a clean copy of the public gal-run/gal-kernel reference monitor.
+# It builds with its OWN Makefile (cc, -std=c11 -Werror); `all` compiles the
+# core, `test` builds+runs the unit/shell suites. This is the ground truth the
+# rest of the monorepo embeds via the C ABI (include/gal_decide.h).
 kernel:
-    make -C kernel lib
+    make -C kernel all
 
 kernel-test:
     make -C kernel test
 
-# Install prebuilt libs + frozen header where cgo + release assets consume them.
-kernel-install:
-    make -C kernel install
+# AddressSanitizer + UBSan over both suites (the kernel's safety-C discipline).
+kernel-asan:
+    make -C kernel asan
 
 # ---- services (Go, OSS subset) -------------------------------------------
 # Depends on the kernel lib being built first (cgo links libgal_decide).
