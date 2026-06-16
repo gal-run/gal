@@ -1,2 +1,4 @@
-// terminal entrypoint (skeleton). Published as a standalone @gal-run package.
-export const name = "terminal";
+#!/usr/bin/env node
+import { startTerminalGalServer } from './server.js';
+
+startTerminalGalServer();

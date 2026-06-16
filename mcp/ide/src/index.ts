@@ -1,2 +1,4 @@
-// ide entrypoint (skeleton). Published as a standalone @gal-run package.
-export const name = "ide";
+#!/usr/bin/env node
+import { startVscodeGalServer } from './server.js';
+
+startVscodeGalServer();

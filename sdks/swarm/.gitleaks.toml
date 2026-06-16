@@ -1,0 +1,10 @@
+# gitleaks config for gal-swarm. Extends defaults; allowlists prose documentation
+# under docs/ where the generic-key heuristic matches back-ticked requirement/
+# constant identifiers (not credentials). Verified 2026-06-15: the docs hit is a
+# named requirement interlock term, not a secret. Source code is NOT allowlisted.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "docs/ prose: requirement/constant identifiers flagged by generic-key heuristic (not secrets)"
+paths = ['''docs/.*\.md''']

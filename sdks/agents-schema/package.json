@@ -1,16 +1,42 @@
 {
-  "name": "@gal-run/agents-schema",
-  "version": "0.0.0",
-  "description": "Agent profile + capability schemas (published).",
+  "name": "@gal-run/gal-agents",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Canonical GAL-compatible agent contract schemas (Agent Card, capability, task, health, status) and validation helpers",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "!dist/**/ee/**"],
-  "publishConfig": { "access": "public" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "echo \"no tests yet\" && exit 0",
-    "lint": "echo \"no lint yet\" && exit 0"
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gal-run/gal-agents.git"
   }
 }

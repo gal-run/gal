@@ -1,16 +1,35 @@
 {
-  "name": "@gal-run/prediction",
-  "version": "0.0.0",
-  "description": "Prediction SDK (published).",
-  "license": "Apache-2.0",
+  "name": "@gal-run/gal-prediction",
+  "version": "0.6.0",
+  "private": false,
+  "description": "GAL execution forecasting contracts for token, tool, CI, and swarm capacity planning",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "!dist/**/ee/**"],
-  "publishConfig": { "access": "public" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "echo \"no tests yet\" && exit 0",
-    "lint": "echo \"no lint yet\" && exit 0"
-  }
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "smoke:consumer": "node scripts/consumer-smoke.mjs",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "Apache-2.0"
 }

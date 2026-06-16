@@ -1,16 +1,37 @@
 {
-  "name": "@gal-run/mcp-terminal",
-  "version": "0.0.0",
-  "description": "gal MCP server: terminal (published).",
+  "name": "@gal-run/gal-terminal-use-mcp",
+  "version": "0.1.0",
+  "description": "GAL Terminal Use MCP — terminal automation for AI agents via node-pty",
   "license": "Apache-2.0",
+  "private": false,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": ["dist", "!dist/**/ee/**"],
-  "publishConfig": { "access": "public" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "gal-terminal-use-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "echo \"no tests yet\" && exit 0",
-    "lint": "echo \"no lint yet\" && exit 0"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "node-pty": "^1.2.0-beta.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
