@@ -1,0 +1,14 @@
+GAL Commercial License (Enterprise Edition)
+
+Copyright 2026 Scheduler Systems Ltd. All rights reserved.
+
+The software in this directory (any "ee" directory within the gal monorepo)
+is the Enterprise Edition of gal and is NOT licensed under the Apache License,
+Version 2.0. It is licensed only to customers holding a valid GAL commercial
+subscription, under the GAL Commercial License Agreement.
+
+Enterprise Edition code is functionally inert without a valid signed license
+key (kernel capability check; see docs/EE.md). OSS builds exclude this
+directory from the published artifact entirely.
+
+For commercial licensing, contact: sales@scheduler-systems.com

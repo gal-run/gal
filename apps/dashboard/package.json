@@ -1,0 +1,13 @@
+{
+  "name": "@gal-run/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "gal dashboard (Next.js). Deployed, NOT published.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "test": "echo \"no tests yet\" && exit 0",
+    "lint": "echo \"no lint yet\" && exit 0"
+  }
+}
