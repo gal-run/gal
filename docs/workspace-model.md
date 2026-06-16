@@ -100,14 +100,14 @@ This keeps the public repo truthful while still allowing incremental extraction 
 
 The current public reference layer includes:
 
-- [schemas/workspace-config.schema.json](../schemas/workspace-config.schema.json)
-- [schemas/project-config.schema.json](../schemas/project-config.schema.json)
-- [examples/workspace-config.yaml](../examples/workspace-config.yaml)
-- [examples/project-config.yaml](../examples/project-config.yaml)
+- [apps/console/schemas/workspace-config.schema.json](../apps/console/schemas/workspace-config.schema.json)
+- [apps/console/schemas/project-config.schema.json](../apps/console/schemas/project-config.schema.json)
+- [apps/console/examples/workspace-config.yaml](../apps/console/examples/workspace-config.yaml)
+- [apps/console/examples/project-config.yaml](../apps/console/examples/project-config.yaml)
 - [docs/merge-rules.md](merge-rules.md)
-- [reference/resolve-config.mjs](../reference/resolve-config.mjs)
-- [reference/filesystem-helpers.mjs](../reference/filesystem-helpers.mjs)
-- [reference/config-documents.mjs](../reference/config-documents.mjs)
+- [apps/console/reference/resolve-config.mjs](../apps/console/reference/resolve-config.mjs)
+- [apps/console/reference/filesystem-helpers.mjs](../apps/console/reference/filesystem-helpers.mjs)
+- [apps/console/reference/config-documents.mjs](../apps/console/reference/config-documents.mjs)
 
 The reference helper layer currently covers:
 

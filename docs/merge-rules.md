@@ -76,8 +76,8 @@ This removes `test` from the effective config even if it exists in workspace sco
 
 The public repo includes a dependency-free reference resolver:
 
-- [reference/resolve-config.mjs](../reference/resolve-config.mjs)
+- [apps/console/reference/resolve-config.mjs](../apps/console/reference/resolve-config.mjs)
 
 And node built-in tests:
 
-- [reference/resolve-config.test.mjs](../reference/resolve-config.test.mjs)
+- [apps/console/reference/resolve-config.test.mjs](../apps/console/reference/resolve-config.test.mjs)
