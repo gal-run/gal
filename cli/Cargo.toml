@@ -1,0 +1,23 @@
+# cli/ - gal-cli cargo workspace. Publishes to crates.io (cargo install gal-cli)
+# and Homebrew tap (brew install gal-run/tap/gal) via cargo release.
+[workspace]
+resolver = "2"
+members = ["."]
+
+[package]
+name = "gal-cli"
+version = "0.0.0"
+edition = "2021"
+description = "gal - open governance platform CLI"
+license = "Apache-2.0"
+repository = "https://github.com/gal-run/gal"
+
+[[bin]]
+name = "gal"
+path = "src/main.rs"
+
+[features]
+# OSS build: cargo build --no-default-features DROPS the ee module entirely,
+# so the published OSS crate contains zero commercial code.
+default = ["ee"]
+ee = []
