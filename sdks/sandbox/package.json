@@ -1,0 +1,26 @@
+{
+  "name": "@gal-run/sandbox",
+  "version": "0.1.0",
+  "description": "A deployment-agnostic contract for secure isolated agent-runtime sandboxes: OS enforcement plans and a narrow startup environment contract.",
+  "license": "Apache-2.0",
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "exports": {
+    "./contracts": "./src/contracts.mjs",
+    "./runtime-session-channel": "./src/runtime-session-channel.mjs"
+  },
+  "files": [
+    "src",
+    "docs",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "echo \"no build step (pure ESM contract)\" && exit 0",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

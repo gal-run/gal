@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "git-evidence-snapshot.v1",
+  "workspace": "/tmp/handoff-workspace",
+  "generatedAt": "2026-05-23T05:40:00Z",
+  "fetchRemotes": false,
+  "repoCount": 4,
+  "repos": [
+    {
+      "path": "/tmp/handoff-workspace/gal-run/gal-handoff-demo",
+      "relativePath": "gal-run/gal-handoff-demo",
+      "kind": "workspace_repo",
+      "remote": "https://github.com/gal-run/gal-handoff-demo.git",
+      "github": {
+        "slug": "gal-run/gal-handoff-demo",
+        "owner": "gal-run",
+        "name": "gal-handoff-demo"
+      },
+      "branch": {
+        "current": "main",
+        "default": "main",
+        "upstream": "origin/main",
+        "hasUpstream": true,
+        "ahead": 0,
+        "behind": 0
+      },
+      "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktree": {
+        "isWorktree": false
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/handoff-workspace/gal-run/gal-handoff-demo/worktrees/local-clean",
+      "relativePath": "gal-run/gal-handoff-demo/worktrees/local-clean",
+      "kind": "worktree",
+      "remote": "https://github.com/gal-run/gal-handoff-demo.git",
+      "github": {
+        "slug": "gal-run/gal-handoff-demo",
+        "owner": "gal-run",
+        "name": "gal-handoff-demo"
+      },
+      "branch": {
+        "current": "codex/local-clean",
+        "default": "main",
+        "upstream": null,
+        "hasUpstream": false,
+        "ahead": 0,
+        "behind": 0
+      },
+      "headSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "worktree": {
+        "isWorktree": true
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/handoff-workspace/gal-run/gal-handoff-demo/worktrees/dirty",
+      "relativePath": "gal-run/gal-handoff-demo/worktrees/dirty",
+      "kind": "worktree",
+      "remote": "https://github.com/gal-run/gal-handoff-demo.git",
+      "github": {
+        "slug": "gal-run/gal-handoff-demo",
+        "owner": "gal-run",
+        "name": "gal-handoff-demo"
+      },
+      "branch": {
+        "current": "codex/dirty",
+        "default": "main",
+        "upstream": "origin/codex/dirty",
+        "hasUpstream": true,
+        "ahead": 1,
+        "behind": 0
+      },
+      "headSha": "cccccccccccccccccccccccccccccccccccccccc",
+      "worktree": {
+        "isWorktree": true
+      },
+      "dirt": {
+        "modified": true,
+        "untrackedCount": 2,
+        "stashCount": 1,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": "session-2",
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 2,
+        "trackedCount": 1,
+        "untrackedCount": 1,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          },
+          {
+            "kind": "codex",
+            "path": ".codex",
+            "type": "directory",
+            "tracked": false
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/handoff-workspace/gal-run/gal-handoff-demo/worktrees/detached",
+      "relativePath": "gal-run/gal-handoff-demo/worktrees/detached",
+      "kind": "worktree",
+      "remote": "https://github.com/gal-run/gal-handoff-demo.git",
+      "github": {
+        "slug": "gal-run/gal-handoff-demo",
+        "owner": "gal-run",
+        "name": "gal-handoff-demo"
+      },
+      "branch": {
+        "current": null,
+        "default": "main",
+        "upstream": null,
+        "hasUpstream": false,
+        "ahead": 0,
+        "behind": 0
+      },
+      "headSha": "dddddddddddddddddddddddddddddddddddddddd",
+      "worktree": {
+        "isWorktree": true
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    }
+  ]
+}

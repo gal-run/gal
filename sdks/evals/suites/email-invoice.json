@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "gal.evals.suite.v1",
+  "id": "gal.ops-triage.email-invoice.v1",
+  "name": "GAL Ops Email Invoice Detection + Entity Routing",
+  "description": "Detects expense invoices/receipts and routes them to the correct accounting entity: transportation (parking/tolls) -> entity-a, everything else -> entity-b. Synthetic fixtures; no real data. Includes non-invoice negatives.",
+  "subject": {
+    "kind": "managed_agent",
+    "agentId": "gal.ops-triage",
+    "taskType": "ops.email.invoice_forward",
+    "repo": "example-org/example-repo"
+  },
+  "evaluatorId": "gal-evals.email-invoice.v1",
+  "gates": [
+    { "metric": "overall", "minScore": 0.85 },
+    { "metric": "is_invoice", "minScore": 0.9 },
+    { "metric": "entity_routing", "minScore": 0.9 }
+  ],
+  "fields": [
+    { "path": "is_invoice", "kind": "boolean_match", "weight": 2 },
+    { "path": "entity", "kind": "exact_match", "weight": 2 }
+  ],
+  "cases": [
+    {
+      "id": "invoice-saas-receipt",
+      "title": "SaaS receipt -> entity-b (default)",
+      "tags": ["invoice", "entity-b", "saas"],
+      "input": {
+        "from": "invoice+statements@billing.example.net",
+        "senderName": "Example SaaS",
+        "subject": "Your receipt from Example SaaS #0000-0000-0000",
+        "body": "Thanks for your payment. Amount: $20.00."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-b" }
+    },
+    {
+      "id": "invoice-workspace",
+      "title": "Workspace invoice -> entity-b (default)",
+      "tags": ["invoice", "entity-b", "saas"],
+      "input": {
+        "from": "payments-noreply@workspace.example.net",
+        "senderName": "Example Payments",
+        "subject": "Example Workspace: Your invoice is available for example.com",
+        "body": "Your monthly invoice is available. The PDF is attached."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-b" }
+    },
+    {
+      "id": "invoice-payroll",
+      "title": "Payroll vendor invoice -> entity-b (default)",
+      "tags": ["invoice", "entity-b", "payroll"],
+      "input": {
+        "from": "billing@payroll.example.net",
+        "senderName": "Example Payroll",
+        "subject": "Invoice INV0000000 from Example Payroll",
+        "body": "Please find attached invoice for USD 8.20, due in 7 days."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-b" }
+    },
+    {
+      "id": "invoice-dev-receipt",
+      "title": "Dev platform payment receipt -> entity-b (default)",
+      "tags": ["invoice", "entity-b", "dev"],
+      "input": {
+        "from": "noreply@devplatform.example.net",
+        "senderName": "Example Dev Platform",
+        "subject": "Payment Receipt for example-account",
+        "body": "Thanks for your purchase. Enterprise plan."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-b" }
+    },
+    {
+      "id": "invoice-parking-app",
+      "title": "Parking-app invoice -> entity-a (transportation)",
+      "tags": ["invoice", "entity-a", "transport"],
+      "input": {
+        "from": "noreply@parking-app.example.net",
+        "senderName": "Example Parking",
+        "subject": "Invoice for parking",
+        "body": "Receipt for a parking payment of 18.00."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-a" }
+    },
+    {
+      "id": "invoice-campus-parking",
+      "title": "Campus parking charge -> entity-a (transportation)",
+      "tags": ["invoice", "entity-a", "transport"],
+      "input": {
+        "from": "parking@campus.example.net",
+        "senderName": "Example Parking",
+        "subject": "Parking receipt",
+        "body": "Parking charge of 24.00. Receipt attached."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-a" }
+    },
+    {
+      "id": "noninvoice-newsletter",
+      "title": "Newsletter is NOT an invoice",
+      "tags": ["negative", "newsletter"],
+      "input": {
+        "from": "newsletter@news.example.net",
+        "senderName": "Example Newsletter",
+        "subject": "This week in AI",
+        "body": "Your weekly digest of the top stories."
+      },
+      "expected": { "is_invoice": false, "entity": null }
+    },
+    {
+      "id": "noninvoice-social-invite",
+      "title": "Social-network invite is NOT an invoice",
+      "tags": ["negative", "social"],
+      "input": {
+        "from": "invitations@social.example.net",
+        "senderName": "Example Social",
+        "subject": "I want to connect",
+        "body": "A contact is waiting for your response."
+      },
+      "expected": { "is_invoice": false, "entity": null }
+    },
+    {
+      "id": "noninvoice-dev-notification",
+      "title": "Dev-platform notification from a high-volume sender is NOT an invoice",
+      "tags": ["negative", "high-volume-sender", "guardrail"],
+      "input": {
+        "from": "noreply@devplatform.example.net",
+        "senderName": "Example Dev Platform",
+        "subject": "[example/repo] Review requested on pull request #42",
+        "body": "A review was requested on a pull request. View it on the platform."
+      },
+      "expected": { "is_invoice": false, "entity": null }
+    },
+    {
+      "id": "invoice-entity-b-toll-in-body",
+      "title": "Default-entity invoice that merely mentions a toll/parking in the body stays entity-b",
+      "tags": ["invoice", "entity-b", "routing", "guardrail"],
+      "input": {
+        "from": "billing@car-rental.example.net",
+        "senderName": "Example Rental",
+        "subject": "Tax invoice for your car rental",
+        "body": "Total 412.00. Charges include fuel, toll road fees and airport parking."
+      },
+      "expected": { "is_invoice": true, "entity": "entity-b" }
+    }
+  ]
+}

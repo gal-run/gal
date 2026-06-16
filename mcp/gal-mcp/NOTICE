@@ -1,0 +1,20 @@
+gal-mcp (@gal/mcp)
+Copyright 2026 Scheduler Systems Ltd
+
+This product includes software developed by Scheduler Systems Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+gal-mcp is the Model Context Protocol (MCP) server for the gal governance
+platform — a client that exposes gal's governance, session, policy, and RAG
+operations as MCP tools for AI coding agents.
+
+----------------------------------------------------------------------
+Bundled third-party components:
+
+  vendor/gal-swarm-v0.3.3 — @gal/swarm (Apache-2.0)
+  Provider-neutral burst-compute swarm planning library by Scheduler Systems Ltd.
+  See vendor/gal-swarm-v0.3.3/LICENSE and CREDITS.md (credits the prompt-to-binary
+  standard and the Swarms topology vocabulary). Published from the gal monorepo (sdks/swarm).

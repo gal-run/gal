@@ -67,15 +67,31 @@ cli-oss:
 cli-test:
     cd cli && cargo test
 
+# ---- tools (mixed native) ------------------------------------------------
+# agent-git-graph is a standalone Go module (dev tool, NOT part of the
+# services module) — build it with its own go toolchain. demo-studio is a TS
+# workspace member and builds via turbo (`just apps`/`sdks`/root build).
+tools-go:
+    cd tools/agent-git-graph && go build ./...
+
+tools-go-test:
+    cd tools/agent-git-graph && go test ./...
+
+# ---- accessibility-app (Swift, macOS only) -------------------------------
+# A standalone SwiftPM package (macOS desktop helper). Not a TS/Go/Rust
+# surface — builds with its own swift toolchain. Skipped on non-macOS.
+accessibility-app:
+    cd apps/accessibility-app && swift build
+
 # ---- license fence (always-on, fast) -------------------------------------
 fence:
     node tools/check-license-fence.mjs
 
 # ---- everything, in ABI order --------------------------------------------
 # kernel header first (cgo + codegen consumers), then services, then TS, cli.
-all: kernel services sdks mcp apps cli fence
+all: kernel services sdks mcp apps cli tools-go fence
 
 # OSS-only build: drop all ee/ code from every artifact.
-all-oss: kernel services-oss sdks mcp apps cli-oss fence
+all-oss: kernel services-oss sdks mcp apps cli-oss tools-go fence
 
-test: kernel-test services-test cli-test
+test: kernel-test services-test cli-test tools-go-test

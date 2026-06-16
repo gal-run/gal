@@ -1,0 +1,34 @@
+{
+  "name": "@gal-run/gal-evals",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Deterministic, rule-based evaluation framework: suites, scoring, and deployment gates for agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "gal-evals": "dist/cli/evaluate.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "suites",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "eval:email": "npm run build && node dist/cli/evaluate.js --suite suites/email-triage.json --adapter email-rules",
+    "eval:all": "npm run eval:email"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "Apache-2.0"
+}

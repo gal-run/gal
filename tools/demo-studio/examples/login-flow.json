@@ -1,0 +1,69 @@
+{
+  "name": "Login Flow Demo",
+  "description": "Demonstrates the login flow with zoom effects and voiceover",
+  "steps": [
+    {
+      "type": "voiceover",
+      "text": "Welcome to our application. Let's walk through the login process.",
+      "duration": 3
+    },
+    {
+      "type": "record",
+      "duration": 2
+    },
+    {
+      "type": "zoom",
+      "x": 0.5,
+      "y": 0.6,
+      "scale": 1.5,
+      "duration": 2
+    },
+    {
+      "type": "click",
+      "x": 960,
+      "y": 500,
+      "duration": 1,
+      "zoom": {
+        "scale": 2
+      }
+    },
+    {
+      "type": "keystroke",
+      "keys": "user@example.com",
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "Enter your email address",
+      "duration": 2
+    },
+    {
+      "type": "click",
+      "x": 960,
+      "y": 580,
+      "duration": 0.5
+    },
+    {
+      "type": "keystroke",
+      "keys": "Cmd+Enter",
+      "duration": 1.5
+    },
+    {
+      "type": "voiceover",
+      "text": "Press Enter to submit",
+      "duration": 1.5
+    },
+    {
+      "type": "zoom",
+      "x": 0.5,
+      "y": 0.5,
+      "scale": 1,
+      "duration": 1
+    },
+    {
+      "type": "voiceover",
+      "text": "You're now logged in and ready to go!",
+      "duration": 2
+    }
+  ]
+}

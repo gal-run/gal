@@ -7,7 +7,8 @@
     "sdks/*",
     "mcp/*",
     "apps/dashboard",
-    "apps/console"
+    "apps/console",
+    "tools/demo-studio"
   ],
   "scripts": {
     "build": "turbo run build",

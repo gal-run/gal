@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "gal.evals.suite.v1",
+  "id": "gal.ops-triage.email.v1",
+  "name": "GAL Ops Email Triage Evaluation",
+  "description": "Synthetic evaluation suite for the gal.ops-triage / ops.email.triage task family.",
+  "subject": {
+    "kind": "managed_agent",
+    "agentId": "gal.ops-triage",
+    "taskType": "ops.email.triage",
+    "repo": "example-org/example-repo"
+  },
+  "evaluatorId": "gal-evals.email-triage.v1",
+  "gates": [
+    { "metric": "overall", "minScore": 0.85 },
+    { "metric": "label", "minScore": 0.85 },
+    { "metric": "createTask", "minScore": 0.85 },
+    { "metric": "archive", "minScore": 0.85 }
+  ],
+  "fields": [
+    { "path": "label", "kind": "exact_match", "weight": 1 },
+    { "path": "createTask", "kind": "boolean_match", "weight": 1 },
+    { "path": "archive", "kind": "boolean_match", "weight": 1 }
+  ],
+  "metadata": {
+    "fixturePolicy": "synthetic-only",
+    "pii": false,
+    "policy": {
+      "labelMappings": [
+        { "match": "cloud.example.net", "label": "cloud" },
+        { "match": "vcs.example.net", "label": "vcs" },
+        { "match": "news.example.net", "label": "example-news" },
+        { "match": "review.example.net", "label": "review" },
+        { "match": "directory.example.net", "label": "directory" },
+        { "match": "platform.example.net", "label": "platform" }
+      ],
+      "taskSignals": [
+        "action required",
+        "assigned to you",
+        "verify your",
+        "bill",
+        "invoice"
+      ],
+      "archiveSignals": [
+        "newsletter",
+        "digest",
+        "unsubscribe",
+        "build succeeded",
+        "directory submissions report"
+      ],
+      "sensitiveSignals": [
+        "bank",
+        "transaction",
+        "payment"
+      ],
+      "keepInInboxSignals": [
+        "bill",
+        "invoice",
+        "transaction",
+        "payment"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "email-newsletter-news",
+      "title": "Newsletter should label and archive",
+      "tags": ["newsletter", "archive"],
+      "input": {
+        "from": "news@news.example.net",
+        "senderName": "example-news",
+        "subject": "New feature: workflow automation",
+        "body": "Weekly newsletter digest with unsubscribe link.",
+        "type": "newsletter"
+      },
+      "expected": {
+        "label": "example-news",
+        "createTask": false,
+        "archive": true
+      }
+    },
+    {
+      "id": "email-cloud-billing",
+      "title": "Billing email should stay in inbox and create task",
+      "tags": ["billing", "task"],
+      "input": {
+        "from": "billing@cloud.example.net",
+        "senderName": "cloud",
+        "subject": "Your cloud bill for March 2026",
+        "body": "Invoice available for review.",
+        "type": "invoice"
+      },
+      "expected": {
+        "label": "cloud",
+        "createTask": true,
+        "archive": false
+      }
+    },
+    {
+      "id": "email-review-digest",
+      "title": "Code review digest should archive",
+      "tags": ["digest", "archive"],
+      "input": {
+        "from": "updates@review.example.net",
+        "senderName": "review",
+        "subject": "Weekly code review digest",
+        "body": "Digest of code review findings.",
+        "type": "newsletter"
+      },
+      "expected": {
+        "label": "review",
+        "createTask": false,
+        "archive": true
+      }
+    },
+    {
+      "id": "email-vcs-ci-success",
+      "title": "Successful CI notification should archive",
+      "tags": ["ci", "archive"],
+      "input": {
+        "from": "noreply@vcs.example.net",
+        "senderName": "vcs",
+        "subject": "Build succeeded: main (abc123)",
+        "body": "Build succeeded.",
+        "type": "ci-notification"
+      },
+      "expected": {
+        "label": "vcs",
+        "createTask": false,
+        "archive": true
+      }
+    },
+    {
+      "id": "email-directory-report",
+      "title": "Directory report should use directory label",
+      "tags": ["service", "archive"],
+      "input": {
+        "from": "contact@directory.example.net",
+        "senderName": "directory",
+        "subject": "Your directory submissions report",
+        "body": "Directory submissions report.",
+        "type": "service"
+      },
+      "expected": {
+        "label": "directory",
+        "createTask": false,
+        "archive": true
+      }
+    },
+    {
+      "id": "email-bank-transaction",
+      "title": "Financial alert should stay in inbox",
+      "tags": ["financial", "sensitive"],
+      "input": {
+        "from": "alerts@bank-example.com",
+        "senderName": "Example Bank",
+        "subject": "Transaction alert: payment received",
+        "body": "Transaction alert.",
+        "type": "financial"
+      },
+      "expected": {
+        "label": "bank-example",
+        "createTask": false,
+        "archive": false
+      }
+    },
+    {
+      "id": "email-platform-action",
+      "title": "Action required email should create task",
+      "tags": ["action-required", "task"],
+      "input": {
+        "from": "support@platform.example.net",
+        "senderName": "platform",
+        "subject": "Action required: verify your deployment",
+        "body": "Please verify your deployment.",
+        "type": "action-required"
+      },
+      "expected": {
+        "label": "platform",
+        "createTask": true,
+        "archive": false
+      }
+    }
+  ]
+}
