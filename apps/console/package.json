@@ -1,0 +1,13 @@
+{
+  "name": "@gal-run/console",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Relocated legacy gal config app (config-document resolver, schemas, examples). Deployed, NOT published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo \"console build (skeleton)\" && exit 0",
+    "test": "node --test reference/*.test.mjs",
+    "lint": "echo \"no lint yet\" && exit 0"
+  }
+}
