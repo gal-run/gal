@@ -281,7 +281,7 @@ GAL is built by [Scheduler Systems](https://scheduler-systems.com), which builds
 
 ## License
 
-GAL is proprietary software. See [LICENSE](LICENSE) for details.
+GAL is licensed under the Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 
