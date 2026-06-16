@@ -1,0 +1,81 @@
+{
+  "name": "Feature Walkthrough",
+  "description": "Comprehensive demo showing multiple features with effects",
+  "steps": [
+    {
+      "type": "voiceover",
+      "text": "Let's explore the key features of our dashboard.",
+      "duration": 2
+    },
+    {
+      "type": "record",
+      "duration": 1
+    },
+    {
+      "type": "zoom",
+      "x": 0.25,
+      "y": 0.3,
+      "scale": 1.8,
+      "duration": 3
+    },
+    {
+      "type": "text",
+      "text": "Analytics Panel",
+      "x": 100,
+      "y": 50,
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "The analytics panel shows real-time metrics for your application.",
+      "duration": 3
+    },
+    {
+      "type": "click",
+      "x": 480,
+      "y": 324,
+      "duration": 1
+    },
+    {
+      "type": "zoom",
+      "x": 0.75,
+      "y": 0.3,
+      "scale": 1.8,
+      "duration": 3
+    },
+    {
+      "type": "text",
+      "text": "User Management",
+      "x": 1500,
+      "y": 50,
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "Manage users and permissions from this panel.",
+      "duration": 2
+    },
+    {
+      "type": "keystroke",
+      "keys": "Cmd+K",
+      "duration": 1.5
+    },
+    {
+      "type": "voiceover",
+      "text": "Use Command K to open the quick action menu.",
+      "duration": 1.5
+    },
+    {
+      "type": "zoom",
+      "x": 0.5,
+      "y": 0.5,
+      "scale": 1,
+      "duration": 1
+    },
+    {
+      "type": "voiceover",
+      "text": "That's a quick overview of the main features. Let us know if you have questions!",
+      "duration": 3
+    }
+  ]
+}

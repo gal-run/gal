@@ -26,3 +26,8 @@ services/**/*.test
 **/target/
 **/.next/
 node_modules/
+# Swift (apps/accessibility-app)
+**/.build/
+**/*.xcodeproj
+# Go tool binaries (tools/agent-git-graph builds ./cmd/agg)
+tools/agent-git-graph/agg-bin

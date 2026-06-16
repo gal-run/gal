@@ -1,0 +1,15 @@
+agent-git-graph
+Copyright 2026 Scheduler Systems Ltd
+
+This product includes software developed at Scheduler Systems Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this software except in compliance with the License. You may obtain a
+copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+The product idea and interaction lineage were inspired by mhutchie/vscode-git-graph
+(https://github.com/mhutchie/vscode-git-graph). That project is referenced only
+as product/UX inspiration; this is an original Go implementation and does not
+incorporate its source code.

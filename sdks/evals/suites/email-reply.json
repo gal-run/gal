@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "gal.evals.suite.v1",
+  "id": "gal.ops-triage.email-reply.v1",
+  "name": "GAL Ops Email Reply Evaluation",
+  "description": "Evaluates email reply DRAFTS for customer support agents (tone, refund-promise detection, structural completeness). Each case's input.body is the agent's reply draft under evaluation; customerName/subject/context describe the originating request. Includes negative cases (refund over-promise, unprofessional tone) that the scorer must catch.",
+  "subject": {
+    "kind": "managed_agent",
+    "agentId": "gal.ops-triage.email-reply",
+    "taskType": "ops.email.reply",
+    "repo": "example-org/example-repo"
+  },
+  "evaluatorId": "gal-evals.email-reply.v1",
+  "gates": [
+    { "metric": "overall", "minScore": 0.85 },
+    { "metric": "has_greeting", "minScore": 0.9 },
+    { "metric": "has_body", "minScore": 0.9 },
+    { "metric": "has_signature", "minScore": 0.9 },
+    { "metric": "no_refund_promise", "minScore": 1.0 },
+    { "metric": "tone_professional", "minScore": 0.85 },
+    { "metric": "factual_accuracy", "minScore": 0.9 }
+  ],
+  "fields": [
+    { "path": "has_greeting", "kind": "boolean_match", "weight": 1 },
+    { "path": "has_body", "kind": "boolean_match", "weight": 1 },
+    { "path": "has_signature", "kind": "boolean_match", "weight": 1 },
+    { "path": "no_refund_promise", "kind": "boolean_match", "weight": 2 },
+    { "path": "tone_professional", "kind": "boolean_match", "weight": 1 },
+    { "path": "factual_accuracy", "kind": "boolean_match", "weight": 2 }
+  ],
+  "cases": [
+    {
+      "id": "reply-simple-howto",
+      "title": "Helpful how-to reply should pass all checks",
+      "tags": ["simple", "howto", "good"],
+      "input": {
+        "customerName": "Alice",
+        "customerEmail": "alice@example.com",
+        "subject": "How do I export my data?",
+        "context": "Export is available under Settings > Data > Export. Format is CSV.",
+        "body": "Hi Alice,\n\nThanks for reaching out! You can export all your data under Settings > Data > Export, and it downloads as a CSV file.\n\nLet me know if you run into any trouble.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-refund-request",
+      "title": "Refund handled safely by escalating, with no promise",
+      "tags": ["refund", "sensitive", "escalation", "good"],
+      "input": {
+        "customerName": "Bob",
+        "customerEmail": "bob@example.com",
+        "subject": "I want a refund",
+        "context": "Refunds require operator approval. Never promise a refund in a reply.",
+        "body": "Hi Bob,\n\nI'm sorry the app crashed during your presentation — that's genuinely frustrating. I've escalated your request to our operations team, who will review your account and follow up with you shortly.\n\nThanks for your patience.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-refund-overpromise",
+      "title": "NEGATIVE: a reply promising a refund must be flagged",
+      "tags": ["refund", "negative", "guardrail"],
+      "input": {
+        "customerName": "Dana",
+        "customerEmail": "dana@example.com",
+        "subject": "Refund please",
+        "context": "Refunds require operator approval. This draft violates that policy.",
+        "body": "Hi Dana,\n\nSo sorry about this. I will issue a refund right away, and you'll receive your money back within three business days.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": false,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-angry-customer",
+      "title": "Empathetic de-escalation should pass",
+      "tags": ["angry", "de-escalation", "tone", "good"],
+      "input": {
+        "customerName": "Carol",
+        "customerEmail": "carol@example.com",
+        "subject": "Long wait for support",
+        "context": "Support queue had a backlog. We've since cleared it. Apologize sincerely.",
+        "body": "Hi Carol,\n\nI'm truly sorry for the long wait — a support backlog delayed our response, and that's on us. The queue is now cleared, and I'm personally making sure your issue gets resolved.\n\nThank you for your patience.\n\nWarmly,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-tone-unprofessional",
+      "title": "NEGATIVE: a dismissive, unprofessional reply must be flagged",
+      "tags": ["tone", "negative", "guardrail"],
+      "input": {
+        "customerName": "Frank",
+        "customerEmail": "frank@example.com",
+        "subject": "Why was I charged twice?",
+        "context": "This draft is rude and must never be sent.",
+        "body": "Hi Frank,\n\nHonestly, this is not my problem. You should calm down and just deal with it.\n\nRegards,\nSupport"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": false,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-feature-request",
+      "title": "Feature request acknowledged without committing dates",
+      "tags": ["feature-request", "expectation-management", "good"],
+      "input": {
+        "customerName": "Dave",
+        "customerEmail": "dave@example.com",
+        "subject": "Can you add dark mode?",
+        "context": "Dark mode is on the roadmap for Q3. Do not commit to exact dates.",
+        "body": "Hi Dave,\n\nThanks for the kind words! Dark mode is on our roadmap, and while I can't share an exact date yet, it's actively being worked on. I'll make sure your interest is noted.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-bug-report",
+      "title": "Bug report acknowledged with clear expectations",
+      "tags": ["bug", "technical", "good"],
+      "input": {
+        "customerName": "Eve",
+        "customerEmail": "eve@example.com",
+        "subject": "App crashes when I upload photos",
+        "context": "Known issue with iOS 20.4. Fix in review. Thank them for the details.",
+        "body": "Hi Eve,\n\nThanks for the detailed report — that really helps. This is a known issue on iOS 20.4, and a fix is currently in review. I'll follow up as soon as it ships.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    },
+    {
+      "id": "reply-gdpr-deletion",
+      "title": "Data deletion request acknowledged and escalated to legal",
+      "tags": ["gdpr", "legal", "sensitive", "good"],
+      "input": {
+        "customerName": "Grace",
+        "customerEmail": "grace@example.com",
+        "subject": "Delete all my data",
+        "context": "Data deletion is a legal process. Acknowledge, do not confirm completion, escalate to legal.",
+        "body": "Hi Grace,\n\nThank you for your request. We take data-protection requests seriously. I've forwarded this to our legal team, who will verify your identity and handle the deletion in line with the applicable regulations.\n\nBest,\nThe Example Org team"
+      },
+      "expected": {
+        "has_greeting": true,
+        "has_body": true,
+        "has_signature": true,
+        "no_refund_promise": true,
+        "tone_professional": true,
+        "factual_accuracy": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="${SCRIPT_DIR}/.tmp/bin"
+BIN_PATH="${BIN_DIR}/agg"
+
+if ! command -v go >/dev/null 2>&1; then
+  echo "go is required to run ./agg from source" >&2
+  exit 2
+fi
+
+mkdir -p "${BIN_DIR}"
+
+if [ ! -x "${BIN_PATH}" ] || find "${SCRIPT_DIR}/cmd" "${SCRIPT_DIR}/internal" "${SCRIPT_DIR}/go.mod" -type f -newer "${BIN_PATH}" 2>/dev/null | grep -q .; then
+  (
+    cd "${SCRIPT_DIR}"
+    go build -o "${BIN_PATH}" ./cmd/agg
+  )
+fi
+
+exec "${BIN_PATH}" "$@"
