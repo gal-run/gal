@@ -5,7 +5,11 @@
 //   1. Every `ee/` directory carries its own commercial LICENSE file.
 //   2. No source file INSIDE an `ee/` dir carries an Apache-2.0 header.
 //   3. No source file OUTSIDE any `ee/` dir imports/links an `ee/` symbol
-//      in the OSS build (so OSS artifacts contain zero commercial code).
+//      in the OSS build (so published OSS artifacts contain zero commercial
+//      code). EXCEPTION: a DEPLOYED app (never published to a registry) that
+//      declares `"gal": { "eeFence": "runtime" }` AND `"private": true`
+//      enforces the boundary at RUNTIME (license-key gate / isEeEnabled), the
+//      Langfuse model — exempt from rule 3 (rules 1 & 2 still apply). docs/EE.md
 //
 // Exit non-zero on any violation. No external deps (Node stdlib only).
 //
@@ -23,6 +27,7 @@ const SRC_EXT = new Set([
 ]);
 
 const violations = [];
+const runtimeFencedRoots = [];
 
 function isEeDir(name) {
   return name === "ee";
@@ -79,7 +84,10 @@ function checkFile(file, insideEe) {
       /from\s+["'][^"']*\/ee(\/|["'])/.test(text) ||
       /require\(\s*["'][^"']*\/ee(\/|["'])/.test(text) ||
       /import\s+["'][^"']*\/ee["']/.test(text);
-    if (importsEe) {
+    // Deployed apps (never published) enforce the ee/ boundary at RUNTIME
+    // (license-key gate / isEeEnabled), so they may statically link ee/ — the
+    // Langfuse model. Published packages stay strict. See docs/EE.md.
+    if (importsEe && !isRuntimeFenced(file)) {
       violations.push(`non-ee/ file imports ee/ symbol: ${rel(file)}`);
     }
     // Rust: a bare `mod ee;` / `use ...ee` is only legal behind cfg(feature="ee").
@@ -103,6 +111,43 @@ function rel(p) {
   return p.startsWith(ROOT) ? p.slice(ROOT.length + 1) : p;
 }
 
+// Collect DEPLOYED-app roots that opt into RUNTIME ee/ enforcement. Such a
+// package declares `"gal": { "eeFence": "runtime" }` and MUST be `"private":
+// true` (never published — else it would ship commercial code in its artifact).
+function collectFenced(dir) {
+  let entries;
+  try { entries = readdirSync(dir); } catch { return; }
+  const pj = join(dir, "package.json");
+  if (existsSync(pj)) {
+    let obj = null;
+    try { obj = JSON.parse(readFileSync(pj, "utf8")); } catch { obj = null; }
+    if (obj && obj.gal && obj.gal.eeFence === "runtime") {
+      runtimeFencedRoots.push(dir);
+      if (obj.private !== true) {
+        violations.push(
+          `package gal.eeFence="runtime" requires "private": true (a published ` +
+          `package must build-drop ee/, not runtime-gate it): ${rel(pj)}`
+        );
+      }
+    }
+  }
+  for (const entry of entries) {
+    if (SKIP_DIRS.has(entry)) continue;
+    const full = join(dir, entry);
+    let st;
+    try { st = statSync(full); } catch { continue; }
+    if (st.isDirectory()) collectFenced(full);
+  }
+}
+
+function isRuntimeFenced(file) {
+  for (const r of runtimeFencedRoots) {
+    if (file === r || file.startsWith(r + sep)) return true;
+  }
+  return false;
+}
+
+collectFenced(ROOT);
 walk(ROOT, false);
 
 if (violations.length > 0) {

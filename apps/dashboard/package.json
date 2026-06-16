@@ -2,6 +2,7 @@
   "name": "@gal-run/dashboard",
   "version": "0.0.674",
   "private": true,
+  "gal": { "eeFence": "runtime", "deployed": true },
   "type": "module",
   "description": "gal dashboard (Next.js). Open-core: single-tenant CORE (Apache-2.0) + commercial src/ee/ (license-gated). Deployed, NOT published.",
   "license": "Apache-2.0",

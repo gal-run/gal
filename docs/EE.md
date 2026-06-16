@@ -35,7 +35,9 @@ the build on any of:
    the OSS build (Go `import ".../ee"`, TS `from ".../ee"`, Rust `mod ee` /
    `use crate::ee` without `cfg(feature = "ee")`).
 
-This guarantees OSS artifacts never link commercial code.
+This guarantees **published** OSS artifacts never link commercial code. A
+*deployed* app (never published) may instead runtime-gate `ee/` — see
+"Deployed apps vs published packages" below.
 
 ## Runtime gate: license key
 
@@ -59,3 +61,18 @@ zero commercial code:
 | Rust     | `cargo build --no-default-features`    | `ee` is a default feature; `#[cfg(feature = "ee")] mod ee` |
 
 The `just all-oss` target builds every surface with these flags.
+
+## Deployed apps vs published packages (runtime gate)
+
+The build-drop above protects **published** packages (npm / cargo / the kernel
+lib): the OSS artifact is what users download, so it must contain zero
+commercial code. A **deployed app** (e.g. `apps/dashboard` — `"private": true`,
+never published to a registry) instead follows the Langfuse model: the `ee/`
+code **ships in the self-host image** but is **inert without a license key**
+(`isEeEnabled()` → ee routes `notFound`, ee nav hidden, ee providers unmounted).
+
+Such a package opts in by declaring `"gal": { "eeFence": "runtime" }` in its
+`package.json` and **must** be `"private": true`. The fence then exempts it from
+rule 3 (it may statically import `ee/`) while keeping rules 1 & 2. Every
+published surface stays strict; a package that sets `eeFence: "runtime"` without
+`private: true` fails the fence.
