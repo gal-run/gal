@@ -46,7 +46,7 @@ jobs:
             --exclude='gate.yml' \
             --exclude='issue-public-surface-check.yml' \
             --exclude='capture.rs' \
-            'Scheduler-Systems/infra|gal-run-private|gal-private|ARC_APP_ID|ARC_PRIVATE_KEY|StratusCloudLabs|argocdgitops|firebaseapphosting-images|clusters/stratus|GAL_GITOPS_WRITE_TOKEN|GAL_REPO_READ_TOKEN|GCP_WORKLOAD_IDENTITY_PROVIDER|GCP_SERVICE_ACCOUNT' \
+            'Scheduler-Systems/infra|gal-run-private|gal-private|ARC_APP_ID|ARC_PRIVATE_KEY|StratusCloudLabs|argocdgitops|firebaseapphosting-images|clusters/stratus|GAL_GITOPS_WRITE_TOKEN|GAL_REPO_READ_TOKEN|GCP_WORKLOAD_IDENTITY_PROVIDER|GCP_SERVICE_ACCOUNT|k3s-production|stratus-scheduler-systems|gal-services-openai-api-key|gal-services-secrets' \
             .; then
             echo "::error::Public repo contains internal-only references. Remove private repo links, hosted-cloud/GitOps topology, GCP registry paths, secret names, and internal infrastructure details."
             exit 1

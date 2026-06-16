@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-        with: { go-version: "1.23" }
+        with: { go-version: "1.25" }
       - name: compile kernel (ABI source the cgo binding embeds)
         run: make -C kernel all
       - name: go build + test
