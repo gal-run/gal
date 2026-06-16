@@ -1,7 +1,7 @@
 # gal-rag — Technical Specification
 
 **Status:** Draft v0.1 (2026-06-02)
-**RFC:** [gal-run/go-services#33](https://github.com/gal-run/go-services/issues/33)
+**RFC:** internal design note
 **Owner:** gal-rag team
 **Related spec:** [`.tmp/gal-memory-routing-spec.md`](../../.tmp/gal-memory-routing-spec.md)
 
@@ -944,7 +944,7 @@ out in the same monorepo.
 
 ## 15. References
 
-- RFC: <https://github.com/gal-run/go-services/issues/33>
+- RFC: internal design note
 - Memory routing spec: `.tmp/gal-memory-routing-spec.md`
 - Embedding schema enum: `gal-run/web/gal-app/crates/warp_graphql_schema/api/schema.graphql`
 - Existing memory tools: `gal-run/mcp/gal-mcp/src/tools/memory-tools.ts`

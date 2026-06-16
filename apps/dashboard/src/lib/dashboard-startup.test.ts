@@ -10,7 +10,7 @@ describe('dashboard startup recovery', () => {
     const result = await loadHomeGitHubBootstrap({
       getPersonalGitHubStatus: vi.fn().mockResolvedValue({
         connected: true,
-        username: 'karabil',
+        username: 'test-user',
       }),
       getGitHubAppStatus: vi.fn().mockRejectedValue(new Error('timeout')),
     })
@@ -18,7 +18,7 @@ describe('dashboard startup recovery', () => {
     expect(result).toEqual({
       githubStatus: {
         connected: true,
-        username: 'karabil',
+        username: 'test-user',
       },
       hasInstallations: false,
     })
