@@ -252,7 +252,7 @@ func TestOrgNamesFromGALSessionCookie(t *testing.T) {
 	token := signGALSessionJWT(t, secret, jwt.MapClaims{
 		"iss":           "gal-run-api",
 		"userId":        "github:48866801",
-		"organizations": []string{"Scheduler-Systems", "StratusCloudLabs", "gal-run"},
+		"organizations": []string{"example-org", "acme-labs", "demo-org"},
 		"exp":           now.Add(time.Hour).Unix(),
 	})
 
@@ -261,7 +261,7 @@ func TestOrgNamesFromGALSessionCookie(t *testing.T) {
 		t.Fatal("validateGALSessionJWT returned nil for a valid token")
 	}
 	got := orgNamesFromClaims(map[string]any(claims))
-	want := []string{"Scheduler-Systems", "StratusCloudLabs", "gal-run"}
+	want := []string{"example-org", "acme-labs", "demo-org"}
 	if len(got) != len(want) {
 		t.Fatalf("org names = %v, want %v", got, want)
 	}

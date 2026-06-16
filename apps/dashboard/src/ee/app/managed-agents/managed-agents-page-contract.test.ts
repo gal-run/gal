@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const pageSource = readFileSync(join(__dirname, 'page.tsx'), 'utf8')
+// EE Managed Agents page is fenced as EePage.tsx (ee/-fence, commit 46b6218)
+// so single-tenant builds without a license key never compile it.
+const pageSource = readFileSync(join(__dirname, 'EePage.tsx'), 'utf8')
 
 describe('managed agents page contract', () => {
   it('uses the provider-neutral managed-agent control plane endpoints', () => {

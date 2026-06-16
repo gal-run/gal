@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+// The EE Team page is fenced as EePage.tsx so single-tenant builds without a
+// license key never compile it (ee/-fence, commit 46b6218). The page contract
+// guards its content under the fenced filename.
 const teamPageSource = readFileSync(
-  join(__dirname, 'page.tsx'),
+  join(__dirname, 'EePage.tsx'),
   'utf8',
 )
 

@@ -35,8 +35,15 @@ describe('dashboard layout navigation contracts', () => {
   })
 
   it('keeps mobile content from inheriting the hidden sidebar width', () => {
-    expect(layoutSource).toContain('-ml-60')
-    expect(layoutSource).toContain('lg:ml-0')
+    // The sidebar offset was migrated off the legacy negative-margin trick
+    // (-ml-60 / lg:ml-0). The sidebar is now a `fixed lg:relative` <aside> that
+    // slides off-screen on mobile (-translate-x-full lg:translate-x-0), so it
+    // is out of layout flow on mobile and in-flow on desktop. The main content
+    // is a `flex-1` sibling that fills the remaining width on both. This means
+    // mobile content can never inherit the hidden sidebar's width.
+    expect(layoutSource).toContain('fixed lg:relative')
+    expect(layoutSource).toContain('-translate-x-full lg:translate-x-0')
+    expect(layoutSource).toContain('flex-1 flex flex-col')
   })
 
   it('keeps billing entry in the sidebar while avoiding legacy "Upgrade Plan" menu wording (#1227)', () => {

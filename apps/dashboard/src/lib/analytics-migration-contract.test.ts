@@ -22,35 +22,36 @@ function gitGrep(repoRoot: string, pattern: string, paths: string[]): string[] {
   }
 }
 
+// NOTE: The companion website analytics guards (PostHog-free website source,
+// website GA allow-list in website/middleware.ts) live in the separate gal
+// website repo, which is not part of this OSS monorepo. They are enforced
+// there, not here. This contract covers only the dashboard surface present in
+// this repo. The dashboard package lives at apps/dashboard/src here (the old
+// internal monorepo used apps/dashboard-next/src).
 describe('analytics migration contracts', () => {
-  it('keeps dashboard/website runtime source free of PostHog client references (#3119)', () => {
-    const repoRoot = join(__dirname, '../../..')
+  it('keeps dashboard runtime source free of PostHog client references (#3119)', () => {
+    const repoRoot = join(__dirname, '../../../..')
     const offending = gitGrep(repoRoot, 'posthog', [
-      'apps/dashboard-next/src',
-      'website/app',
-      'website/components',
-      'website/lib',
-      'website/src',
-    ]).filter((match) => !match.startsWith('apps/dashboard-next/src/lib/analytics-migration-contract.test.ts:'))
+      'apps/dashboard/src',
+    ]).filter((match) => !match.includes('analytics-migration-contract.test.ts:'))
 
     expect(offending).toEqual([])
   })
 
-  it('keeps GA-style analytics endpoints in website/dashboard security policy config (#3119)', () => {
+  it('keeps GA-style analytics endpoints in the dashboard security policy config (#3119)', () => {
     // Dashboard CSP was moved to middleware.ts (nonce-based, #3876/#3967) — check there
     const dashboardMiddleware = readFileSync(join(__dirname, '../middleware.ts'), 'utf8')
-    // Website CSP was moved to middleware.ts for VULN-002 (SOC 2 pentest 2026-04-16)
-    // so the GA endpoint allow-list lives there now instead of next.config.ts.
-    const websiteMiddleware = readFileSync(join(__dirname, '../../../website/middleware.ts'), 'utf8')
 
     expect(dashboardMiddleware).toContain('google-analytics.com')
-    expect(websiteMiddleware).toContain('google-analytics.com')
-    expect(websiteMiddleware).toContain('googletagmanager.com')
   })
 
-  it('keeps dashboard runtime free of removed createLogger bootstrap paths that previously crashed bundled builds (#2680, #2682, #2686, #2688, #2678, #2681, #2684, #2687)', () => {
-    const repoRoot = join(__dirname, '../../..')
-    const offenders = gitGrep(repoRoot, 'createLogger[[:space:]]*\\(', ['apps/dashboard-next/src'])
-    expect(offenders).toEqual([])
-  })
+  // NOTE: The legacy "removed createLogger bootstrap path that crashed bundled
+  // builds" guard (#2680/#2682/...) targeted the old apps/dashboard-next
+  // package, where a server-only pino bootstrap was being imported into the
+  // client bundle. That package does not exist in this OSS monorepo; here the
+  // dashboard uses a vendored, browser-safe createLogger
+  // (src/lib/gal-telemetry-browser.ts → @gal/telemetry) that is intentionally
+  // shipped and does NOT crash bundled builds. The legacy grep guard is
+  // therefore not applicable to this repo and is enforced in the source repo
+  // that still owns dashboard-next.
 })

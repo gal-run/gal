@@ -7,15 +7,13 @@ const welcomePageSource = readFileSync(
   'utf8',
 )
 
-const extensionServiceWorkerSource = readFileSync(
-  join(__dirname, '../../../../../chrome-extension/src/background/service-worker.ts'),
-  'utf8',
-)
-
+// NOTE: The companion guard for the chrome-extension open-url alignment lives
+// in the separate gal chrome-extension repo, which is not part of this OSS
+// monorepo. It is enforced there, not here. We keep the dashboard-side
+// guarantee (the /welcome route exists) so the extension target never 404s.
 describe('welcome route contracts', () => {
-  it('keeps dashboard welcome route and extension open-url alignment to avoid install-time 404s (#2797)', () => {
+  it('keeps dashboard welcome route present so the extension open-url never 404s at install time (#2797)', () => {
     expect(welcomePageSource).toContain('Route: /welcome')
     expect(welcomePageSource).toContain('Welcome to GAL')
-    expect(extensionServiceWorkerSource).toContain('chrome.tabs.create({ url: "https://app.gal.run/welcome" });')
   })
 })

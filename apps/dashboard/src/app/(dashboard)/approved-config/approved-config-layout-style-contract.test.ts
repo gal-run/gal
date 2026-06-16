@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const postinstallSource = readFileSync(
-  join(__dirname, '../../../../../../apps/cli/scripts/postinstall.cjs'),
-  'utf8',
-)
-
 const approvedConfigClientSource = readFileSync(
   join(__dirname, 'ApprovedConfigClient.tsx'),
   'utf8',
@@ -76,12 +71,10 @@ describe('approved-config layout/style contracts', () => {
     expect(policySelectorSource).toContain('!policy.isBuiltin && (')
   })
 
-  it('includes policy name in CLI session-start sync notification (#4677 Bug 1)', () => {
-    // The postinstall.cjs embeds a hook that is installed into ~/.claude/hooks/.
-    // The hook's syncMessage must include state.policyName when present.
-    expect(postinstallSource).toContain("state.policyName ? ")
-    expect(postinstallSource).toContain("state.policyName}")
-  })
+  // NOTE: The companion guard for the CLI session-start sync notification
+  // (postinstall.cjs embeds state.policyName in its syncMessage, #4677 Bug 1)
+  // lives in the separate gal CLI repo, which is not part of this OSS monorepo.
+  // It is enforced there, not here.
 
   it('handleSelectPolicy loads selected policy config into configBundle (#4677 Bug 3)', () => {
     // Clicking a policy in the PolicySelector must immediately populate configBundle
