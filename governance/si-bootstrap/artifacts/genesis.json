@@ -1,0 +1,8 @@
+{
+  "constitution_hash": "59cdaf9ad1e0326bb3c825e8d7a824c43f54877135df67cbc1d6fcfe2aa1e8c1",
+  "signature_algorithm": "ed25519",
+  "signature_file": "artifacts/constitution.sig.base64",
+  "public_key_file": "artifacts/root.pub.pem",
+  "public_key_sha256": "8a020f4927235fdde58914e3cb7e1f51e1baa57e4add7a02d378c22826c732e4",
+  "signed_at_utc": "2026-05-12T09:06:16Z"
+}

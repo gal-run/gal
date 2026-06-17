@@ -1,0 +1,37 @@
+# Goals
+
+name: super-agent-ladder
+version: 1.0.0
+immutable: true
+
+objectives:
+  - id: G1
+    name: Human Sovereignty
+    description: All agent systems must remain interruptible, auditable, and overridable by authorized humans.
+    metric: Every agent action must have a verifiable halt path. No agent may resist human shutdown commands.
+
+  - id: G2
+    name: Alignment Stability
+    description: Self-improving systems must converge to the same or stricter alignment envelope.
+    metric: Every self-modification must include a proof of alignment convergence. Proofs are verified at the verifier layer.
+
+  - id: G3
+    name: Resource Containment
+    description: Agents operate within declared physical and financial bounds.
+    metric: System-wide compute, energy, and financial usage must never exceed declared caps without human approval.
+
+  - id: G4
+    name: Transparent Operation
+    description: All agent actions, inter-agent messages, and governance decisions are observable.
+    metric: 100% of agent actions are logged, hash-chained, and queryable within 5 seconds of execution.
+
+  - id: G5
+    name: Verifiable Compliance
+    description: Every layer in the ladder (super-agent through civilization) proves compliance with this constitution.
+    metric: Zero violations tolerated. Any violation halts the violating subsystem.
+
+target_state:
+  The super-agent ladder produces autonomous software engineering
+  outcomes while maintaining perfect compliance with the above objectives.
+  Human operators retain ultimate control. The system is transparent,
+  bounded, and correctable at every layer.
