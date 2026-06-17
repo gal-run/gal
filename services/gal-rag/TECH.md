@@ -74,13 +74,13 @@ escalation.
 
 ## 3. Tech Stack Decision: Go
 
-**Decision: Go**, matching the existing `go-services` monorepo.
+**Decision: Go**, matching the existing backend monorepo.
 
 ### 3.1 Justification
 
 | Criterion | Go | Rust |
 |---|---|---|
-| Matches monorepo (`go-services`) | Yes | No (Rust lives in `gal-cli`) |
+| Matches the backend monorepo | Yes | No (Rust lives in `gal-cli`) |
 | Shared `lib/` (Firestore, auth, telemetry, httpclient) | Reusable | Would need parallel impl |
 | HTTP/gRPC service patterns (`chi`, `httputil.ReverseProxy`) | Mature, established | Would introduce new stack |
 | Qdrant client (`qdrant/go-client`) | First-class, gRPC | First-class too |
@@ -184,12 +184,12 @@ the dense vector to use, or the server auto-selects based on the
 {
   "id": "01J...",                  // ULID, also Qdrant point ID
   "orgId": "sched-sys",            // tenant scope
-  "repoScope": "gal-run/backend/go-services",  // owner/repo, "" for org-only
+  "repoScope": "example-org/example-repo",  // owner/repo, "" for org-only
   "sourceType": "go",              // go | rust | ts | py | md | issue | pr | adr | memory
   "sourceRef": {
     "kind": "github_file",         // github_file | github_issue | github_pr | memory_entry | adr
     "owner": "gal-run",
-    "repo": "go-services",
+    "repo": "example-repo",
     "path": "auth-svc/cmd/server/main.go",
     "ref": "abc123",               // commit SHA / issue number / memory entry id
     "url": "https://github.com/..."
@@ -329,7 +329,7 @@ either:
 ### 7.1 REST contract (exposed at `/rag/*` via gateway)
 
 All endpoints require a valid JWT (same auth chain as the rest of
-go-services: `jwtauth.Verifier` + `jwtauth.Authenticator` + `auth.Middleware`).
+the backend monorepo: `jwtauth.Verifier` + `jwtauth.Authenticator` + `auth.Middleware`).
 The orgId claim scopes every request.
 
 #### 7.1.1 `POST /rag/search` — hybrid search
@@ -343,7 +343,7 @@ The orgId claim scopes every request.
   "topK": 20,
   "filter": {
     "orgId": "sched-sys",                    // forced by JWT, do not allow override
-    "repoScopes": ["gal-run/backend/go-services"],
+    "repoScopes": ["example-org/example-repo"],
     "sourceTypes": ["go", "md"],
     "tags": ["auth"],
     "createdAfter": 1700000000
@@ -370,7 +370,7 @@ The orgId claim scopes every request.
       "sourceRef": {
         "kind": "github_file",
         "owner": "gal-run",
-        "repo": "go-services",
+        "repo": "example-repo",
         "path": "lib/httpclient/client.go",
         "url": "https://github.com/..."
       },
@@ -441,7 +441,7 @@ for a date range, returns chunks created/updated in that window.
 ```json
 {
   "query": "auth middleware changes",
-  "filter": { "repoScope": "gal-run/backend/go-services" },
+  "filter": { "repoScope": "example-org/example-repo" },
   "window": { "from": 1700000000, "to": 1717286400 },
   "bucket": "week"
 }
@@ -659,7 +659,7 @@ is a separate change to `team-svc` and out of scope here.
 ### 9.1 Error contract
 
 All errors follow the existing `contracts.APIError` shape used across
-`go-services`:
+the backend monorepo:
 
 ```go
 type APIError struct {
@@ -749,7 +749,7 @@ chain that the gateway already supports.
 
 ### 10.1 Prerequisites
 
-- Go 1.25+ (matches go-services)
+- Go 1.25+ (matches the backend monorepo)
 - Docker (for Qdrant via the existing
   [`dev/docker-compose.yml`](./dev/docker-compose.yml))
 - A running gal-model instance OR `OPENAI_API_KEY` / `VOYAGE_API_KEY` env
@@ -772,7 +772,7 @@ createdb gal_rag
 # 3. Run migrations
 psql -d gal_rag -f migrations/0001_init.sql
 
-# 4. Start gal-rag (reads from ../go-services/lib for shared packages)
+# 4. Start gal-rag (reads from ../../lib for shared packages)
 JWT_SECRET=dev-secret \
 DATABASE_URL=postgres://localhost/gal_rag?sslmode=disable \
 QDRANT_URL=http://localhost:6333 \
@@ -788,7 +788,7 @@ curl http://localhost:8090/metrics
 
 ```bash
 # Same binary exposes a CLI subcommand
-go run ./cmd/server/ backfill --repo gal-run/go-services --path auth-svc
+go run ./cmd/server/ backfill --repo example-org/example-repo --path auth-svc
 go run ./cmd/server/ backfill --all
 ```
 
@@ -807,7 +807,7 @@ go test -tags=integration ./test/integration/...   # spins up qdrant + postgres 
 Integration tests use `testcontainers-go` to launch ephemeral Qdrant +
 Postgres instances — no external dependencies.
 
-### 10.6 Running with the full go-services stack
+### 10.6 Running with the full backend stack
 
 gal-rag plugs into the existing Stratus manifests. To add to the dev
 overlay:
@@ -830,7 +830,7 @@ overlay:
 │  developer machine                                          │
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │  gal-rag     │  │  go-services │  │  Qdrant          │   │
+│  │  gal-rag     │  │  backend-svcs │  │  Qdrant          │   │
 │  │  (this)      │  │  (existing)  │  │  (docker)        │   │
 │  │  :8090       │  │  :8080       │  │  :6333 / :6334   │   │
 │  └──────┬───────┘  └──────┬───────┘  └────────┬─────────┘   │
@@ -857,7 +857,7 @@ overlay:
 | Qdrant gRPC | 6334 | `http://localhost:6334` |
 | Qdrant Dashboard | 6333 | `http://localhost:6333/dashboard` |
 | gal-model (sidecar) | 9000 | `http://localhost:9000` |
-| go-services gateway | 8080 | `http://localhost:8080` |
+| the backend monorepo gateway | 8080 | `http://localhost:8080` |
 | Postgres | 5432 | `postgres://localhost:5432/gal_rag` |
 
 ---
@@ -870,7 +870,7 @@ gal-rag/
 ├── README.md                     (quickstart, links to TECH.md)
 ├── go.mod
 ├── go.sum
-├── Dockerfile                    (matches go-services pattern)
+├── Dockerfile                    (matches the backend monorepo pattern)
 ├── cmd/
 │   └── server/
 │       ├── main.go               (HTTP server + worker bootstrap)
@@ -897,7 +897,7 @@ gal-rag/
     └── integration/              (testcontainers-go based)
 ```
 
-The module path is `github.com/gal-run/go-services/gal-rag` (lives in the
+The module path is `github.com/gal-run/gal/services/gal-rag` (lives in the
 existing monorepo as a sub-package; it imports `lib/...` from the parent
 module). This is consistent with how `mcp-gateway/internal/...` is laid
 out in the same monorepo.
@@ -914,7 +914,7 @@ out in the same monorepo.
 | M4 | GitHub webhook → ingestion worker → Qdrant upsert (E2E for one repo) | M1, M3 |
 | M5 | `POST /rag/search` returns hybrid results, scoring matches offline eval | M4 |
 | M6 | `gal_rag_*` MCP tools registered in `gal-mcp` (TS) and `mcp-gateway` (Go) | M5 |
-| M7 | Backfill script migrates one real repo (gal-run/go-services) | M4 |
+| M7 | Backfill script migrates one real repo (example-org/example-repo) | M4 |
 | M8 | Stratus manifest + gateway route + `/metrics` integration | M5 |
 | M9 | Self-host on dev cluster, smoke test with real Claude session | M6, M7, M8 |
 
@@ -948,7 +948,7 @@ out in the same monorepo.
 - Memory routing spec: `.tmp/gal-memory-routing-spec.md`
 - Embedding schema enum: `gal-run/web/gal-app/crates/warp_graphql_schema/api/schema.graphql`
 - Existing memory tools: `gal-run/mcp/gal-mcp/src/tools/memory-tools.ts`
-- Go services README: `gal-run/backend/go-services/README.md`
-- Shared lib (auth, firestore, telemetry, handler, httpclient): `gal-run/backend/go-services/lib/`
+- Go services README: `the backend services README`
+- Shared lib (auth, firestore, telemetry, handler, httpclient): `the shared backend lib`
 - Qdrant dev setup: `gal-rag/dev/README.md`
 - Dev compose: `gal-rag/dev/docker-compose.yml`
