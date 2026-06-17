@@ -7,6 +7,7 @@
 #                ONLY intentional cross-lang fan-out: rebuilds Go cgo)
 #   ts        <- sdks/** | mcp/** | apps/**          (turbo affected-only)
 #   cli       <- cli/**
+#   agents    <- agents/**                           (separate cargo workspace)
 #   fence     <- ALWAYS (fast license check)
 #
 # Repo ruleset: every commit message must contain "[ci]".
@@ -28,6 +29,7 @@ jobs:
       services: ${{ steps.filter.outputs.services }}
       ts: ${{ steps.filter.outputs.ts }}
       cli: ${{ steps.filter.outputs.cli }}
+      agents: ${{ steps.filter.outputs.agents }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -45,6 +47,8 @@ jobs:
               - 'apps/**'
             cli:
               - 'cli/**'
+            agents:
+              - 'agents/**'
 
   # Always-on, fast license-by-location fence.
   fence:
@@ -110,3 +114,16 @@ jobs:
           cargo build
           cargo build --no-default-features
           cargo test
+
+  agents:
+    needs: changes
+    if: ${{ needs.changes.outputs.agents == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo build + test (workspace)
+        working-directory: agents
+        run: |
+          cargo build --workspace
+          cargo test --workspace

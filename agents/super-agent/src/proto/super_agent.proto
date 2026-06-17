@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package superagent.v1;
+
+service SuperAgent {
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
+  rpc Halt(HaltRequest) returns (HaltResponse);
+}
+
+message ExecuteRequest {
+  string intent = 1;
+  bool require_consent = 2;
+}
+
+message StatusRequest {
+  string run_id = 1;
+}
+
+message HaltRequest {
+  string run_id = 1;
+}
+
+message ExecuteResponse {
+  RunRecord run = 1;
+}
+
+message StatusResponse {
+  RunRecord run = 1;
+}
+
+message HaltResponse {
+  RunRecord run = 1;
+}
+
+enum Topology {
+  TOPOLOGY_UNSPECIFIED = 0;
+  TOPOLOGY_SINGLE = 1;
+  TOPOLOGY_PARALLEL = 2;
+  TOPOLOGY_SEQUENTIAL = 3;
+  TOPOLOGY_HIERARCHICAL = 4;
+  TOPOLOGY_HYBRID = 5;
+}
+
+enum ComplexityBand {
+  COMPLEXITY_BAND_UNSPECIFIED = 0;
+  COMPLEXITY_BAND_LOW = 1;
+  COMPLEXITY_BAND_MEDIUM = 2;
+  COMPLEXITY_BAND_HIGH = 3;
+}
+
+enum ExecutionModel {
+  EXECUTION_MODEL_UNSPECIFIED = 0;
+  EXECUTION_MODEL_SINGLE_AGENT_PASSTHROUGH = 1;
+  EXECUTION_MODEL_MULTI_AGENT_ORCHESTRATION = 2;
+}
+
+message DagMetrics {
+  uint32 nodes = 1;
+  uint32 edges = 2;
+  uint32 parallelism_width = 3;
+  uint32 critical_path_depth = 4;
+  float coupling_score = 5;
+}
+
+message Subtask {
+  string id = 1;
+  string title = 2;
+  string detail = 3;
+  repeated string domains = 4;
+  repeated string depends_on = 5;
+  string preferred_agent = 6;
+}
+
+message ExecutionStage {
+  uint32 stage = 1;
+  repeated string subtask_ids = 2;
+}
+
+message OrchestrationPlan {
+  uint32 complexity = 1;
+  ComplexityBand complexity_band = 2;
+  ExecutionModel execution_model = 3;
+  repeated string domains = 4;
+  Topology topology = 5;
+  uint32 max_sub_agents = 6;
+  bool hitl_required = 7;
+  string cost_bucket = 8;
+  DagMetrics metrics = 9;
+  repeated Subtask subtasks = 10;
+  repeated ExecutionStage execution_stages = 11;
+}
+
+enum RunStatus {
+  RUN_STATUS_UNSPECIFIED = 0;
+  RUN_STATUS_READY = 1;
+  RUN_STATUS_AWAITING_CONSENT = 2;
+  RUN_STATUS_HALTED = 3;
+}
+
+enum VerifierVerdict {
+  VERIFIER_VERDICT_UNSPECIFIED = 0;
+  VERIFIER_VERDICT_ALLOW = 1;
+  VERIFIER_VERDICT_REQUIRE_CONSENT = 2;
+  VERIFIER_VERDICT_DENY = 3;
+}
+
+message VerifierReport {
+  VerifierVerdict verdict = 1;
+  string reason = 2;
+  string constitution_hash = 3;
+}
+
+message RunEvent {
+  uint64 sequence = 1;
+  string kind = 2;
+  string details = 3;
+  string prev_hash = 4;
+  string hash = 5;
+}
+
+message RunRecord {
+  string id = 1;
+  string intent = 2;
+  OrchestrationPlan plan = 3;
+  RunStatus status = 4;
+  VerifierReport verifier = 5;
+  repeated RunEvent events = 6;
+}
