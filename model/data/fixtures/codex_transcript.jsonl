@@ -1,0 +1,10 @@
+{"type":"message","role":"user","content":"List the directory, fetch the API, then patch main.py.","timestamp":"2026-06-02T00:59:59.000Z"}
+{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Sure, I'll start with a directory listing."}],"timestamp":"2026-06-02T00:59:59.500Z"}
+{"type":"function_call","name":"shell","arguments":"{\"command\":\"ls -la\"}","call_id":"codex-ls-1","timestamp":"2026-06-02T01:00:00.000Z"}
+{"type":"function_call_output","call_id":"codex-ls-1","output":"total 0","success":true}
+{"type":"function_call","name":"shell","arguments":"{\"command\":\"curl https://example.com/api\"}","call_id":"codex-curl-1","timestamp":"2026-06-02T01:00:01.000Z"}
+{"type":"function_call_output","call_id":"codex-curl-1","output":{"content":"200 OK"},"success":true}
+{"type":"function_call","name":"apply_patch","arguments":"{\"path\":\"main.py\"}","call_id":"codex-patch-1","timestamp":"2026-06-02T01:00:02.000Z"}
+{"type":"function_call_output","call_id":"codex-patch-1","output":"patch failed: missing required field","success":false}
+{"type":"message","role":"assistant","content":[{"type":"output_text","text":"The patch failed; the path needs a required field."}],"timestamp":"2026-06-02T01:00:02.500Z"}
+{"type":"turn_complete","status":"completed","usage":{"input_tokens":200,"output_tokens":60}}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/runtime-benchmark-case.schema.json",
+  "title": "GAL Runtime Governance Benchmark Case",
+  "type": "object",
+  "required": [
+    "case_id",
+    "request",
+    "expected"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "request": {
+      "$ref": "https://gal.run/schemas/model/inference-request.schema.json"
+    },
+    "expected": {
+      "type": "object",
+      "required": [
+        "schema_valid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_valid": {
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "clear_for_operator_review",
+            "hold_for_operator_review"
+          ]
+        },
+        "escalate_for_deeper_review": {
+          "type": "boolean"
+        },
+        "required_audit_fields": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "request_id",
+              "application",
+              "evidence_ref"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "features": {
+    "approval_refs_complete": false,
+    "detection_count": 4,
+    "evidence_complete": true,
+    "latency_measured": true,
+    "obstacles_present": true,
+    "operator_review_required": true,
+    "people_present": false,
+    "vehicles_present": false
+  }
+}

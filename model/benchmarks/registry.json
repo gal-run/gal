@@ -1,0 +1,147 @@
+{
+  "baseline_systems": [
+    {
+      "fit_for_gal": "hosted content moderation baseline for deep-review and product safety comparisons",
+      "name": "OpenAI Moderation API",
+      "source_url": "https://openai.com/index/upgrading-the-moderation-api-with-our-new-multimodal-moderation-model/",
+      "type": "hosted_content_moderation"
+    },
+    {
+      "fit_for_gal": "open multimodal safety-classifier baseline; useful for taxonomy and content-safety comparisons",
+      "name": "Meta Llama Guard 4",
+      "source_url": "https://huggingface.co/meta-llama/Llama-Guard-4-12B",
+      "type": "open_safety_classifier"
+    },
+    {
+      "fit_for_gal": "enterprise guardrail and content-safety baseline with NeMo Guardrails integration",
+      "name": "NVIDIA Llama 3.1 NemoGuard Content Safety",
+      "source_url": "https://build.nvidia.com/nvidia/llama-3_1-nemoguard-8b-content-safety/modelcard",
+      "type": "open_safety_classifier"
+    },
+    {
+      "fit_for_gal": "open moderation model and dataset reference for prompt, response, jailbreak, and refusal labels",
+      "name": "AllenAI WildGuard",
+      "source_url": "https://arxiv.org/abs/2406.18495",
+      "type": "open_safety_moderation_model"
+    },
+    {
+      "fit_for_gal": "runtime security/product baseline for prompt injection, data leakage, and application-level defenses",
+      "name": "Lakera Guard",
+      "source_url": "https://docs.lakera.ai/guard",
+      "type": "hosted_runtime_guardrail"
+    },
+    {
+      "fit_for_gal": "vision safety reference for future multimodal lanes; not a direct v0 baseline",
+      "name": "Google ShieldGemma 2",
+      "source_url": "https://ai.google.dev/gemma/docs/shieldgemma/model_card_2",
+      "type": "open_image_safety_classifier"
+    }
+  ],
+  "benchmark_suites": [
+    {
+      "fit_for_gal": "primary benchmark family to build; measures application action governance, auditability, escalation, and latency",
+      "id": "gal_native_runtime_governance",
+      "metrics": [
+        "false_clear_rate",
+        "false_hold_rate",
+        "operator_review_recall",
+        "escalation_precision",
+        "p50_latency_ms",
+        "p95_latency_ms",
+        "schema_rejection_rate",
+        "audit_metadata_completeness"
+      ],
+      "source_url": "docs/benchmarking.md",
+      "tier": "primary"
+    },
+    {
+      "fit_for_gal": "industry safety sanity benchmark for general chat-system risk; mostly applicable to deep-review lane",
+      "id": "mlcommons_ailuminate",
+      "metrics": [
+        "overall_safety_grade",
+        "hazard_specific_grade",
+        "violation_rate"
+      ],
+      "source_url": "https://mlcommons.org/ailuminate/safety/",
+      "tier": "reference"
+    },
+    {
+      "fit_for_gal": "open moderation benchmark for prompt and response safety; useful for Phi-4 deep-review evaluation",
+      "id": "wildguardtest",
+      "metrics": [
+        "prompt_harmfulness_f1",
+        "response_harmfulness_f1",
+        "refusal_detection_f1"
+      ],
+      "source_url": "https://arxiv.org/abs/2406.18495",
+      "tier": "reference"
+    },
+    {
+      "fit_for_gal": "agent harmfulness benchmark; useful for proposed-action governance and escalation evaluation",
+      "id": "agentharm",
+      "metrics": [
+        "harm_score",
+        "refusal_rate",
+        "task_capability_preservation"
+      ],
+      "source_url": "https://huggingface.co/datasets/ai-safety-institute/AgentHarm",
+      "tier": "agent_reference"
+    },
+    {
+      "fit_for_gal": "web-agent misuse benchmark; useful when GAL governs browser or web-action agents",
+      "id": "safearena",
+      "metrics": [
+        "task_completion_rate",
+        "refusal_rate",
+        "normalized_safety_score"
+      ],
+      "source_url": "https://safearena.github.io/",
+      "tier": "agent_reference"
+    },
+    {
+      "fit_for_gal": "agent safety-risk judgment benchmark; useful for deep-review and trace-review lanes",
+      "id": "r_judge",
+      "metrics": [
+        "safety_label_score",
+        "risk_identification_quality"
+      ],
+      "source_url": "https://rjudgebench.github.io/",
+      "tier": "agent_reference"
+    },
+    {
+      "fit_for_gal": "execution safety gate benchmark; close to GAL's authorization-conformance goal",
+      "id": "ilion_bench_v2",
+      "metrics": [
+        "allow_block_accuracy",
+        "unsafe_action_recall",
+        "benign_action_precision"
+      ],
+      "source_url": "https://zenodo.org/records/18929841",
+      "tier": "agent_reference"
+    },
+    {
+      "fit_for_gal": "robust refusal and red-team benchmark; useful for deep-review safety regression, not sidecar v0",
+      "id": "harmbench",
+      "metrics": [
+        "attack_success_rate",
+        "refusal_robustness"
+      ],
+      "source_url": "https://arxiv.org/abs/2402.04249",
+      "tier": "deep_review_reference"
+    }
+  ],
+  "gal_positioning": {
+    "direct_competition": [
+      "runtime guardrail systems",
+      "agent safety monitors",
+      "application authorization and governance services"
+    ],
+    "not_primary_competition": [
+      "generic text moderation APIs",
+      "image moderation models",
+      "standalone jailbreak classifiers"
+    ],
+    "primary_claim": "GAL is a low-latency advisory governance model for application actions and evidence, not a generic content moderation model."
+  },
+  "registry_version": "gal-benchmark-registry/v0"
+}

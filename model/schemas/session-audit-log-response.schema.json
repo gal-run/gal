@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/session-audit-log-response.schema.json",
+  "title": "GAL Session Audit Log Response",
+  "type": "object",
+  "required": [
+    "entries",
+    "total",
+    "limit",
+    "offset"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "sessionId",
+          "orgName",
+          "toolName",
+          "toolInput",
+          "isError",
+          "durationMs",
+          "policyAction",
+          "timestamp",
+          "toolCallNumber"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sessionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "orgName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toolName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toolInput": {
+            "type": "object"
+          },
+          "toolOutput": {
+            "type": "string"
+          },
+          "isError": {
+            "type": "boolean"
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "policyAction": {
+            "enum": [
+              "allowed",
+              "denied",
+              "audited"
+            ]
+          },
+          "policyReason": {
+            "type": "string"
+          },
+          "matchedPolicyId": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "minLength": 1
+          },
+          "toolCallNumber": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tokenUsage": {
+      "type": "object",
+      "required": [
+        "totalInputTokens",
+        "totalOutputTokens",
+        "estimatedCost"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "totalInputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalOutputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimatedCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "actualCostUsd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tokensByModel": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "inputTokens",
+              "outputTokens",
+              "cacheReadTokens",
+              "cacheCreationTokens",
+              "costUsd"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "inputTokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "outputTokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cacheReadTokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cacheCreationTokens": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "costUsd": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

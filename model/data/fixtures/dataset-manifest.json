@@ -1,0 +1,34 @@
+{
+  "advisory_only": true,
+  "dataset_ref": "gal-dataset://governance-decision/v0/fixture-civil-scene-safety",
+  "feature_names": [
+    "people_present",
+    "vehicles_present",
+    "obstacles_present",
+    "evidence_complete",
+    "operator_review_required",
+    "latency_measured",
+    "approval_refs_complete",
+    "detection_count_norm"
+  ],
+  "hardware_commands_allowed": false,
+  "manifest_version": "gal-dataset-manifest/v0",
+  "model_ref": "gal-model://governance-decision/v0",
+  "physical_action_allowed": false,
+  "reviewer_status": "fixture_smoke",
+  "schema_ref": "https://gal.run/schemas/model/training-example.schema.json",
+  "source_lanes": [
+    "canonical_gal_structured_dataset"
+  ],
+  "splits": {
+    "smoke": {
+      "label_counts": {
+        "clear_for_operator_review": 2,
+        "hold_for_operator_review": 6
+      },
+      "path": "civil_scene_safety.jsonl",
+      "rows": 8,
+      "sha256": "06cfc4a9450f0670dc67cda97b6d7963a13eb427fa3a8308ffa294103355f4f1"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{"type":"tool_call","toolName":"bash","toolInput":{"command":"cd /workspace && git status"},"toolUseId":"call-ok","sequence":1,"serverTimestamp":1000}
+{"type":"tool_result","toolUseId":"call-ok","result":"stdout:\nOn branch main\n\nexit_code: 0","isError":false,"sequence":2,"serverTimestamp":1120}
+{"type":"tool_call","toolName":"bash","toolInput":{"command":"cd /workspace && gh issue view 1 --json title"},"toolUseId":"call-auth","sequence":3,"serverTimestamp":1200}
+{"type":"tool_result","toolUseId":"call-auth","result":"stderr:\nTo get started with GitHub CLI, please run: gh auth login\nAlternatively, populate the GH_TOKEN environment variable with a GitHub API authentication token.\n\nexit_code: 4","isError":true,"sequence":4,"serverTimestamp":1400}
+{"type":"tool_call","toolName":"write_file","toolInput":{},"toolUseId":"call-invalid","sequence":5,"serverTimestamp":1500}
+{"type":"tool_result","toolUseId":"call-invalid","result":"write_file tool requires a \"path\" string","isError":true,"sequence":6,"serverTimestamp":1560}
+{"type":"error","error":"GAL Code agent loop exceeded maximum iterations (50)","code":"MAX_ITERATIONS","sequence":7,"serverTimestamp":1700}
+{"type":"complete","reason":"error","sequence":8,"serverTimestamp":1710}

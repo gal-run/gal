@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/gal-api-session-export-summary.schema.json",
+  "title": "GAL API Session Export Summary",
+  "type": "object",
+  "required": [
+    "summary_version",
+    "schema_ref",
+    "source_type",
+    "base_url",
+    "org",
+    "application",
+    "dataset_ref",
+    "source_lane",
+    "reviewer_status",
+    "split_ratios",
+    "sessions",
+    "totals",
+    "advisory_only",
+    "physical_action_allowed",
+    "hardware_commands_allowed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "summary_version": {
+      "const": "gal-api-session-export/v0"
+    },
+    "schema_ref": {
+      "const": "https://gal.run/schemas/model/gal-api-session-export-summary.schema.json"
+    },
+    "source_type": {
+      "const": "gal_api_session_audit_log"
+    },
+    "base_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "org": {
+      "type": "string",
+      "minLength": 1
+    },
+    "application": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataset_ref": {
+      "type": "string",
+      "pattern": "^gal-dataset://"
+    },
+    "source_lane": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer_status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "split_ratios": {
+      "type": "object",
+      "required": [
+        "train",
+        "validation",
+        "test"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "train": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "validation": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "test": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "split",
+          "entries",
+          "events",
+          "policy_action_counts",
+          "error_count",
+          "token_usage_present"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "split": {
+            "enum": [
+              "train",
+              "validation",
+              "test"
+            ]
+          },
+          "entries": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "events": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "policy_action_counts": {
+            "$ref": "#/$defs/policyActionCounts"
+          },
+          "error_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "token_usage_present": {
+            "type": "boolean"
+          },
+          "token_usage": {
+            "$ref": "#/$defs/tokenUsage"
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": [
+        "sessions",
+        "entries",
+        "events",
+        "policy_action_counts",
+        "error_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sessions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "entries": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "events": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_action_counts": {
+          "$ref": "#/$defs/policyActionCounts"
+        },
+        "error_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "token_usage": {
+          "$ref": "#/$defs/tokenUsage"
+        }
+      }
+    },
+    "advisory_only": {
+      "const": true
+    },
+    "physical_action_allowed": {
+      "const": false
+    },
+    "hardware_commands_allowed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "policyActionCounts": {
+      "type": "object",
+      "required": [
+        "allowed",
+        "denied",
+        "audited"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denied": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "audited": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "tokenUsage": {
+      "type": "object",
+      "required": [
+        "totalInputTokens",
+        "totalOutputTokens",
+        "estimatedCost"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "totalInputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalOutputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "estimatedCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "actualCostUsd": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

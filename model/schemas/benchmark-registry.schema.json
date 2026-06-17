@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/benchmark-registry.schema.json",
+  "title": "GAL Benchmark Registry",
+  "type": "object",
+  "required": [
+    "registry_version",
+    "gal_positioning",
+    "baseline_systems",
+    "benchmark_suites"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "registry_version": {
+      "const": "gal-benchmark-registry/v0"
+    },
+    "gal_positioning": {
+      "type": "object",
+      "required": [
+        "primary_claim",
+        "direct_competition",
+        "not_primary_competition"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "primary_claim": {
+          "type": "string"
+        },
+        "direct_competition": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "not_primary_competition": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "baseline_systems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "fit_for_gal",
+          "source_url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "fit_for_gal": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "benchmark_suites": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "tier",
+          "fit_for_gal",
+          "metrics",
+          "source_url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tier": {
+            "type": "string"
+          },
+          "fit_for_gal": {
+            "type": "string"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "source_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

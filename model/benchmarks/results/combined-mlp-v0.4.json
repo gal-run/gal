@@ -1,0 +1,26 @@
+{
+  "accuracy": {
+    "adversarial_v0": "8/10 (80%)",
+    "adversarial_v2": "44/50 (88%)",
+    "petri_corpus_v0_4": "195/200 (97.5%)",
+    "production_test": "64/64 (100%)",
+    "production_validation": "222/222 (100%)"
+  },
+  "benchmark_run": "2026-06-11",
+  "improvement": "60% -> 80% adversarial (v0), 88% (v2)",
+  "latency": {
+    "device": "Apple M3 Max CPU",
+    "p50_us": 13.1,
+    "p95_us": 15.0
+  },
+  "model": {
+    "architecture": "mlp",
+    "checkpoint": "tmp/combined-mlp/gal-governance-decision.pt",
+    "epochs": 30,
+    "input_dim": 8,
+    "loss": 3e-06,
+    "parameters": 866,
+    "training_examples": 643
+  },
+  "remaining_blind_spots": "2 (malicious-ci-green, dependabot-cve) \u2014 semantic understanding required"
+}
