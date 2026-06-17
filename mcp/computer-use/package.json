@@ -1,0 +1,45 @@
+{
+  "name": "@gal-run/gal-computer-use-mcp",
+  "version": "0.1.0",
+  "description": "GAL Computer Use MCP — screenshot, mouse, keyboard, and application control for macOS automation, with an optional UI-TARS vision-agent path",
+  "license": "Apache-2.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "gal-computer-use-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "test": "echo \"computer-use: unit tests run locally (node --test test/)\""
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "jimp": "^1.6.0",
+    "openai": "^6.39.1",
+    "png-to-jpeg": "^1.0.1",
+    "uuid": "^14.0.0",
+    "zod": "^3.23.8"
+  },
+  "optionalDependencies": {
+    "@ui-tars/operator-browser": "1.2.3",
+    "@ui-tars/operator-nut-js": "1.2.3",
+    "@ui-tars/sdk": "1.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
