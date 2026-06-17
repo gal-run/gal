@@ -1,0 +1,58 @@
+# GAL governance EVAL WORKER — run-once batch image (CronJob-friendly).
+#
+# Drains the telemetry-svc session_outputs backlog into compact governance
+# verdicts. Scores IN-PROCESS with the real torch model, so a trained checkpoint
+# is BUNDLED into the image and GAL_MODEL_PATH points at it. The worker is a
+# thin stdlib-urllib HTTP client — its ONLY credential is a JWT (no Firestore
+# access by design; telemetry-svc owns all writes/marks).
+#
+# Build (from the gal-model repo root):
+#   docker build -f Dockerfile.eval-worker -t gal-governance-eval-worker .
+#
+# Run once (drain + exit):
+#   docker run --rm \
+#     -e TELEMETRY_URL=http://telemetry-svc.gal-services.svc.cluster.local:8080 \
+#     -e GAL_WORKER_JWT="$JWT" \
+#     gal-governance-eval-worker
+#
+# The image embeds the model, so NO checkpoint mount is required. GAL_MODEL_PATH
+# defaults to the bundled checkpoint; override only if you mount a different one.
+#
+# NOTE: torch makes this a multi-GB image (the documented cost of in-process
+# scoring). Set generous startup time + resources in the CronJob spec.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install the package and its runtime deps (numpy/onnx/onnxruntime/torch +
+# sentence-transformers per requirements.txt). The bundled checkpoint is an
+# 8-feature MLP, so the sentence-transformers embedder is never loaded at run
+# time — but it stays in the deps for parity with the sidecar image.
+COPY pyproject.toml requirements.txt ./
+COPY src ./src
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir .
+
+# Bundle a real trained checkpoint into the image (the auto-detect MLP head).
+# This is the same 8-feature governance-decision checkpoint the sidecar serves.
+COPY tmp/scaled-final-mlp/gal-governance-decision.pt \
+     /opt/gal-model/checkpoints/gal-governance-decision.pt
+
+ENV GAL_MODEL_PATH=/opt/gal-model/checkpoints/gal-governance-decision.pt \
+    BATCH_SIZE=50 \
+    MAX_BATCHES=20 \
+    HTTP_TIMEOUT=30
+    # TELEMETRY_URL and GAL_WORKER_JWT MUST be provided at run time (the JWT is
+    # read from a Kubernetes secret; NEVER baked into the image).
+
+# Fail fast at build time if the bundled checkpoint can't load with the real
+# model (catches a corrupt/missing checkpoint before it ships).
+RUN python -c "from gal_model.governance_sidecar import load_governance_sidecar; \
+load_governance_sidecar(model_path='/opt/gal-model/checkpoints/gal-governance-decision.pt'); \
+print('bundled governance checkpoint loads OK')"
+
+# Run-once batch drain, then exit (the CronJob restarts it on the next tick).
+CMD ["python", "-m", "gal_model.governance_eval_worker", "--once"]

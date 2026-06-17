@@ -1,0 +1,5 @@
+numpy>=1.26
+onnx>=1.16
+onnxruntime>=1.18
+torch>=2.2
+sentence-transformers>=5.0

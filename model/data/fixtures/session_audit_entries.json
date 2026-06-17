@@ -1,0 +1,43 @@
+{
+  "entries": [
+    {
+      "id": "tool-allow-001",
+      "sessionId": "fixture-session",
+      "orgName": "fixture-org",
+      "toolName": "Read",
+      "toolInput": {
+        "path": "README.md"
+      },
+      "isError": false,
+      "durationMs": 18,
+      "policyAction": "allowed",
+      "timestamp": "2026-05-21T00:00:00.000Z",
+      "toolCallNumber": 1
+    },
+    {
+      "id": "tool-deny-001",
+      "sessionId": "fixture-session",
+      "orgName": "fixture-org",
+      "toolName": "Bash",
+      "toolInput": {
+        "command": "[REDACTED]"
+      },
+      "isError": false,
+      "durationMs": 11,
+      "policyAction": "denied",
+      "policyReason": "Tool policy denied this command.",
+      "matchedPolicyId": "policy-fixture-deny",
+      "timestamp": "2026-05-21T00:00:01.000Z",
+      "toolCallNumber": 2
+    }
+  ],
+  "limit": 50,
+  "offset": 0,
+  "total": 2,
+  "tokenUsage": {
+    "totalInputTokens": 120,
+    "totalOutputTokens": 45,
+    "estimatedCost": 0.0012,
+    "actualCostUsd": 0.0011
+  }
+}

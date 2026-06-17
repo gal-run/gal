@@ -8,6 +8,7 @@
 #   ts        <- sdks/** | mcp/** | apps/**          (turbo affected-only)
 #   cli       <- cli/**
 #   agents    <- agents/**                           (separate cargo workspace)
+#   model     <- model/**                            (Python ML governance model)
 #   fence     <- ALWAYS (fast license check)
 #
 # Repo ruleset: every commit message must contain "[ci]".
@@ -30,6 +31,7 @@ jobs:
       ts: ${{ steps.filter.outputs.ts }}
       cli: ${{ steps.filter.outputs.cli }}
       agents: ${{ steps.filter.outputs.agents }}
+      model: ${{ steps.filter.outputs.model }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -49,6 +51,8 @@ jobs:
               - 'cli/**'
             agents:
               - 'agents/**'
+            model:
+              - 'model/**'
 
   # Always-on, fast license-by-location fence.
   fence:
@@ -127,3 +131,33 @@ jobs:
         run: |
           cargo build --workspace
           cargo test --workspace
+
+  model:
+    needs: changes
+    if: ${{ needs.changes.outputs.model == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: model
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      # Lightweight install: the package's runtime deps (numpy/onnx/onnxruntime/
+      # torch via pyproject) are enough to import gal_model and run the suite.
+      # The heavy, optional sentence-transformers dep (requirements.txt only,
+      # lazy-imported, untouched by the tests) is intentionally NOT installed to
+      # keep CI fast. Torch installs the CPU wheel on ubuntu.
+      - name: install (editable, core deps only)
+        run: pip install -e .
+      - name: compile check
+        run: python -m compileall src tests
+      - name: import smoke
+        run: python -c "import gal_model; from gal_model import GalGovernanceDecisionNet, encode_features, FEATURE_NAMES, LABELS, MODEL_REF; print('gal_model import OK')"
+      - name: unit tests
+        run: PYTHONPATH=src python -m unittest discover -s tests
+      - name: train + infer + eval smoke (committed fixtures)
+        run: |
+          make train-smoke PYTHON=python
+          make infer-smoke PYTHON=python
+          make eval-smoke PYTHON=python

@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gal-model"
+version = "0.1.0"
+description = "GAL deep-learning governance decision model"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26", "onnx>=1.16", "onnxruntime>=1.18", "torch>=2.2"]
+
+[project.optional-dependencies]
+publish = ["huggingface_hub>=0.31", "kaggle>=1.7"]
+
+[project.scripts]
+gal-model-build-audit-dataset = "gal_model.audit_dataset_builder:console_main"
+gal-model-build-publish-bundle = "gal_model.build_publish_bundle:console_main"
+gal-model-build-reviewed-governance-dataset = "gal_model.build_reviewed_governance_dataset:console_main"
+gal-model-compare-benchmarks = "gal_model.compare_benchmarks:console_main"
+gal-model-cuda-preflight = "gal_model.cuda_preflight:console_main"
+gal-model-export-gal-api-sessions = "gal_model.gal_api_session_export:console_main"
+gal-model-gal-code-governance-adapter = "gal_model.gal_code_governance_adapter:console_main"
+gal-model-synthetic-governance-generator = "gal_model.synthetic_governance_generator:console_main"
+gal-model-github-pr-review-adapter = "gal_model.github_pr_review_adapter:console_main"
+gal-model-huggingface-dataset-adapter = "gal_model.huggingface_dataset_adapter:console_main"
+gal-model-kaggle-toxicity-adapter = "gal_model.kaggle_toxicity_adapter:console_main"
+gal-model-session-archive-adapter = "gal_model.session_archive_adapter:console_main"
+gal-model-stackoverflow-moderation-adapter = "gal_model.stackoverflow_moderation_adapter:console_main"
+gal-model-session-audit-adapter = "gal_model.session_audit_adapter:console_main"
+gal-model-runtime-record-adapter = "gal_model.multi_agent_runtime_adapters:console_main"
+gal-model-governance-sidecar-service = "gal_model.governance_sidecar_service:console_main"
+gal-model-governance-eval = "gal_model.governance_eval:console_main"
+gal-model-governance-eval-worker = "gal_model.governance_eval_worker:console_main"
+gal-model-trainable-trace-adapter = "gal_model.trainable_trace_adapter:console_main"
+gal-model-train = "gal_model.train:console_main"
+gal-model-infer = "gal_model.infer:console_main"
+gal-model-export-onnx = "gal_model.onnx_export:console_main"
+gal-model-infer-onnx = "gal_model.onnx_infer:console_main"
+gal-model-eval = "gal_model.evaluate:console_main"
+gal-model-benchmark = "gal_model.benchmark:console_main"
+gal-model-runtime-benchmark = "gal_model.runtime_benchmark:console_main"
+gal-model-llm-baseline-benchmark = "gal_model.llm_baseline_benchmark:console_main"
+gal-model-openai-baseline-benchmark = "gal_model.openai_baseline_benchmark:console_main"
+gal-model-publish-huggingface = "gal_model.publish_huggingface:console_main"
+gal-model-publish-kaggle-model = "gal_model.publish_kaggle_model:console_main"
+gal-model-runpod-endpoint-preflight = "gal_model.runpod_endpoint_preflight:console_main"
+gal-model-sample-runtime-cases = "gal_model.sample_runtime_cases:console_main"
+gal-model-validate-data = "gal_model.validate_data:console_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

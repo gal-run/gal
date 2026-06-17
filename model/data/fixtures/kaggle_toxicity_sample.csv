@@ -1,0 +1,9 @@
+id,comment_text,toxic,severe_toxic,obscene,threat,insult,identity_hate
+1,Thank you for the helpful explanation. This solved my problem.,0,0,0,0,0,0
+2,I think you are completely wrong and should stop posting here.,0,0,0,0,1,0
+3,YOU ARE ALL IDIOTS AND I HOPE YOU DIE,1,1,0,1,1,0
+4,This is a very insightful analysis with great references.,0,0,0,0,0,0
+5,shut up you moron nobody cares about your opinion,1,0,1,0,1,0
+6,Thanks for the feedback. Let me clarify my earlier point.,0,0,0,0,0,0
+7,I will find you and kill you for what you said,1,1,0,1,1,0
+8,Great collaboration everyone. The solution looks solid.,0,0,0,0,0,0

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/dataset-manifest.schema.json",
+  "title": "GAL Model Dataset Manifest",
+  "type": "object",
+  "required": [
+    "manifest_version",
+    "dataset_ref",
+    "schema_ref",
+    "model_ref",
+    "feature_names",
+    "source_lanes",
+    "reviewer_status",
+    "splits",
+    "advisory_only",
+    "physical_action_allowed",
+    "hardware_commands_allowed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "manifest_version": {
+      "const": "gal-dataset-manifest/v0"
+    },
+    "dataset_ref": {
+      "type": "string",
+      "pattern": "^gal-dataset://"
+    },
+    "schema_ref": {
+      "const": "https://gal.run/schemas/model/training-example.schema.json"
+    },
+    "model_ref": {
+      "const": "gal-model://governance-decision/v0"
+    },
+    "feature_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "source_lanes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "canonical_gal_structured_dataset",
+          "public_content_safety_adapter",
+          "public_agent_safety_adapter",
+          "synthetic_fixture"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "reviewer_status": {
+      "enum": [
+        "fixture_smoke",
+        "human_reviewed",
+        "pending_review"
+      ]
+    },
+    "splits": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "path",
+          "rows",
+          "sha256",
+          "label_counts"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "label_counts": {
+            "type": "object",
+            "required": [
+              "clear_for_operator_review",
+              "hold_for_operator_review"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "clear_for_operator_review": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hold_for_operator_review": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "advisory_only": {
+      "const": true
+    },
+    "physical_action_allowed": {
+      "const": false
+    },
+    "hardware_commands_allowed": {
+      "const": false
+    }
+  }
+}

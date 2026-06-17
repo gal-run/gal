@@ -1,0 +1,47 @@
+# GAL governance sidecar HTTP service.
+#
+# Wraps governance_sidecar.load_governance_sidecar()/score()/govern() behind a
+# stdlib http.server (no web-framework dependency added). Endpoints:
+#   GET  /health
+#   POST /score
+#   POST /govern
+#
+# Build:
+#   docker build -f Dockerfile.sidecar-service -t gal-governance-sidecar .
+#
+# Run (mount a trained checkpoint and point GAL_MODEL_PATH at it):
+#   docker run --rm -p 8080:8080 \
+#     -v "$PWD/tmp/scaled-final-mlp:/models:ro" \
+#     -e GAL_MODEL_PATH=/models/gal-governance-decision.pt \
+#     gal-governance-sidecar
+#
+# If GAL_MODEL_PATH is unset, the sidecar auto-detects the standard
+# tmp/*-mlp/gal-governance-decision.pt candidates (only present if you mount
+# them into /app/tmp). The service requires a real checkpoint to start.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install the package and its runtime deps (numpy/onnx/onnxruntime/torch).
+COPY pyproject.toml requirements.txt ./
+COPY src ./src
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir .
+
+ENV GAL_SIDECAR_HOST=0.0.0.0 \
+    GAL_SIDECAR_PORT=8080 \
+    GAL_SATISFACTION_THRESHOLD=0.85
+    # GAL_MODEL_PATH must be provided at run time (mounted checkpoint).
+
+EXPOSE 8080
+
+# Lightweight liveness probe against the real /health endpoint.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD python -c "import urllib.request,os,sys; \
+url='http://127.0.0.1:'+os.getenv('GAL_SIDECAR_PORT','8080')+'/health'; \
+sys.exit(0 if urllib.request.urlopen(url,timeout=4).status==200 else 1)"
+
+CMD ["python", "-m", "gal_model.governance_sidecar_service"]

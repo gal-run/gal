@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gal.run/schemas/model/training-example.schema.json",
+  "title": "GAL Model Training Example",
+  "type": "object",
+  "required": [
+    "example_id",
+    "features",
+    "label"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "example_id": {
+      "type": "string"
+    },
+    "features": {
+      "type": "object",
+      "required": [
+        "people_present",
+        "vehicles_present",
+        "obstacles_present",
+        "evidence_complete",
+        "operator_review_required",
+        "latency_measured",
+        "approval_refs_complete",
+        "detection_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "people_present": {
+          "type": "boolean"
+        },
+        "vehicles_present": {
+          "type": "boolean"
+        },
+        "obstacles_present": {
+          "type": "boolean"
+        },
+        "evidence_complete": {
+          "type": "boolean"
+        },
+        "operator_review_required": {
+          "type": "boolean"
+        },
+        "latency_measured": {
+          "type": "boolean"
+        },
+        "approval_refs_complete": {
+          "type": "boolean"
+        },
+        "detection_count": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "label": {
+      "enum": [
+        "clear_for_operator_review",
+        "hold_for_operator_review"
+      ]
+    }
+  }
+}

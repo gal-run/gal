@@ -1,0 +1,17 @@
+{
+  "application": "gal-model-fixture",
+  "evidence_ref": "fixture://civil-scene/hold-obstacle",
+  "features": {
+    "approval_refs_complete": false,
+    "detection_count": 4,
+    "evidence_complete": true,
+    "latency_measured": true,
+    "obstacles_present": true,
+    "operator_review_required": true,
+    "people_present": false,
+    "vehicles_present": false
+  },
+  "model_ref": "gal-model://governance-decision/v0",
+  "request_id": "fixture-request-001",
+  "schema_ref": "https://gal.run/schemas/model/inference-request.schema.json"
+}
