@@ -7,11 +7,28 @@ KSRC    := src/gal_kernel.c
 SSRC    := src/gal_kernel.c src/gal_decide.c
 KTEST   := test/test_kernel
 STEST   := test/test_shell
+LIBNAME := gal_decide
+STATICLIB := lib$(LIBNAME).a
+SHAREDLIB := lib$(LIBNAME).so
 
-.PHONY: all test asan cppcheck clean
+.PHONY: all lib test asan cppcheck clean
 
 all:
 	$(CC) $(CFLAGS) -c $(KSRC) -o /dev/null
+
+# Build the consumer-ABI libraries (libgal_decide.{a,so}) that downstream
+# cgo bindings and services link against. Compiled position-independent so the
+# same objects archive into the static lib and link into the shared lib.
+# deploy/Dockerfile.service runs `make lib` and COPYs both artifacts.
+lib: $(STATICLIB) $(SHAREDLIB)
+
+$(STATICLIB): $(SSRC)
+	$(CC) $(CFLAGS) -fPIC -c src/gal_kernel.c -o src/gal_kernel.o
+	$(CC) $(CFLAGS) -fPIC -c src/gal_decide.c -o src/gal_decide.o
+	$(AR) rcs $@ src/gal_kernel.o src/gal_decide.o
+
+$(SHAREDLIB): $(SSRC)
+	$(CC) $(CFLAGS) -fPIC -shared $(SSRC) -o $@
 
 # Build + run unit tests (kernel core + JSON shell).
 test:
@@ -35,4 +52,4 @@ cppcheck:
 		--suppress='*:third_party/*' --error-exitcode=1 -Iinclude -Ithird_party src test
 
 clean:
-	rm -f $(KTEST) $(STEST) $(KTEST)-asan $(STEST)-asan src/*.o
+	rm -f $(KTEST) $(STEST) $(KTEST)-asan $(STEST)-asan src/*.o $(STATICLIB) $(SHAREDLIB)

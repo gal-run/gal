@@ -4,7 +4,7 @@ This document maps customer-facing GAL components to our status page for service
 
 ## Status Page
 
-Check real-time service health at: **[status.gal.run](https://status.gal.run)**
+Check real-time service health at: **[status.scheduler-systems.com](https://status.scheduler-systems.com)**
 
 ## Service Components
 
@@ -31,13 +31,16 @@ Check real-time service health at: **[status.gal.run](https://status.gal.run)**
 When GAL APIs report degraded state, authenticated UI surfaces should display a banner:
 
 ```
-⚠️ GAL services are experiencing issues. Check status.gal.run for updates.
+⚠️ GAL services are experiencing issues. Check status.scheduler-systems.com for updates.
 ```
 
 This messaging:
 - Informs users of known issues
 - Directs them to the status page
 - Avoids implying user misconfiguration
+
+The canonical status page is **[status.scheduler-systems.com](https://status.scheduler-systems.com)**
+(the central Scheduler Systems status page — see [`docs/status-components.md`](docs/status-components.md)).
 
 ## Incident Communication
 
@@ -53,4 +56,4 @@ Planned maintenance windows are announced on the status page at least 24 hours i
 
 ## Support
 
-For service issues not reflected on the status page, contact support@gal.run.
+For service issues not reflected on the status page, contact support@scheduler-systems.com.

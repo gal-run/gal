@@ -1,9 +1,15 @@
-# deploy/docker-compose.yml - self-host stub.
-# "self-host today": bring up the OSS governance + gateway + auth services
-# against a local Postgres. Per-service images publish to
-# ghcr.io/gal-run/<svc>:<ver>; this compose pins :dev placeholders.
+# deploy/docker-compose.yml - self-host skeleton (work-in-progress).
 #
-# Real images are built per service from deploy/Dockerfile.<svc> (skeleton).
+# This brings up the OSS governance + gateway + auth services against a local
+# Postgres. The per-service images (ghcr.io/gal-run/<svc>:dev) are NOT yet
+# published, so the `image:` lines are placeholders. Build them locally with:
+#
+#     docker compose -f deploy/docker-compose.yml up --build
+#
+# Each service is built from deploy/Dockerfile.service (SVC arg selects the
+# binary). NOTE: the Go services are currently skeleton binaries that print
+# their ABI version and exit; this compose is not yet a one-command running
+# platform. A pinned, published-image compose is on the roadmap.
 version: "3.9"
 
 services:
@@ -18,7 +24,12 @@ services:
 
   governance:
     image: ghcr.io/gal-run/governance:dev
-    # build: { context: .., dockerfile: deploy/Dockerfile.service, args: { SVC: governance } }
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args:
+        SVC: governance
+        GAL_OSS: "1"
     environment:
       # ee features stay inert unless a valid signed key is supplied.
       GAL_LICENSE_KEY: ""
@@ -27,6 +38,12 @@ services:
 
   gateway:
     image: ghcr.io/gal-run/gateway:dev
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args:
+        SVC: gateway
+        GAL_OSS: "1"
     environment:
       GAL_LICENSE_KEY: ""
     ports:
@@ -35,4 +52,10 @@ services:
 
   auth:
     image: ghcr.io/gal-run/auth:dev
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.service
+      args:
+        SVC: auth
+        GAL_OSS: "1"
     depends_on: [postgres]
