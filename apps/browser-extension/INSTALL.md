@@ -168,6 +168,6 @@ The extension:
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/your-org/gal/issues
-- Documentation: https://docs.gal.run
-- Email: support@gal.run
+- GitHub Issues: https://github.com/gal-run/gal/issues
+- Documentation: https://gal.run
+- Email: support@scheduler-systems.com

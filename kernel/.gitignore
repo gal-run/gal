@@ -34,6 +34,7 @@ Thumbs.db
 # --- C build artifacts (never commit; DWARF embeds absolute local paths) ---
 *.o
 *.a
+*.so
 *.dSYM/
 /test/test_kernel
 /test/test_shell

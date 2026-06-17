@@ -270,7 +270,7 @@ Access your organization's dashboard at [app.gal.run](https://app.gal.run)
 
 ## Service Status
 
-Check service health at **[status.gal.run](https://status.gal.run)** — see [STATUS.md](../../STATUS.md) for component mapping.
+Check service health at **[status.scheduler-systems.com](https://status.scheduler-systems.com)** — see [STATUS.md](../../STATUS.md) for component mapping.
 
 ## Support
 

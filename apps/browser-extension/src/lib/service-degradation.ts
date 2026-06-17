@@ -7,7 +7,7 @@ export interface ServiceDegradation {
   detectedAt: number;
 }
 
-const STATUS_PAGE_URL = "https://status.gal.run";
+const STATUS_PAGE_URL = "https://status.scheduler-systems.com";
 const DEGRADATION_COOLDOWN_MS = 60_000;
 const MAX_STORED_DEGRADATIONS = 5;
 

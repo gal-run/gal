@@ -8,18 +8,30 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-brightgreen" alt="License"></a>
 </p>
 
-# gal — open governance platform; kernel at head; self-host today
+# gal — open governance platform; kernel at head; build from source today
 
 gal governs AI agents from a small, auditable core. A pure-C **reference
 monitor** sits at the head of the repo behind a **frozen ABI**; every other
 surface — Go services, TypeScript SDKs and MCP servers, the Rust CLI, the
 dashboard — binds to that one contract. gal is Apache-2.0, open core, and you
-can **self-host the whole platform today**.
+build the whole platform **from source today**:
 
 ```bash
-# self-host the OSS platform
-docker compose -f deploy/docker-compose.yml up
+# build everything from source, in ABI order (kernel header first)
+just all          # or `just kernel` / `just services` for one ecosystem
 ```
+
+> **Self-host via Docker Compose is a work-in-progress.**
+> [`deploy/docker-compose.yml`](deploy/docker-compose.yml) is a **skeleton**: the
+> per-service images (`ghcr.io/gal-run/<svc>:dev`) are not yet published, and the
+> Go services are currently skeleton binaries. To build the images locally,
+> uncomment the `build:` block under each service and run:
+>
+> ```bash
+> docker compose -f deploy/docker-compose.yml up --build
+> ```
+>
+> A pinned, published-image compose for one-command self-host is on the roadmap.
 
 ## Why kernel at head
 
