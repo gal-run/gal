@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.gitignore
+e2e
+tests
+playwright.config.ts
+*.md
+.pnpm-store
+turbo.json
+pnpm-workspace.yaml

@@ -10,6 +10,7 @@
     "apps/console",
     "apps/browser-extension",
     "apps/chrome-extension",
+    "apps/website",
     "tools/demo-studio"
   ],
   "scripts": {
