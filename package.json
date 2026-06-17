@@ -9,6 +9,7 @@
     "apps/dashboard",
     "apps/console",
     "apps/browser-extension",
+    "apps/chrome-extension",
     "tools/demo-studio"
   ],
   "scripts": {
