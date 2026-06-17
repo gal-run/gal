@@ -8,6 +8,7 @@
     "mcp/*",
     "apps/dashboard",
     "apps/console",
+    "apps/browser-extension",
     "tools/demo-studio"
   ],
   "scripts": {

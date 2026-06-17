@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (skip Chrome Web Store publish)"
+        required: false
+        default: "true"
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm tsc --noEmit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build extension
+        run: pnpm build
+
+      - name: Package extension
+        run: pnpm package
+
+      - name: Validate manifest
+        run: |
+          if [ ! -f dist/manifest.json ]; then
+            echo "Error: manifest.json not found in dist/"
+            exit 1
+          fi
+          node -e "JSON.parse(require('fs').readFileSync('dist/manifest.json', 'utf8'))"
+          echo "Manifest validation passed"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gal-extension
+          path: gal-extension.zip
+          retention-days: 30
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gal-extension
+
+      - name: Publish to Chrome Web Store
+        uses: desktop-app/action-chrome-webstore-publish@v1
+        with:
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          file: gal-extension.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: gal-extension.zip
+          generate_release_notes: true
+
+  dry-run-summary:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gal-extension
+
+      - name: Summary
+        run: |
+          echo "## Dry Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: completed" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Manifest: validated" >> $GITHUB_STEP_SUMMARY
+          echo "- Package: gal-extension.zip created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Chrome Web Store publish was skipped (dry run)**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -la gal-extension.zip >> $GITHUB_STEP_SUMMARY
