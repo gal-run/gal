@@ -1,0 +1,74 @@
+name: beta
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  sync:
+    runs-on: ci-standard-runc-x64
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check beta PRs
+        id: beta
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const items = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "beta",
+              per_page: 100,
+            })
+            const prs = []
+            for (const item of items) {
+              if (!item.pull_request) continue
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: item.number,
+              })
+              if (!pr.data.draft) prs.push(item)
+            }
+            core.setOutput("count", String(prs.length))
+            await core.summary.addHeading("Beta sync precheck")
+            if (prs.length === 0) {
+              core.notice("No beta-labeled non-draft PRs; skipping beta sync.")
+              await core.summary.addRaw("No beta-labeled non-draft PRs found. Skipping sync.").write()
+              return
+            }
+            core.notice(`Found ${prs.length} beta-labeled non-draft PR(s).`)
+            await core.summary.addList(prs.map((pr) => `#${pr.number}: ${pr.title}`)).write()
+
+      - name: Setup Bun
+        if: steps.beta.outputs.count != '0'
+        uses: ./.github/actions/setup-bun
+
+      - name: Setup Git Committer
+        if: steps.beta.outputs.count != '0'
+        id: setup-git-committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Install GAL Code
+        if: steps.beta.outputs.count != '0'
+        run: bun i -g @gal-run/code
+
+      - name: Sync beta branch
+        if: steps.beta.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ steps.setup-git-committer.outputs.token }}
+          GAL_CODE_API_KEY: ${{ secrets.GAL_CODE_API_KEY }}
+        run: bun script/beta.ts

@@ -1,0 +1,4 @@
+{
+  "$schema": "https://gal.run/config.json",
+  "model": "gal-code/deepseek-v4-pro"
+}

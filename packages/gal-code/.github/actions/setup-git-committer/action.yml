@@ -1,0 +1,51 @@
+name: "Setup Git Committer"
+description: "Create app token and configure git user"
+inputs:
+  gal-code-app-id:
+    description: "GAL Code GitHub App ID"
+    required: false
+  gal-code-app-secret:
+    description: "GAL Code GitHub App private key"
+    required: false
+outputs:
+  token:
+    description: "GitHub App token, or GITHUB_TOKEN when app credentials are unavailable"
+    value: ${{ steps.apptoken.outputs.token || github.token }}
+  app-slug:
+    description: "GitHub App slug"
+    value: ${{ steps.apptoken.outputs.app-slug }}
+runs:
+  using: "composite"
+  steps:
+    - name: Create app token
+      id: apptoken
+      if: inputs.gal-code-app-id != '' && inputs.gal-code-app-secret != ''
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ inputs.gal-code-app-id }}
+        private-key: ${{ inputs.gal-code-app-secret }}
+        owner: ${{ github.repository_owner }}
+
+    - name: Configure git user
+      run: |
+        if [ -n "$APP_SLUG" ]; then
+          git config --global user.name "${APP_SLUG}[bot]"
+          git config --global user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+        else
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        fi
+      shell: bash
+      env:
+        APP_SLUG: ${{ steps.apptoken.outputs.app-slug }}
+
+    - name: Clear checkout auth
+      run: |
+        git config --local --unset-all http.https://github.com/.extraheader || true
+      shell: bash
+
+    - name: Configure git remote
+      run: git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}"
+      shell: bash
+      env:
+        TOKEN: ${{ steps.apptoken.outputs.token || github.token }}
