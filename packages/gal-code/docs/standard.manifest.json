@@ -1,0 +1,38 @@
+{
+  "standard": {
+    "name": "prompt-to-binary",
+    "version": "1",
+    "source": "GravitonChips/prompt-to-binary"
+  },
+  "sdk": {
+    "name": "prompt-to-binary-sdk",
+    "version": "1",
+    "contract": "stable request/result/provenance surface"
+  },
+  "framework": {
+    "name": "prompt-to-binary-framework",
+    "version": "1",
+    "contract": "artifact ladder, verification gates, provenance enforcement"
+  },
+  "policy": {
+    "preferredArtifactOrder": [
+      "requirements",
+      "source",
+      "ir",
+      "bytecode",
+      "assembly",
+      "native"
+    ],
+    "allowAssembly": true,
+    "allowNativeBinary": false
+  },
+  "repo": {
+    "name": "gal-run/gal-code",
+    "boundary": "GAL Code runtime and UI surface for model selection, governance, and generated executable adoption",
+    "docs": {
+      "architecture": "docs/architecture.md",
+      "requirements": "docs/requirements.md",
+      "adr": "docs/adr"
+    }
+  }
+}

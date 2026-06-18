@@ -1,0 +1,1 @@
+Run local claw agent commands (doctor, status, version, diff) and read back structured output. Use this to check the claw sidecar health before delegating work to it.

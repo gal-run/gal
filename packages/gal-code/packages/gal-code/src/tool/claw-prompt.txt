@@ -1,0 +1,1 @@
+Send a prompt to the claw local agent sidecar and return its response. This delegates work to a Rust-native runtime with sandboxed bash, file tools, MCP, LSP, and full Claude Code parity. Use for tasks that need stronger isolation or faster local tool execution.
