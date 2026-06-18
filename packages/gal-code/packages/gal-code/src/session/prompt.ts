@@ -70,7 +70,7 @@ export function buildSwarmPrompt(input: { worktree: string; workspaceRoot?: stri
   const workspaceDiscipline = input.workspaceRoot
     ? `Enterprise workspace discipline:
 - The workspace root ${input.workspaceRoot} is a multi-repository workspace, not a git repository.
-- Reuse existing checkouts under org directories such as gal-run/, StratusCloudLabs/, and Scheduler-Systems/.
+- Reuse existing checkouts under org directories such as gal-run/, example-org/, and Scheduler-Systems/.
 - Never run git clone in the enterprise workspace root.
 - For read-only verification or review, use the existing repo checkout.
 - For edits outside the current repo, create or reuse a repo-owned worktree under <repo>/worktrees/<slug>.`

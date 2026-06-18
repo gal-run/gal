@@ -79,7 +79,7 @@ test("swarm agent allows enterprise sibling paths and denies external directorie
   await using tmp = await tmpdir()
   const workspaceRoot = tmp.path
   const repo = path.join(workspaceRoot, "gal-run", "gal-code")
-  const sibling = path.join(workspaceRoot, "StratusCloudLabs", "stratus", "worktrees", "audit")
+  const sibling = path.join(workspaceRoot, "example-org", "stratus", "worktrees", "audit")
 
   await fs.mkdir(repo, { recursive: true })
   await fs.mkdir(sibling, { recursive: true })
