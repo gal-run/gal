@@ -693,6 +693,10 @@ func main() {
 		r.Delete("/auth/session", svc.handleLogout)
 
 		r.Get("/users/me", svc.handleGetMe)
+		// Back-compat alias: older clients (gal CLI <=0.1.0, mcp-svc, gal-cli-ts)
+		// call GET /auth/me to fetch the current user. Keep this until those
+		// callers migrate to /users/me so the auth-svc cutover doesn't 404 them.
+		r.Get("/auth/me", svc.handleGetMe)
 		r.Patch("/users/me", svc.handleUpdateMe)
 		r.Get("/users/me/settings", svc.handleGetSettings)
 		r.Patch("/users/me/settings", svc.handleUpdateSettings)
