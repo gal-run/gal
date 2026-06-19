@@ -35,8 +35,8 @@ just all          # or `just kernel` / `just services` for one ecosystem
 
 ## Why kernel at head
 
-The reference monitor (`kernel/`, pure C — a clean copy of the public
-`gal-run/gal-kernel`) is the single contract the entire monorepo binds to. Its
+The reference monitor (`kernel/`, pure C) is the single contract the entire
+monorepo binds to. Its
 ABI — `kernel/include/gal_decide.h` — is frozen and append-only, so consumers in
 any language **embed it via the C ABI**. Builds run in **ABI order**: the kernel
 is built first, then everything downstream (the Go cgo binding, codegen
@@ -44,17 +44,21 @@ consumers, the rest).
 
 ## Monorepo layout
 
-| Path        | Lang  | What                                                              | Ships as |
-|-------------|-------|-------------------------------------------------------------------|----------|
-| `kernel/`   | C     | pure-C reference monitor (core + JSON shell) + frozen C ABI + tests | source (embedded via C ABI) + header |
-| `services/` | Go    | governance, auth, gateway, mcp-gateway, dispatch, repo, sdlc, team, swarm, gal-rag | `ghcr.io/gal-run/<svc>` images |
-| `sdks/`     | TS    | agents-schema, agent-network, swarm, prediction, contracts        | npm `@gal-run/*` |
-| `mcp/`      | TS    | mcp-chrome, mcp-terminal, mcp-ide, mcp-vision                     | npm `@gal-run/mcp-*` |
-| `apps/`     | TS/JS | `dashboard/` (Next.js, deployed), `console/` (relocated legacy app) | deployed |
-| `cli/`      | Rust  | `gal-cli`                                                         | crates.io + Homebrew tap |
-| `deploy/`   | —     | Dockerfiles, helm/argocd/IaC, docker-compose                     | — |
-| `docs/`     | —     | architecture, ABI spec, EE policy, runbooks                      | — |
-| `tools/`    | —     | license-fence, codegen, ci helpers                               | — |
+| Path          | Lang   | What                                                              | Ships as |
+|---------------|--------|-------------------------------------------------------------------|----------|
+| `kernel/`     | C      | pure-C reference monitor (core + JSON shell) + frozen C ABI + tests | source (embedded via C ABI) + header |
+| `services/`   | Go     | auth, gateway, mcp-gateway, mcp, dispatch, repo, sdlc, team, swarm, governance, gal-rag, gal-inference, mal | `ghcr.io/gal-run/<svc>` images |
+| `sdks/`       | TS     | agents-schema, agent-network, contracts, swarm, prediction, evals, sandbox | npm `@gal-run/*` |
+| `mcp/`        | TS     | chrome, terminal, ide, vision, computer-use, gal-mcp             | npm `@gal-run/mcp-*` |
+| `apps/`       | TS/JS  | `dashboard/` (Next.js, deployed), `console/`, `website/`, browser/chrome extensions, accessibility-app | deployed |
+| `packages/`   | TS     | `gal-code` — the coding agent (app + desktop/electron)           | app |
+| `agents/`     | Rust   | `agent-os`, `super-agent`                                        | source |
+| `cli/`        | Rust   | `gal-cli`                                                        | crates.io + in-repo Homebrew tap (`Formula/`, `Casks/`) |
+| `model/`      | Python | `gal-model` — deep-learning governance model (train/eval/inference, eval-worker + sidecar) | source |
+| `governance/` | —      | `si-bootstrap` — governance bootstrap (policies + scripts)       | — |
+| `deploy/`     | —      | Dockerfiles, helm/argocd/IaC, docker-compose                    | — |
+| `docs/`       | —      | architecture, ABI spec, EE policy, runbooks                     | — |
+| `tools/`      | —      | license-fence, codegen, ci helpers                              | — |
 
 ## Build
 
@@ -81,8 +85,9 @@ Every commit message must contain `[ci]`.
 ## Install the CLI
 
 ```bash
-# Homebrew
-brew install gal-run/tap/gal
+# Homebrew (formula + cask live in this repo)
+brew tap gal-run/gal https://github.com/gal-run/gal
+brew install gal-run/gal/gal
 
 # crates.io
 cargo install gal-cli
