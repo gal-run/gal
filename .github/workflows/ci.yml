@@ -1,0 +1,163 @@
+# Path-filtered CI for the gal monorepo. ubuntu-latest only.
+#
+# One workflow, per-language jobs gated by dorny/paths-filter so a consumer
+# touching one surface doesn't pay for all of them:
+#   kernel    <- kernel/**
+#   services  <- services/** OR kernel/include/**   (ABI header change is the
+#                ONLY intentional cross-lang fan-out: rebuilds Go cgo)
+#   ts        <- sdks/** | mcp/** | apps/**          (turbo affected-only)
+#   cli       <- cli/**
+#   agents    <- agents/**                           (separate cargo workspace)
+#   model     <- model/**                            (Python ML governance model)
+#   fence     <- ALWAYS (fast license check)
+#
+# Repo ruleset: every commit message must contain "[ci]".
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      kernel: ${{ steps.filter.outputs.kernel }}
+      services: ${{ steps.filter.outputs.services }}
+      ts: ${{ steps.filter.outputs.ts }}
+      cli: ${{ steps.filter.outputs.cli }}
+      agents: ${{ steps.filter.outputs.agents }}
+      model: ${{ steps.filter.outputs.model }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            kernel:
+              - 'kernel/**'
+            services:
+              - 'services/**'
+              - 'kernel/include/**'
+            ts:
+              - 'sdks/**'
+              - 'mcp/**'
+              - 'apps/**'
+            cli:
+              - 'cli/**'
+            agents:
+              - 'agents/**'
+            model:
+              - 'model/**'
+
+  # Always-on, fast license-by-location fence.
+  fence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: node tools/check-license-fence.mjs
+
+  kernel:
+    needs: changes
+    if: ${{ needs.changes.outputs.kernel == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build + unit/shell tests (pure C, -Werror)
+        run: |
+          make -C kernel all
+          make -C kernel test
+
+  services:
+    needs: changes
+    if: ${{ needs.changes.outputs.services == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.25" }
+      - name: compile kernel (ABI source the cgo binding embeds)
+        run: make -C kernel all
+      - name: go build + test
+        working-directory: services
+        run: |
+          go build ./...
+          go test ./...
+
+  ts:
+    needs: changes
+    if: ${{ needs.changes.outputs.ts == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm install
+      - name: turbo affected build + test
+        run: |
+          npm run build:affected
+          npm run test:affected
+
+  cli:
+    needs: changes
+    if: ${{ needs.changes.outputs.cli == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo build + test (default and OSS)
+        working-directory: cli
+        run: |
+          cargo build
+          cargo build --no-default-features
+          cargo test
+
+  agents:
+    needs: changes
+    if: ${{ needs.changes.outputs.agents == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo build + test (workspace)
+        working-directory: agents
+        run: |
+          cargo build --workspace
+          cargo test --workspace
+
+  model:
+    needs: changes
+    if: ${{ needs.changes.outputs.model == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: model
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      # Lightweight install: the package's runtime deps (numpy/onnx/onnxruntime/
+      # torch via pyproject) are enough to import gal_model and run the suite.
+      # The heavy, optional sentence-transformers dep (requirements.txt only,
+      # lazy-imported, untouched by the tests) is intentionally NOT installed to
+      # keep CI fast. Torch installs the CPU wheel on ubuntu.
+      - name: install (editable, core deps only)
+        run: pip install -e .
+      - name: compile check
+        run: python -m compileall src tests
+      - name: import smoke
+        run: python -c "import gal_model; from gal_model import GalGovernanceDecisionNet, encode_features, FEATURE_NAMES, LABELS, MODEL_REF; print('gal_model import OK')"
+      - name: unit tests
+        run: PYTHONPATH=src python -m unittest discover -s tests
+      - name: train + infer + eval smoke (committed fixtures)
+        run: |
+          make train-smoke PYTHON=python
+          make infer-smoke PYTHON=python
+          make eval-smoke PYTHON=python

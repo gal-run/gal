@@ -1,0 +1,39 @@
+name: Reference Assets
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/reference-assets.yml"
+      - "docs/**"
+      - "apps/console/examples/**"
+      - "apps/console/reference/**"
+      - "apps/console/schemas/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/reference-assets.yml"
+      - "docs/**"
+      - "apps/console/examples/**"
+      - "apps/console/reference/**"
+      - "apps/console/schemas/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Validate JSON schemas
+        run: |
+          set -euo pipefail
+          jq empty apps/console/schemas/*.schema.json
+
+      - name: Run reference resolver tests
+        run: |
+          set -euo pipefail
+          node --test apps/console/reference/*.test.mjs

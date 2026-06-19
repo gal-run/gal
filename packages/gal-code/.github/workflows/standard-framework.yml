@@ -1,0 +1,38 @@
+name: standard-framework
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout prompt-to-binary framework
+        id: checkout-framework
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: GravitonChips/prompt-to-binary
+          path: prompt-to-binary
+          token: ${{ secrets.PROMPT_TO_BINARY_TOKEN || github.token }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - run: bun install --frozen-lockfile
+
+      - name: Run standard verifier
+        if: hashFiles('prompt-to-binary/framework/verify.py') != ''
+        run: bun run standard:verify
+        env:
+          PROMPT_TO_BINARY_FRAMEWORK_ROOT: ${{ github.workspace }}/prompt-to-binary
+
+      - name: Verify standard manifest presence
+        if: hashFiles('prompt-to-binary/framework/verify.py') == ''
+        run: |
+          echo "::warning::Skipping prompt-to-binary standard verifier because GravitonChips/prompt-to-binary is private and unavailable to this workflow. Configure PROMPT_TO_BINARY_TOKEN to enable full verification."
+          test -f docs/standard.manifest.json

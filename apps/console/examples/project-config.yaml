@@ -1,0 +1,40 @@
+apiVersion: gal/v1
+kind: ProjectConfig
+
+metadata:
+  workspaceRef: scheduler-systems
+  updatedAt: "2026-03-16T12:05:00Z"
+
+inherit:
+  workspace: true
+
+platforms:
+  common:
+    instructions:
+      strategy: append
+      content: |
+        This repo is payment-critical. Prioritize correctness over speed.
+
+    commands:
+      review:
+        content: |
+          Review for billing, auth, and migration regressions first.
+      migrate:
+        description: Repo-specific migration flow
+        content: |
+          Run the repository migration checklist before merge.
+      test:
+        disabled: true
+
+  codex:
+    instructions:
+      strategy: append
+      content: |
+        Prefer explicit file references and short verification summaries in this repo.
+
+policy:
+  domains:
+    mode: narrow
+    allow:
+      - github.com
+      - api.github.com

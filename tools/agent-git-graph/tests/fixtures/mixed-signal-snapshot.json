@@ -1,0 +1,257 @@
+{
+  "schemaVersion": "git-evidence-snapshot.v1",
+  "workspace": "/tmp/mixed-workspace",
+  "generatedAt": "2026-05-23T05:48:00Z",
+  "fetchRemotes": false,
+  "repoCount": 5,
+  "repos": [
+    {
+      "path": "/tmp/mixed-workspace/gal-run/gal-cli",
+      "relativePath": "gal-run/gal-cli",
+      "kind": "workspace_repo",
+      "remote": "https://github.com/gal-run/gal-cli.git",
+      "github": {
+        "slug": "gal-run/gal-cli",
+        "owner": "gal-run",
+        "name": "gal-cli"
+      },
+      "branch": {
+        "current": "main",
+        "default": "main",
+        "upstream": "origin/main",
+        "hasUpstream": true,
+        "ahead": 0,
+        "behind": 0
+      },
+      "headSha": "1111111111111111111111111111111111111111",
+      "worktree": {
+        "isWorktree": false
+      },
+      "dirt": {
+        "modified": true,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/mixed-workspace/gal-run/gal-cli/worktrees/feature-live",
+      "relativePath": "gal-run/gal-cli/worktrees/feature-live",
+      "kind": "worktree",
+      "remote": "https://github.com/gal-run/gal-cli.git",
+      "github": {
+        "slug": "gal-run/gal-cli",
+        "owner": "gal-run",
+        "name": "gal-cli"
+      },
+      "branch": {
+        "current": "codex/feature-live",
+        "default": "main",
+        "upstream": "origin/codex/feature-live",
+        "hasUpstream": true,
+        "ahead": 1,
+        "behind": 0
+      },
+      "headSha": "2222222222222222222222222222222222222222",
+      "worktree": {
+        "isWorktree": true
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 2,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": "session-live",
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/mixed-workspace/gal-run/gal-cli/worktrees/sync-only",
+      "relativePath": "gal-run/gal-cli/worktrees/sync-only",
+      "kind": "worktree",
+      "remote": "https://github.com/gal-run/gal-cli.git",
+      "github": {
+        "slug": "gal-run/gal-cli",
+        "owner": "gal-run",
+        "name": "gal-cli"
+      },
+      "branch": {
+        "current": "codex/sync-only",
+        "default": "main",
+        "upstream": "origin/codex/sync-only",
+        "hasUpstream": true,
+        "ahead": 0,
+        "behind": 2
+      },
+      "headSha": "3333333333333333333333333333333333333333",
+      "worktree": {
+        "isWorktree": true
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/tmp/mixed-workspace/.forks/example/upstream-tool",
+      "relativePath": ".forks/example/upstream-tool",
+      "kind": "third_party_fork",
+      "remote": "https://github.com/example/upstream-tool.git",
+      "github": {
+        "slug": "example/upstream-tool",
+        "owner": "example",
+        "name": "upstream-tool"
+      },
+      "branch": {
+        "current": "main",
+        "default": "main",
+        "upstream": "origin/main",
+        "hasUpstream": true,
+        "ahead": 1,
+        "behind": 1
+      },
+      "headSha": "4444444444444444444444444444444444444444",
+      "worktree": {
+        "isWorktree": false
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 0,
+        "trackedCount": 0,
+        "untrackedCount": 0,
+        "present": []
+      }
+    },
+    {
+      "path": "/tmp/mixed-workspace/widgetco/service",
+      "relativePath": "widgetco/service",
+      "kind": "workspace_repo",
+      "remote": "https://github.com/widgetco/service.git",
+      "github": {
+        "slug": "widgetco/service",
+        "owner": "widgetco",
+        "name": "service"
+      },
+      "branch": {
+        "current": "main",
+        "default": "main",
+        "upstream": "origin/main",
+        "hasUpstream": true,
+        "ahead": 0,
+        "behind": 0
+      },
+      "headSha": "5555555555555555555555555555555555555555",
+      "worktree": {
+        "isWorktree": false
+      },
+      "dirt": {
+        "modified": false,
+        "untrackedCount": 0,
+        "stashCount": 0,
+        "submoduleDriftCount": 0
+      },
+      "evidence": {
+        "entireCheckpoint": null,
+        "entireCheckpointRefs": [],
+        "entireCheckpointRemote": null,
+        "galSession": null,
+        "galAgentLayer": null,
+        "galEvidence": null,
+        "hasEntireCheckpointBranch": false
+      },
+      "agenticLayers": {
+        "count": 1,
+        "trackedCount": 1,
+        "untrackedCount": 0,
+        "present": [
+          {
+            "kind": "agents",
+            "path": "AGENTS.md",
+            "type": "file",
+            "tracked": true
+          }
+        ]
+      }
+    }
+  ]
+}

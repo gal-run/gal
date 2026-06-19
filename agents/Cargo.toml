@@ -1,0 +1,7 @@
+# agents/ - Rust agent runtimes folded in from the former standalone
+# gal-run/super-agent and gal-run/agent-os repos. A SEPARATE Cargo workspace
+# from cli/ (which has its own standalone Cargo.toml); the two do not share a
+# lockfile or build graph.
+[workspace]
+resolver = "2"
+members = ["super-agent", "agent-os"]

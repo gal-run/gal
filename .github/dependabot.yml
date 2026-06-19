@@ -1,0 +1,21 @@
+---
+# Dependabot - automated dependency updates
+# Issue #32 | Docs: https://docs.github.com/en/code-security/dependabot
+version: 2
+updates:
+  # GitHub Actions (the only package ecosystem in this docs repo)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Asia/Jerusalem
+    open-pull-requests-limit: 10
+    target-branch: main
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: "deps(ci)"
+      include: scope

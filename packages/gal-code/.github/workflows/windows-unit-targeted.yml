@@ -1,0 +1,87 @@
+name: windows-unit-targeted
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - ".github/workflows/windows-unit-targeted.yml"
+      - ".github/actions/setup-bun/action.yml"
+      - "packages/gal-code/src/background/**"
+      - "packages/gal-code/test/background/**"
+      - "packages/gal-code/src/effect/cross-spawn-spawner.ts"
+      - "packages/gal-code/src/shell/**"
+      - "packages/gal-code/package.json"
+      - "bun.lock"
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "Test file path relative to packages/gal-code"
+        required: false
+        default: "test/background/job.test.ts"
+        type: string
+      timeout:
+        description: "Bun test timeout in milliseconds"
+        required: false
+        default: "30000"
+        type: string
+
+permissions:
+  contents: read
+  checks: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GAL_CODE_EXPERIMENTAL_DISABLE_FILEWATCHER: true
+
+jobs:
+  background:
+    name: background job unit (windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Run targeted Windows unit
+        working-directory: packages/gal-code
+        env:
+          TEST_PATH: ${{ inputs.path || 'test/background/job.test.ts' }}
+          TEST_TIMEOUT: ${{ inputs.timeout || '30000' }}
+        run: |
+          mkdir -p .artifacts/unit
+          bun test "$TEST_PATH" --timeout "$TEST_TIMEOUT" --reporter=junit --reporter-outfile=.artifacts/unit/windows-targeted.xml
+
+      - name: Publish unit report
+        if: always()
+        continue-on-error: true
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: packages/gal-code/.artifacts/unit/windows-targeted.xml
+          check_name: "windows targeted unit results"
+          detailed_summary: true
+          include_time_in_summary: true
+          fail_on_failure: false
+
+      - name: Upload unit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-targeted-unit-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+          path: packages/gal-code/.artifacts/unit/windows-targeted.xml

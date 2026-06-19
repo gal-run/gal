@@ -1,0 +1,11 @@
+# Robots.txt for GAL - Governance Agentic Layer
+# https://gal.run
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://gal.run/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

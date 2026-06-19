@@ -1,0 +1,32 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Claude Triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-sonnet-4-5-20250929
+          prompt: |
+            Analyze this new issue and add appropriate labels.
+            Available labels: bug, enhancement, documentation, question, duplicate
+
+            If it's clearly a bug, add 'bug' label.
+            If it's a feature request, add 'enhancement' label.
+            If it's a question, add 'question' label.
+
+            Also add a brief, helpful comment acknowledging the issue.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -1,0 +1,698 @@
+name: publish
+run-name: "${{ format('release {0}', inputs.bump) }}"
+
+on:
+  push:
+    branches:
+      - ci
+      - dev
+      - beta
+      - snapshot-*
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Bump major, minor, or patch"
+        required: false
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+      version:
+        description: "Override version (optional)"
+        required: false
+        type: string
+      publish_desktop:
+        description: "Also build and publish desktop artifacts"
+        required: false
+        type: boolean
+        default: false
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || inputs.version || inputs.bump }}
+
+permissions:
+  actions: read
+  id-token: write
+  contents: write
+  packages: write
+
+env:
+  GAL_CODE_RELEASE_BRANCH: main
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    if: github.repository == 'gal-run/gal-code'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Enforce stable release ref
+        if: github.event_name == 'workflow_dispatch' && (inputs.bump != '' || inputs.version != '')
+        run: |
+          if [ "$GITHUB_REF_NAME" != "$GAL_CODE_RELEASE_BRANCH" ]; then
+            echo "Stable releases must run from ${GAL_CODE_RELEASE_BRANCH}; got ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Install GAL Code
+        run: bun i -g @gal-run/code || true
+
+      - id: version
+        run: |
+          ./script/version.ts
+        env:
+          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          GAL_CODE_BUMP: ${{ inputs.bump }}
+          GAL_CODE_VERSION: ${{ inputs.version }}
+          GAL_CODE_API_KEY: ${{ secrets.GAL_CODE_API_KEY }}
+          GH_REPO: ${{ github.repository }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+      tag: ${{ steps.version.outputs.tag }}
+      repo: ${{ steps.version.outputs.repo }}
+
+  build-cli:
+    needs: version
+    runs-on: ubuntu-24.04
+    if: github.repository == 'gal-run/gal-code'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Build
+        id: build
+        run: |
+          ./packages/gal-code/script/build.ts
+        env:
+          GAL_CODE_VERSION: ${{ needs.version.outputs.version }}
+          GAL_CODE_RELEASE: ${{ needs.version.outputs.release }}
+          GH_REPO: ${{ needs.version.outputs.repo }}
+          GH_TOKEN: ${{ steps.committer.outputs.token }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gal-code-cli
+          path: |
+            packages/gal-code/dist/gal-code-darwin*
+            packages/gal-code/dist/gal-code-linux*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gal-code-cli-windows
+          path: packages/gal-code/dist/gal-code-windows*
+    outputs:
+      version: ${{ needs.version.outputs.version }}
+
+  sign-cli-windows:
+    needs:
+      - build-cli
+      - version
+    runs-on: windows-2025
+    if: github.repository == 'gal-run/gal-code'
+    continue-on-error: true
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      SSL_COM_USERNAME: ${{ secrets.SSL_COM_USERNAME }}
+      SSL_COM_PASSWORD: ${{ secrets.SSL_COM_PASSWORD }}
+      SSL_COM_CREDENTIAL_ID: ${{ secrets.SSL_COM_CREDENTIAL_ID }}
+      SSL_COM_TOTP_SECRET: ${{ secrets.SSL_COM_TOTP_SECRET }}
+      WINDOWS_AZURE_SIGNING_ENABLED: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '' }}
+      WINDOWS_SSL_SIGNING_ENABLED: ${{ secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '' }}
+      WINDOWS_SIGNING_ENABLED: ${{ (secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '') || (secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gal-code-cli-windows
+          path: packages/gal-code/dist
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Azure login
+        if: env.WINDOWS_AZURE_SIGNING_ENABLED == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/setup-java@v4
+        if: env.WINDOWS_SSL_SIGNING_ENABLED == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Sign Windows CLI
+        if: env.WINDOWS_SIGNING_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          ./script/sign-windows.ps1 `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-arm64\bin\gal-code.exe" `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64\bin\gal-code.exe" `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64-baseline\bin\gal-code.exe"
+
+      - name: Verify Windows CLI signatures
+        if: env.WINDOWS_SIGNING_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $files = @(
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-arm64\bin\gal-code.exe",
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64\bin\gal-code.exe",
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64-baseline\bin\gal-code.exe"
+          )
+
+          foreach ($file in $files) {
+            $sig = Get-AuthenticodeSignature $file
+            if ($sig.Status -ne "Valid") {
+              throw "Invalid signature for ${file}: $($sig.Status)"
+            }
+          }
+
+      - name: Repack Windows CLI archives
+        if: env.WINDOWS_SIGNING_ENABLED == 'true'
+        working-directory: packages/gal-code/dist
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "gal-code-windows-arm64\bin\*" -DestinationPath "gal-code-windows-arm64.zip" -Force
+          Compress-Archive -Path "gal-code-windows-x64\bin\*" -DestinationPath "gal-code-windows-x64.zip" -Force
+          Compress-Archive -Path "gal-code-windows-x64-baseline\bin\*" -DestinationPath "gal-code-windows-x64-baseline.zip" -Force
+
+      - name: Upload signed Windows CLI release assets
+        if: needs.version.outputs.release != '' && env.WINDOWS_SIGNING_ENABLED == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.committer.outputs.token }}
+        run: |
+          gh release upload "v${{ needs.version.outputs.version }}" `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-arm64.zip" `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64.zip" `
+            "${{ github.workspace }}\packages\gal-code\dist\gal-code-windows-x64-baseline.zip" `
+            --clobber `
+            --repo "${{ needs.version.outputs.repo }}"
+
+      - uses: actions/upload-artifact@v4
+        if: env.WINDOWS_SIGNING_ENABLED == 'true'
+        with:
+          name: gal-code-cli-signed-windows
+          path: |
+            packages/gal-code/dist/gal-code-windows-arm64
+            packages/gal-code/dist/gal-code-windows-x64
+            packages/gal-code/dist/gal-code-windows-x64-baseline
+
+  build-tauri:
+    needs:
+      - build-cli
+      - version
+    if: github.ref_name != 'beta' && (github.event_name != 'workflow_dispatch' || inputs.publish_desktop)
+    continue-on-error: true
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      SSL_COM_USERNAME: ${{ secrets.SSL_COM_USERNAME }}
+      SSL_COM_PASSWORD: ${{ secrets.SSL_COM_PASSWORD }}
+      SSL_COM_CREDENTIAL_ID: ${{ secrets.SSL_COM_CREDENTIAL_ID }}
+      SSL_COM_TOTP_SECRET: ${{ secrets.SSL_COM_TOTP_SECRET }}
+      WINDOWS_AZURE_SIGNING_ENABLED: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '' }}
+      WINDOWS_SSL_SIGNING_ENABLED: ${{ secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '' }}
+      WINDOWS_SIGNING_ENABLED: ${{ (secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '') || (secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: macos-latest
+            target: aarch64-apple-darwin
+          - host: windows-2025
+            target: aarch64-pc-windows-msvc
+          - host: windows-2025
+            target: x86_64-pc-windows-msvc
+          - host: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - uses: apple-actions/import-codesign-certs@v2
+        if: ${{ runner.os == 'macOS' }}
+        with:
+          keychain: build
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Verify Certificate
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")
+          CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+          CERT_NAME=${CERT_ID#Developer ID Application: }
+          echo "CERT_ID=$CERT_ID" >> "$GITHUB_ENV"
+          echo "CERT_NAME=$CERT_NAME" >> "$GITHUB_ENV"
+          echo "Certificate imported."
+
+      - name: Setup Apple API Key
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          echo "${{ secrets.APPLE_API_KEY_PATH }}" > "$RUNNER_TEMP/apple-api-key.p8"
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Azure login
+        if: runner.os == 'Windows' && env.WINDOWS_AZURE_SIGNING_ENABLED == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/setup-java@v4
+        if: runner.os == 'Windows' && env.WINDOWS_SSL_SIGNING_ENABLED == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Cache apt packages
+        if: contains(matrix.settings.host, 'ubuntu')
+        uses: actions/cache@v4
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-${{ matrix.settings.target }}-apt-${{ hashFiles('.github/workflows/publish.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.settings.target }}-apt-
+
+      - name: install dependencies (ubuntu only)
+        if: contains(matrix.settings.host, 'ubuntu')
+        run: |
+          mkdir -p ~/apt-cache && chmod -R a+rw ~/apt-cache
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends -o dir::cache::archives="$HOME/apt-cache" libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo chmod -R a+rw ~/apt-cache
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.settings.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/desktop/src-tauri
+          shared-key: ${{ matrix.settings.target }}
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Prepare
+        run: |
+          cd packages/desktop
+          bun ./scripts/prepare.ts
+        env:
+          GAL_CODE_VERSION: ${{ needs.version.outputs.version }}
+          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          GAL_CODE_CLI_ARTIFACT: ${{ (runner.os == 'Windows' && 'gal-code-cli-windows') || 'gal-code-cli' }}
+          RUST_TARGET: ${{ matrix.settings.target }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+
+      - name: Resolve tauri portable SHA
+        if: contains(matrix.settings.host, 'ubuntu')
+        run: |
+          sha=$(git ls-remote https://github.com/tauri-apps/tauri.git refs/heads/feat/truly-portable-appimage | cut -f1)
+          echo "TAURI_PORTABLE_SHA=$sha" >> "$GITHUB_ENV"
+
+      # Fixes AppImage build issues, can be removed when https://github.com/tauri-apps/tauri/pull/12491 is released
+      - name: Install tauri-cli from portable appimage branch
+        uses: taiki-e/cache-cargo-install-action@v3
+        if: contains(matrix.settings.host, 'ubuntu')
+        with:
+          tool: tauri-cli
+          git: https://github.com/tauri-apps/tauri
+          # branch: feat/truly-portable-appimage
+          rev: ${{ env.TAURI_PORTABLE_SHA }}
+
+      - name: Show tauri-cli version
+        if: contains(matrix.settings.host, 'ubuntu')
+        run: cargo tauri --version
+
+      - name: Build and upload artifacts
+        uses: tauri-apps/tauri-action@390cbe447412ced1303d35abe75287949e43437a
+        timeout-minutes: 60
+        with:
+          projectPath: packages/desktop
+          uploadWorkflowArtifacts: true
+          tauriScript: ${{ (contains(matrix.settings.host, 'ubuntu') && 'cargo tauri') || '' }}
+          args: --target ${{ matrix.settings.target }} --config ${{ (github.ref_name == 'beta' && './src-tauri/tauri.beta.conf.json') || './src-tauri/tauri.prod.conf.json' }} --verbose
+          updaterJsonPreferNsis: true
+          releaseId: ${{ needs.version.outputs.release }}
+          tagName: ${{ needs.version.outputs.tag }}
+          releaseDraft: true
+          releaseAssetNamePattern: gal-code-desktop-[platform]-[arch][ext]
+          repo: ${{ (github.ref_name == 'beta' && 'gal-code-beta') || '' }}
+          releaseCommitish: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/apple-api-key.p8
+
+      - name: Verify signed Windows desktop artifacts
+        if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $files = @(
+            "${{ github.workspace }}\packages\desktop\src-tauri\sidecars\gal-code-cli-${{ matrix.settings.target }}.exe"
+          )
+          $files += Get-ChildItem "${{ github.workspace }}\packages\desktop\src-tauri\target\${{ matrix.settings.target }}\release\bundle\nsis\*.exe" | Select-Object -ExpandProperty FullName
+
+          foreach ($file in $files) {
+            $sig = Get-AuthenticodeSignature $file
+            if ($sig.Status -ne "Valid") {
+              throw "Invalid signature for ${file}: $($sig.Status)"
+            }
+          }
+
+  build-electron:
+    needs:
+      - build-cli
+      - version
+    if: github.repository == 'gal-run/gal-code' && github.ref_name != 'beta' && (github.event_name != 'workflow_dispatch' || inputs.publish_desktop)
+    continue-on-error: true
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TRUSTED_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME }}
+      AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+      AZURE_TRUSTED_SIGNING_ENDPOINT: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+      SSL_COM_USERNAME: ${{ secrets.SSL_COM_USERNAME }}
+      SSL_COM_PASSWORD: ${{ secrets.SSL_COM_PASSWORD }}
+      SSL_COM_CREDENTIAL_ID: ${{ secrets.SSL_COM_CREDENTIAL_ID }}
+      SSL_COM_TOTP_SECRET: ${{ secrets.SSL_COM_TOTP_SECRET }}
+      WINDOWS_AZURE_SIGNING_ENABLED: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '' }}
+      WINDOWS_SSL_SIGNING_ENABLED: ${{ secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '' }}
+      WINDOWS_SIGNING_ENABLED: ${{ (secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_TRUSTED_SIGNING_ENDPOINT != '' && secrets.AZURE_TRUSTED_SIGNING_ACCOUNT_NAME != '' && secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE != '') || (secrets.SSL_COM_USERNAME != '' && secrets.SSL_COM_PASSWORD != '' && secrets.SSL_COM_CREDENTIAL_ID != '' && secrets.SSL_COM_TOTP_SECRET != '') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            platform_flag: --mac --x64
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            platform_flag: --mac --arm64
+          - host: "windows-2025"
+            target: aarch64-pc-windows-msvc
+            platform_flag: --win --arm64
+          - host: "windows-2025"
+            target: x86_64-pc-windows-msvc
+            platform_flag: --win
+          - host: "ubuntu-24.04"
+            target: x86_64-unknown-linux-gnu
+            platform_flag: --linux
+          - host: "ubuntu-24.04"
+            target: aarch64-unknown-linux-gnu
+            platform_flag: --linux
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: apple-actions/import-codesign-certs@v2
+        if: runner.os == 'macOS'
+        with:
+          keychain: build
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Verify Certificate
+        if: runner.os == 'macOS'
+        run: |
+          CERT_INFO=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application")
+          CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+          CERT_NAME=${CERT_ID#Developer ID Application: }
+          echo "CERT_ID=$CERT_ID" >> "$GITHUB_ENV"
+          echo "CERT_NAME=$CERT_NAME" >> "$GITHUB_ENV"
+          echo "Certificate imported."
+
+      - name: Setup Apple API Key
+        if: runner.os == 'macOS'
+        run: echo "${{ secrets.APPLE_API_KEY_PATH }}" > "$RUNNER_TEMP/apple-api-key.p8"
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Azure login
+        if: runner.os == 'Windows' && env.WINDOWS_AZURE_SIGNING_ENABLED == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: actions/setup-java@v4
+        if: runner.os == 'Windows' && env.WINDOWS_SSL_SIGNING_ENABLED == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Cache apt packages
+        if: contains(matrix.settings.host, 'ubuntu')
+        uses: actions/cache@v4
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-${{ matrix.settings.target }}-apt-electron-${{ hashFiles('.github/workflows/publish.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.settings.target }}-apt-electron-
+
+      - name: Install dependencies (ubuntu only)
+        if: contains(matrix.settings.host, 'ubuntu')
+        run: |
+          mkdir -p ~/apt-cache && chmod -R a+rw ~/apt-cache
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends -o dir::cache::archives="$HOME/apt-cache" rpm
+          sudo chmod -R a+rw ~/apt-cache
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - name: Prepare
+        run: bun ./scripts/prepare.ts
+        working-directory: packages/desktop-electron
+        env:
+          GAL_CODE_VERSION: ${{ needs.version.outputs.version }}
+          GAL_CODE_CHANNEL: ${{ (github.ref_name == 'beta' && 'beta') || 'prod' }}
+          GAL_CODE_CLI_ARTIFACT: ${{ (runner.os == 'Windows' && 'gal-code-cli-windows') || 'gal-code-cli' }}
+          RUST_TARGET: ${{ matrix.settings.target }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+
+      - name: Build
+        run: bun run build
+        working-directory: packages/desktop-electron
+        env:
+          GAL_CODE_CHANNEL: ${{ (github.ref_name == 'beta' && 'beta') || 'prod' }}
+
+      - name: Package and publish
+        if: needs.version.outputs.release
+        run: npx electron-builder ${{ matrix.settings.platform_flag }} --publish always --config electron-builder.config.ts
+        working-directory: packages/desktop-electron
+        timeout-minutes: 60
+        env:
+          GAL_CODE_CHANNEL: ${{ (github.ref_name == 'beta' && 'beta') || 'prod' }}
+          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          CSC_KEYCHAIN: build.keychain
+          CSC_NAME: ${{ env.CERT_NAME }}
+          APPLE_API_KEY: ${{ runner.temp }}/apple-api-key.p8
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+
+      - name: Package (no publish)
+        if: ${{ !needs.version.outputs.release }}
+        run: npx electron-builder ${{ matrix.settings.platform_flag }} --publish never --config electron-builder.config.ts
+        working-directory: packages/desktop-electron
+        timeout-minutes: 60
+        env:
+          GAL_CODE_CHANNEL: ${{ (github.ref_name == 'beta' && 'beta') || 'prod' }}
+
+      - name: Verify signed Windows Electron artifacts
+        if: runner.os == 'Windows' && env.WINDOWS_SIGNING_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $files = @()
+          $files += Get-ChildItem "${{ github.workspace }}\packages\desktop-electron\dist\*.exe" | Select-Object -ExpandProperty FullName
+          $files += Get-ChildItem "${{ github.workspace }}\packages\desktop-electron\dist\*unpacked\*.exe" | Select-Object -ExpandProperty FullName
+          $files += Get-ChildItem "${{ github.workspace }}\packages\desktop-electron\dist\*unpacked\resources\gal-code-cli.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+
+          foreach ($file in $files | Select-Object -Unique) {
+            $sig = Get-AuthenticodeSignature $file
+            if ($sig.Status -ne "Valid") {
+              throw "Invalid signature for ${file}: $($sig.Status)"
+            }
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gal-code-electron-${{ matrix.settings.target }}
+          path: packages/desktop-electron/dist/*
+
+      - uses: actions/upload-artifact@v4
+        if: needs.version.outputs.release
+        with:
+          name: latest-yml-${{ matrix.settings.target }}
+          path: packages/desktop-electron/dist/latest*.yml
+
+  publish:
+    needs:
+      - version
+      - build-cli
+    if: always() && !failure() && !cancelled()
+    runs-on: ubuntu-24.04
+    env:
+      HAS_AUR_KEY: ${{ secrets.AUR_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup git committer
+        id: committer
+        uses: ./.github/actions/setup-git-committer
+        with:
+          gal-code-app-id: ${{ vars.GAL_CODE_APP_ID }}
+          gal-code-app-secret: ${{ secrets.GAL_CODE_APP_SECRET }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gal-code-cli
+          path: packages/gal-code/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gal-code-cli-windows
+          path: packages/gal-code/dist
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: gal-code-cli-signed-windows
+          path: packages/gal-code/dist
+
+      - uses: actions/download-artifact@v4
+        if: needs.version.outputs.release && github.ref_name != 'beta'
+        continue-on-error: true
+        with:
+          pattern: latest-yml-*
+          path: packages/gal-code/dist/latest-yml
+
+      - name: Cache apt packages (AUR)
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-aur-${{ hashFiles('.github/workflows/publish.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-aur-
+
+      - name: Setup SSH for AUR
+        if: needs.version.outputs.release && env.HAS_AUR_KEY == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pacman-package-manager
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          git config --global user.email "gal-code@sst.dev"
+          git config --global user.name "gal-code"
+          ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts || true
+
+      - run: ./script/publish.ts
+        env:
+          GAL_CODE_VERSION: ${{ needs.version.outputs.version }}
+          GAL_CODE_RELEASE: ${{ needs.version.outputs.release }}
+          GAL_CODE_PUBLISH_DESKTOP: ${{ (github.event_name != 'workflow_dispatch' || inputs.publish_desktop) && '1' || '0' }}
+          GAL_CODE_SKIP_BOOK: ${{ github.event_name == 'workflow_dispatch' && (inputs.bump != '' || inputs.version != '') && '1' || '0' }}
+          AUR_KEY: ${{ secrets.AUR_KEY }}
+          HOMEBREW_TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO }}
+          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          GH_REPO: ${{ needs.version.outputs.repo }}
+          NPM_CONFIG_PROVENANCE: ${{ github.event.repository.private && 'false' || 'true' }}
+          GAL_CODE_REQUIRE_NPM_PUBLISH: "1"
+          LATEST_YML_DIR: packages/gal-code/dist/latest-yml

@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/workspace-config.schema.json",
+  "title": "GAL Workspace Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "gal/v1"
+    },
+    "kind": {
+      "const": "WorkspaceConfig"
+    },
+    "metadata": {
+      "$ref": "#/$defs/workspaceMetadata"
+    },
+    "github": {
+      "$ref": "#/$defs/githubBinding"
+    },
+    "defaults": {
+      "$ref": "#/$defs/workspaceDefaults"
+    },
+    "platforms": {
+      "$ref": "#/$defs/platformMap"
+    },
+    "policy": {
+      "$ref": "#/$defs/policyConfig"
+    },
+    "sync": {
+      "$ref": "#/$defs/syncConfig"
+    }
+  },
+  "$defs": {
+    "platformName": {
+      "type": "string",
+      "enum": [
+        "common",
+        "claude",
+        "cursor",
+        "copilot",
+        "gemini",
+        "codex",
+        "windsurf"
+      ]
+    },
+    "workspaceMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "local",
+            "cloud",
+            "org"
+          ]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "githubBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "user",
+            "org"
+          ]
+        }
+      }
+    },
+    "workspaceDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/platformName"
+          },
+          "uniqueItems": true
+        },
+        "outputMode": {
+          "type": "string",
+          "enum": [
+            "merge",
+            "replace"
+          ]
+        }
+      }
+    },
+    "platformMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/platformName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/platformConfig"
+      }
+    },
+    "platformConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "instructions": {
+          "$ref": "#/$defs/instructionsConfig"
+        },
+        "commands": {
+          "$ref": "#/$defs/namedCommandMap"
+        },
+        "agents": {
+          "$ref": "#/$defs/namedEntryMap"
+        },
+        "rules": {
+          "$ref": "#/$defs/namedRuleMap"
+        },
+        "hooks": {
+          "$ref": "#/$defs/namedHookMap"
+        },
+        "settings": {
+          "type": "object"
+        },
+        "mcpServers": {
+          "$ref": "#/$defs/namedMcpServerMap"
+        }
+      }
+    },
+    "instructionsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content"
+      ],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "replace",
+            "append"
+          ]
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "namedCommandMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/commandEntry"
+      }
+    },
+    "namedEntryMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/baseEntry"
+      }
+    },
+    "namedRuleMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ruleEntry"
+      }
+    },
+    "namedHookMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/hookEntry"
+      }
+    },
+    "namedMcpServerMap": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/mcpServerEntry"
+      }
+    },
+    "baseEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "commandEntry": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEntry"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "allowedTools": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "ruleEntry": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEntry"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "hookEntry": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/baseEntry"
+        },
+        {
+          "type": "object",
+          "required": [
+            "event"
+          ],
+          "properties": {
+            "event": {
+              "type": "string",
+              "enum": [
+                "SessionStart",
+                "SessionEnd",
+                "PreToolUse",
+                "PostToolUse",
+                "PreCommit",
+                "PostCommit"
+              ]
+            },
+            "runtime": {
+              "type": "string",
+              "enum": [
+                "node",
+                "python",
+                "bash"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "mcpServerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "policyConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domains": {
+          "$ref": "#/$defs/domainPolicy"
+        }
+      }
+    },
+    "domainPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allow"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "union",
+            "narrow"
+          ]
+        },
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "syncConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nativeTargets": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/platformName"
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

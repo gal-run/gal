@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/project-config.schema.json",
+  "title": "GAL Project Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "gal/v1"
+    },
+    "kind": {
+      "const": "ProjectConfig"
+    },
+    "metadata": {
+      "$ref": "#/$defs/projectMetadata"
+    },
+    "inherit": {
+      "$ref": "#/$defs/inheritConfig"
+    },
+    "platforms": {
+      "$ref": "workspace-config.schema.json#/$defs/platformMap"
+    },
+    "policy": {
+      "$ref": "workspace-config.schema.json#/$defs/policyConfig"
+    }
+  },
+  "$defs": {
+    "projectMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspaceRef"
+      ],
+      "properties": {
+        "workspaceRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "inheritConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

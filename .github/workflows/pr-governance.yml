@@ -1,0 +1,35 @@
+# Require Issue Reference in PR Body
+name: PR Governance
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+concurrency:
+  group: ${{ format('{0}-{1}-pr-{2}', github.repository, github.workflow, github.event.pull_request.number) }}
+  cancel-in-progress: true
+permissions: {}
+jobs:
+  require-issue-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Require issue reference in PR body
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            const authorLogin = (pr.user?.login || '').toLowerCase();
+            const isAutomation = pr.user?.type === 'Bot' || authorLogin.endsWith('[bot]') || (context.actor||'').toLowerCase().endsWith('[bot]') || authorLogin.includes('dependabot') || authorLogin.includes('renovate');
+            if (isAutomation) { core.notice(`Skipping automation PR`); return; }
+            const pat = new RegExp(['\\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?|address(?:e[sd])?)\\b\\s*:?\\s+','(?:#\\d+|[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+#\\d+|https?:\\/\\/github\\.com\\/[^\\/\\s]+\\/[^\\/\\s]+\\/issues\\/\\d+)'].join(''),'i');
+            if (pat.test(body)) { console.log(`PR #${pr.number} ok`); return; }
+            const marker = '<!-- pr-issue-reference-guidance -->';
+            const guidance = [marker,'## Issue Link Required','','Add one of:','- `Fixes #123`','- `Closes #123`','- `Addresses #123`','','Reference public issues only. Do not mention private repos or internal infrastructure in public PRs.'].join('\n');
+            let commented = false;
+            try { const cs = await github.paginate(github.rest.issues.listComments,{owner:context.repo.owner,repo:context.repo.repo,issue_number:pr.number,per_page:100}); commented = cs.some(c=>(c.body||'').includes(marker)); } catch(e){}
+            if (!commented) { try { await github.rest.issues.createComment({owner:context.repo.owner,repo:context.repo.repo,issue_number:pr.number,body:guidance}); } catch(e){} }
+            core.setFailed('PR body must include an issue reference (e.g. "Fixes #123").');

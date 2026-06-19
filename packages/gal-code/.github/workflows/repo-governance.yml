@@ -1,0 +1,26 @@
+name: Repo Governance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  repo-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate bootstrap files
+        run: |
+          test -f README.md
+          test -f .github/CODEOWNERS
+          test -f docs/actions-policy.md
+          test -f docs/governance.md
+          test -f docs/release-runbook.md
+          test -f docs/migration-inventory.md

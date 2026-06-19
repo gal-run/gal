@@ -1,0 +1,55 @@
+name: Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('{0}-{1}-pr-{2}', github.repository, github.workflow, github.event.pull_request.number) || format('{0}-{1}-{2}', github.repository, github.workflow, github.ref_name) }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Public surface check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Scan the WHOLE tree (not just docs) so private-repo links, hosted-cloud
+          # topology, GitOps/cluster paths, GCP registry, and secret NAMES cannot
+          # re-enter the public surface through any file type.
+          #
+          # Excludes:
+          #  - build/vendor output dirs (node_modules, dist, .next, target, .git)
+          #  - this gate file + the legacy issue-gate (they list the patterns)
+          #  - cli/.../capture.rs: secret-redaction TEST fixtures embed sample
+          #    secret-shaped tokens on purpose; the redactor strips them at runtime.
+          #
+          # Patterns flag genuinely-private surface ONLY. The public carved
+          # packages (@gal-run/agent-network, @gal-run/swarm, the gal-cli-oss repo,
+          # gs://gal-* model/config buckets, and public runner-class labels) are
+          # intentionally shipped and are NOT listed here.
+          if grep -RInE \
+            --exclude-dir='node_modules' \
+            --exclude-dir='.git' \
+            --exclude-dir='dist' \
+            --exclude-dir='.next' \
+            --exclude-dir='target' \
+            --exclude='gate.yml' \
+            --exclude='issue-public-surface-check.yml' \
+            --exclude='capture.rs' \
+            'Scheduler-Systems/infra|gal-run-private|gal-private|ARC_APP_ID|ARC_PRIVATE_KEY|StratusCloudLabs|argocdgitops|firebaseapphosting-images|clusters/stratus|GAL_GITOPS_WRITE_TOKEN|GAL_REPO_READ_TOKEN|GCP_WORKLOAD_IDENTITY_PROVIDER|GCP_SERVICE_ACCOUNT|k3s-production|stratus-scheduler-systems|gal-services-openai-api-key|gal-services-secrets' \
+            .; then
+            echo "::error::Public repo contains internal-only references. Remove private repo links, hosted-cloud/GitOps topology, GCP registry paths, secret names, and internal infrastructure details."
+            exit 1
+          fi
+
+          echo "Public surface clean."

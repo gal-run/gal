@@ -1,0 +1,31 @@
+apiVersion: agent-os.dev/v1alpha1
+kind: AgentRuntime
+metadata:
+  name: bootstrap-runtime
+  revision: 1
+spec:
+  worker_pool:
+    min_workers: 2
+    max_workers: 8
+    # Bootstrap reconcile uses CLI/runtime utilization inputs to keep demand
+    # between these thresholds while staying inside the manifest cap.
+    scale_up_threshold: 0.7
+    scale_down_threshold: 0.2
+    lease_timeout_secs: 300
+    heartbeat_interval_secs: 30
+    max_retries: 3
+  memory:
+    vector_dimensions: 1536
+    kv_max_value_size: 1048576
+    graph_max_nodes: 1000000
+    episodic_retention_hours: 2160
+  governance:
+    enforcement_points:
+      - dispatch
+      - tool_call
+      - memory_access
+      - manifest_change
+    require_human_consent_for_destructive: true
+  improvement:
+    cadence_minutes: 60
+    requires_human_approval: true

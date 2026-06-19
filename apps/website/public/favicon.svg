@@ -1,0 +1,6 @@
+<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="36" height="36" rx="8" fill="black"/>
+  <path d="M8 12L18 6L28 12V18L18 12L8 18V12Z" fill="#00FF2A"/>
+  <path d="M8 18L18 12L28 18V24L18 18L8 24V18Z" fill="#00FF2A" fill-opacity="0.6"/>
+  <path d="M8 24L18 18L28 24V30L18 24L8 30V24Z" fill="#00FF2A" fill-opacity="0.3"/>
+</svg>

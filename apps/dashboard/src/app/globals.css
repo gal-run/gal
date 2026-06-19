@@ -1,0 +1,1705 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode for Tailwind v4.
+   The app toggles dark mode by adding the "dark" class to <html>.
+   Without this, Tailwind v4's dark: variants use prefers-color-scheme
+   (media query) instead and all dark: utility classes are silently ignored. */
+@variant dark (&:is(.dark, .dark *));
+
+/* ============================================================================
+   GAL Design Token System — Monochrome Edition
+
+   Three-layer architecture:
+   1. Primitive tokens (raw color values) - in @theme
+   2. Semantic tokens (meaning-based) - light/dark mode specific
+   3. Component tokens - applied via Tailwind utility classes
+
+   Design direction: Vercel-inspired light mode, Linear-inspired dark mode.
+   Color is semantic only — used for status dots, agent identity badges.
+   All structural UI is monochrome (black, white, grays).
+
+   References:
+   - https://vercel.com/design (light mode)
+   - https://linear.app (dark mode)
+   ============================================================================ */
+
+/* ============================================================================
+   LAYER 1: Primitive Tokens (Raw Color Values)
+   ============================================================================ */
+@theme {
+  /* Pure Neutrals — the monochrome palette */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+
+  /* Functional Colors — semantic only (status indicators, small dots) */
+  --color-red-100: #fee2e2;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-amber-100: #fef3c7;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-cyan-100: #cffafe;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+
+  /* Semantic success — used only for small status dots/badges, NOT buttons or accents */
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+
+  /* Typography */
+  --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", monospace;
+}
+
+/* ============================================================================
+   LAYER 2: Semantic Tokens (Meaning-Based)
+
+   These tokens define the PURPOSE of a color, not the color itself.
+   They change based on theme mode.
+   ============================================================================ */
+
+/* Light Mode — Vercel-inspired (Default)
+   Clean whites, crisp borders, black primary actions.
+   ========================================== */
+:root,
+.light.theme-subtle,
+.light:not(.theme-vivid) {
+  /* Surface Tokens */
+  --surface-base: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #fafafa;
+  --surface-overlay: #ffffff;
+  --surface-overlay-hover: #fafafa;
+
+  /* Sidebar */
+  --sidebar-bg: #fafafa;
+  --sidebar-border: #eaeaea;
+  --sidebar-text: #111111;
+  --sidebar-text-dim: #666666;
+  --sidebar-text-muted: #999999;
+  --sidebar-hover-bg: #f0f0f0;
+  --sidebar-active-bg: #f0f0f0;
+  --sidebar-active-text: #111111;
+  --sidebar-divider: #eaeaea;
+
+  /* Text Tokens */
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-on-accent: #ffffff;
+  --text-link: #000000;
+  --text-code: #171717;
+
+  /* Interactive Tokens — monochrome primary */
+  --interactive-primary: #000000;
+  --interactive-primary-hover: #171717;
+  --interactive-primary-active: #262626;
+  --interactive-secondary: #171717;
+  --interactive-secondary-hover: #262626;
+
+  /* Border Tokens */
+  --border-subtle: #eaeaea;
+  --border-default: #d4d4d4;
+  --border-strong: #a3a3a3;
+  --border-interactive: #000000;
+  --border-interactive-hover: #171717;
+
+  /* Status Tokens — semantic color, used only for dots/badges */
+  --status-success: #22c55e;
+  --status-warning: var(--color-amber-500);
+  --status-danger: var(--color-red-500);
+  --status-info: #0891b2;
+
+  /* Status Tokens — Text */
+  --status-success-text: #166534;
+  --status-warning-text: var(--color-amber-600);
+  --status-danger-text: var(--color-red-600);
+  --status-info-text: #0e7490;
+
+  /* Status Tokens — Lighter variants for badges/subtle UI */
+  --status-success-light: #f0fdf4;
+  --status-warning-light: #fffbeb;
+  --status-danger-light: #fef2f2;
+  --status-info-light: #ecfeff;
+
+  /* Badge Semantic Colors */
+  --badge-gray-bg: #f5f5f5;
+  --badge-gray-text: #525252;
+  --badge-green-bg: #f0fdf4;
+  --badge-green-text: #166534;
+  --badge-blue-bg: #eff6ff;
+  --badge-blue-text: #1e40af;
+  --badge-amber-bg: #fffbeb;
+  --badge-amber-text: #92400e;
+  --badge-red-bg: #fef2f2;
+  --badge-red-text: #991b1b;
+  --badge-purple-bg: #f5f3ff;
+  --badge-purple-text: #5b21b6;
+  --badge-active-bg: #000000;
+  --badge-active-text: #ffffff;
+
+  /* Accent Color — monochrome */
+  --accent-neon: #000000;
+  --accent-neon-bg: #f5f5f5;
+  --accent-neon-border: #e5e5e5;
+
+  /* External Brand Colors */
+  --brand-gal: #00ff2a;
+  --brand-vscode: #007acc;
+  --brand-vscode-accent: #1f9cf0;
+  --brand-vscode-text: #ffffff;
+  --brand-cursor: #d97757;
+  --brand-llm-analysis: #00d4ff;
+  --brand-github: #111111;
+  --brand-github-text: #ffffff;
+
+  /* Agent / Provider Brand Colors */
+  --brand-claude: #d97757;
+  --brand-claude-bg: #fff7ed;
+  --brand-claude-border: rgba(217, 119, 87, 0.25);
+  --brand-claude-text: #ffffff;
+  --brand-codex: #10a37f;
+  --brand-codex-bg: #ecfdf5;
+  --brand-codex-border: rgba(16, 163, 127, 0.2);
+  --brand-cursor-agent: #7b61ff;
+  --brand-cursor-agent-bg: #f5f3ff;
+  --brand-cursor-agent-border: rgba(123, 97, 255, 0.2);
+
+  /* Platform Brand Colors */
+  --brand-gemini: #7c3aed;
+  --brand-gemini-bg: #f5f3ff;
+  --brand-gemini-border: rgba(124, 58, 237, 0.2);
+
+  --brand-windsurf: #0891b2;
+  --brand-windsurf-bg: #ecfeff;
+  --brand-windsurf-border: rgba(8, 145, 178, 0.2);
+
+  --brand-copilot: #db2777;
+  --brand-copilot-bg: #fdf2f8;
+  --brand-copilot-border: rgba(219, 39, 119, 0.2);
+
+  /* Terminal/Console Backgrounds */
+  --terminal-bg: #111111;
+  --surface-inverse: #111111;
+  --border-inverse: #333333;
+  --text-inverse: #e5e5e5;
+  --text-inverse-muted: #a3a3a3;
+  --text-inverse-subtle: #737373;
+
+  /* Effect Tokens */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-accent: 0 0 0 2px #000000, 0 0 0 4px rgba(0, 0, 0, 0.08);
+
+  /* Card shadows */
+  --shadow-card: 0 0 0 1px #eaeaea;
+  --shadow-card-hover: 0 0 0 1px #d4d4d4;
+
+  --glow-subtle: rgba(0, 0, 0, 0.02);
+  --glow-medium: rgba(0, 0, 0, 0.04);
+  --selection-bg: rgba(0, 0, 0, 0.06);
+
+  /* Navigation Tokens */
+  --nav-item-selected-bg: #f0f0f0;
+  --nav-item-selected-text: #000000;
+  --nav-item-hover-bg: #f5f5f5;
+
+  /* Scrollbar Tokens */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+
+  /* ====================================
+     Legacy Variables (Backward Compatibility)
+     ==================================== */
+  --bg-primary: var(--surface-base);
+  --bg-secondary: var(--surface-raised);
+  --bg-tertiary: var(--surface-sunken);
+  --bg-code: #fafafa;
+  --text-muted: var(--text-tertiary);
+  --border-color: var(--border-subtle);
+  --skeleton-bg: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --accent: #000000;
+  --accent-light: #171717;
+  --accent-bg: #f5f5f5;
+  --accent-rgb: 0, 0, 0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --bg-error: var(--status-danger-light);
+  --border-error: var(--status-danger);
+  --text-error: var(--status-danger-text);
+  --color-warning: var(--status-warning);
+  --status-error: var(--status-danger);
+  --status-error-text: var(--status-danger-text);
+  --status-error-bg: var(--status-danger-light);
+  --status-error-border: var(--status-danger);
+  --status-warning-bg: var(--status-warning-light);
+  --status-warning-border: var(--status-warning);
+  --status-success-bg: var(--status-success-light);
+  --status-success-border: var(--status-success);
+  --error: var(--status-danger);
+  --error-text: var(--status-danger-text);
+  --border-primary: var(--border-default);
+  --border-secondary: var(--border-subtle);
+  --surface-hover: var(--surface-overlay-hover);
+
+  /* Code Syntax Highlighting - Light Mode */
+  --code-text: #171717;
+  --code-prompt: #999999;
+  --code-command: #171717;
+}
+
+/* Light Mode - Vivid
+   Subtle depth enhancement (no green — just stronger shadows)
+   ========================================== */
+.light.theme-vivid {
+  --interactive-primary: #000000;
+  --interactive-primary-hover: #171717;
+  --border-interactive: #000000;
+  --shadow-accent: 0 0 0 2px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.06), 0 12px 28px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --glow-medium: rgba(0, 0, 0, 0.08);
+  --selection-bg: rgba(0, 0, 0, 0.1);
+  --nav-item-selected-bg: rgba(0, 0, 0, 0.06);
+}
+
+/* Dark Mode — Linear-inspired (Default)
+   Deep dark backgrounds, high-contrast text, monochrome palette.
+   ========================================== */
+.dark:not(.theme-vivid),
+.dark.theme-subtle {
+  /* Surface Tokens */
+  --surface-base: #0a0a0a;
+  --surface-raised: #141414;
+  --surface-sunken: #0a0a0a;
+  --surface-overlay: #1a1a1a;
+  --surface-overlay-hover: #242424;
+
+  /* Text Tokens */
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-tertiary: #737373;
+  --text-on-accent: #0a0a0a;
+  --text-link: #ededed;
+  --text-code: #ededed;
+
+  /* Interactive Tokens — white on dark */
+  --interactive-primary: #ededed;
+  --interactive-primary-hover: #ffffff;
+  --interactive-primary-active: #d4d4d4;
+  --interactive-secondary: #a1a1a1;
+  --interactive-secondary-hover: #ededed;
+
+  /* Border Tokens */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-interactive: #ededed;
+  --border-interactive-hover: #ffffff;
+
+  /* Status Tokens (semantic dots only — keep colored) */
+  --status-success: var(--color-green-500);
+  --status-warning: var(--color-amber-500);
+  --status-danger: var(--color-red-500);
+  --status-info: var(--color-cyan-500);
+
+  /* Status Tokens — Text */
+  --status-success-text: var(--color-green-400);
+  --status-warning-text: var(--color-amber-400);
+  --status-danger-text: var(--color-red-400);
+  --status-info-text: var(--color-cyan-400);
+
+  /* Status Tokens — Lighter variants */
+  --status-success-light: rgba(34, 197, 94, 0.12);
+  --status-warning-light: rgba(245, 158, 11, 0.12);
+  --status-danger-light: rgba(239, 68, 68, 0.12);
+  --status-info-light: rgba(6, 182, 212, 0.12);
+
+  /* Badge Semantic Colors — Dark Mode */
+  --badge-gray-bg: rgba(163, 163, 163, 0.12);
+  --badge-gray-text: #d4d4d4;
+  --badge-green-bg: rgba(74, 222, 128, 0.12);
+  --badge-green-text: #86efac;
+  --badge-blue-bg: rgba(96, 165, 250, 0.12);
+  --badge-blue-text: #93C5FD;
+  --badge-amber-bg: rgba(251, 191, 36, 0.12);
+  --badge-amber-text: #FCD34D;
+  --badge-red-bg: rgba(248, 113, 113, 0.12);
+  --badge-red-text: #FCA5A5;
+  --badge-purple-bg: rgba(196, 181, 253, 0.12);
+  --badge-purple-text: #C4B5FD;
+  --badge-active-bg: #ffffff;
+  --badge-active-text: #000000;
+
+  /* Accent Color — monochrome (white on dark) */
+  --accent-neon: #ededed;
+  --accent-neon-bg: rgba(255, 255, 255, 0.06);
+  --accent-neon-border: rgba(255, 255, 255, 0.12);
+
+  /* External Brand Colors */
+  --brand-gal: #00ff2a;
+  --brand-vscode: #007acc;
+  --brand-vscode-accent: #1f9cf0;
+  --brand-vscode-text: #ffffff;
+  --brand-cursor: #d97757;
+  --brand-llm-analysis: #00d4ff;
+  --brand-github: #ffffff;
+  --brand-github-text: #0a0a0a;
+
+  /* Agent / Provider Brand Colors */
+  --brand-claude: #f0ab8a;
+  --brand-claude-bg: rgba(240, 171, 138, 0.12);
+  --brand-claude-border: rgba(240, 171, 138, 0.3);
+  --brand-claude-text: #ffffff;
+  --brand-codex: #34d399;
+  --brand-codex-bg: rgba(52, 211, 153, 0.12);
+  --brand-codex-border: rgba(52, 211, 153, 0.3);
+  --brand-cursor-agent: #a78bfa;
+  --brand-cursor-agent-bg: rgba(167, 139, 250, 0.12);
+  --brand-cursor-agent-border: rgba(167, 139, 250, 0.3);
+
+  /* Platform Brand Colors */
+  --brand-gemini: #c084fc;
+  --brand-gemini-bg: rgba(192, 132, 252, 0.1);
+  --brand-gemini-border: rgba(192, 132, 252, 0.3);
+
+  --brand-windsurf: #22d3ee;
+  --brand-windsurf-bg: rgba(34, 211, 238, 0.1);
+  --brand-windsurf-border: rgba(34, 211, 238, 0.3);
+
+  --brand-copilot: #f472b6;
+  --brand-copilot-bg: rgba(244, 114, 182, 0.1);
+  --brand-copilot-border: rgba(244, 114, 182, 0.3);
+
+  /* Terminal/Console */
+  --terminal-bg: #0a0a0a;
+  --surface-inverse: #0a0a0a;
+  --border-inverse: #2a2a2a;
+  --text-inverse: #ededed;
+  --text-inverse-muted: #b3b3b3;
+  --text-inverse-subtle: #737373;
+
+  /* Effect Tokens */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 0 0 2px rgba(255, 255, 255, 0.12);
+
+  --glow-subtle: rgba(255, 255, 255, 0.03);
+  --glow-medium: rgba(255, 255, 255, 0.06);
+  --selection-bg: rgba(255, 255, 255, 0.12);
+
+  /* Sidebar */
+  --sidebar-bg: #0a0a0a;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-text: #ededed;
+  --sidebar-text-dim: rgba(255, 255, 255, 0.6);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.4);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+  --sidebar-active-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-active-text: #ffffff;
+  --sidebar-divider: rgba(255, 255, 255, 0.06);
+
+  /* Navigation Tokens */
+  --nav-item-selected-bg: rgba(255, 255, 255, 0.08);
+  --nav-item-selected-text: #ffffff;
+  --nav-item-hover-bg: rgba(255, 255, 255, 0.04);
+
+  /* Scrollbar Tokens */
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #262626;
+  --scrollbar-thumb-hover: #404040;
+
+  /* Card shadows */
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-card-hover: 0 0 0 1px rgba(255, 255, 255, 0.12);
+
+  /* ====================================
+     Legacy Variables (Backward Compatibility)
+     ==================================== */
+  --bg-primary: var(--surface-base);
+  --bg-secondary: var(--surface-raised);
+  --bg-tertiary: var(--surface-sunken);
+  --bg-code: #141414;
+  --text-muted: var(--text-tertiary);
+  --border-color: var(--border-subtle);
+  --accent: var(--interactive-primary);
+  --accent-light: #ffffff;
+  --accent-bg: rgba(255, 255, 255, 0.06);
+  --accent-rgb: 237, 237, 237;
+  --bg-card: #141414;
+  --bg-card-hover: #1a1a1a;
+  --bg-error: var(--status-danger-light);
+  --border-error: var(--status-danger);
+  --text-error: var(--status-danger-text);
+  --color-warning: var(--status-warning);
+  --status-error: var(--status-danger);
+  --status-error-text: var(--status-danger-text);
+  --status-error-bg: var(--status-danger-light);
+  --status-error-border: var(--status-danger);
+  --status-warning-bg: var(--status-warning-light);
+  --status-warning-border: var(--status-warning);
+  --status-success-bg: var(--status-success-light);
+  --status-success-border: var(--status-success);
+  --error: var(--status-danger);
+  --error-text: var(--status-danger-text);
+  --border-primary: var(--border-default);
+  --border-secondary: var(--border-subtle);
+  --surface-hover: var(--surface-overlay-hover);
+
+  /* Code Syntax Highlighting - Dark Mode */
+  --code-text: #ededed;
+  --code-prompt: #737373;
+  --code-command: #ededed;
+}
+
+/* Dark Mode - Vivid
+   Slightly higher contrast borders, sharper shadows — still monochrome
+   ========================================== */
+.dark.theme-vivid {
+  /* Text Tokens */
+  --text-code: #ffffff;
+
+  /* Interactive Tokens */
+  --interactive-primary: #ffffff;
+  --interactive-primary-hover: #ffffff;
+  --border-interactive: #ffffff;
+
+  /* Effect Tokens */
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-accent: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  --glow-subtle: rgba(255, 255, 255, 0.04);
+  --glow-medium: rgba(255, 255, 255, 0.08);
+  --selection-bg: rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================================
+   System Preference Support
+   When no JS-set class is present, respect prefers-color-scheme.
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    /* Surface Tokens */
+    --surface-base: #0a0a0a;
+    --surface-raised: #141414;
+    --surface-sunken: #0a0a0a;
+    --surface-overlay: #1a1a1a;
+    --surface-overlay-hover: #242424;
+
+    /* Text Tokens */
+    --text-primary: #ededed;
+    --text-secondary: #a1a1a1;
+    --text-tertiary: #737373;
+    --text-on-accent: #0a0a0a;
+    --text-link: #ededed;
+    --text-code: #ededed;
+
+    /* Interactive Tokens */
+    --interactive-primary: #ededed;
+    --interactive-primary-hover: #ffffff;
+    --interactive-primary-active: #d4d4d4;
+    --interactive-secondary: #a1a1a1;
+    --interactive-secondary-hover: #ededed;
+
+    /* Border Tokens */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.2);
+    --border-interactive: #ededed;
+    --border-interactive-hover: #ffffff;
+
+    /* Status Tokens */
+    --status-success: var(--color-green-500);
+    --status-warning: var(--color-amber-500);
+    --status-danger: var(--color-red-500);
+    --status-info: var(--color-cyan-500);
+    --status-success-text: var(--color-green-400);
+    --status-warning-text: var(--color-amber-400);
+    --status-danger-text: var(--color-red-400);
+    --status-info-text: var(--color-cyan-400);
+    --status-success-light: rgba(34, 197, 94, 0.12);
+    --status-warning-light: rgba(245, 158, 11, 0.12);
+    --status-danger-light: rgba(239, 68, 68, 0.12);
+    --status-info-light: rgba(6, 182, 212, 0.12);
+
+    /* Badge Colors */
+    --badge-gray-bg: rgba(163, 163, 163, 0.12);
+    --badge-gray-text: #d4d4d4;
+    --badge-green-bg: rgba(74, 222, 128, 0.12);
+    --badge-green-text: #86efac;
+    --badge-blue-bg: rgba(96, 165, 250, 0.12);
+    --badge-blue-text: #93C5FD;
+    --badge-amber-bg: rgba(251, 191, 36, 0.12);
+    --badge-amber-text: #FCD34D;
+    --badge-red-bg: rgba(248, 113, 113, 0.12);
+    --badge-red-text: #FCA5A5;
+    --badge-purple-bg: rgba(196, 181, 253, 0.12);
+    --badge-purple-text: #C4B5FD;
+    --badge-active-bg: #ffffff;
+    --badge-active-text: #000000;
+
+    /* Accent */
+    --accent-neon: #ededed;
+    --accent-neon-bg: rgba(255, 255, 255, 0.06);
+    --accent-neon-border: rgba(255, 255, 255, 0.12);
+
+    /* Brand */
+    --brand-github: #ffffff;
+
+    /* Terminal */
+    --terminal-bg: #0a0a0a;
+
+    /* Effects */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-accent: 0 0 0 2px rgba(255, 255, 255, 0.12);
+    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --shadow-card-hover: 0 0 0 1px rgba(255, 255, 255, 0.12);
+    --glow-subtle: rgba(255, 255, 255, 0.03);
+    --glow-medium: rgba(255, 255, 255, 0.06);
+    --selection-bg: rgba(255, 255, 255, 0.12);
+
+    /* Sidebar */
+    --sidebar-bg: #0a0a0a;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-text: #ededed;
+    --sidebar-text-dim: rgba(255, 255, 255, 0.6);
+    --sidebar-text-muted: rgba(255, 255, 255, 0.4);
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+    --sidebar-active-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-active-text: #ffffff;
+    --sidebar-divider: rgba(255, 255, 255, 0.06);
+
+    /* Navigation */
+    --nav-item-selected-bg: rgba(255, 255, 255, 0.08);
+    --nav-item-selected-text: #ffffff;
+    --nav-item-hover-bg: rgba(255, 255, 255, 0.04);
+
+    /* Scrollbar */
+    --scrollbar-track: #0a0a0a;
+    --scrollbar-thumb: #262626;
+    --scrollbar-thumb-hover: #404040;
+
+    /* Legacy */
+    --bg-primary: var(--surface-base);
+    --bg-secondary: var(--surface-raised);
+    --bg-tertiary: var(--surface-sunken);
+    --bg-code: #141414;
+    --text-muted: var(--text-tertiary);
+    --border-color: var(--border-subtle);
+    --accent: var(--interactive-primary);
+    --accent-light: #ffffff;
+    --accent-bg: rgba(255, 255, 255, 0.06);
+    --accent-rgb: 237, 237, 237;
+    --bg-card: #141414;
+    --bg-card-hover: #1a1a1a;
+    --bg-error: var(--status-danger-light);
+    --border-error: var(--status-danger);
+    --text-error: var(--status-danger-text);
+    --color-warning: var(--status-warning);
+    --status-error: var(--status-danger);
+    --status-error-text: var(--status-danger-text);
+    --status-error-bg: var(--status-danger-light);
+    --status-error-border: var(--status-danger);
+    --status-warning-bg: var(--status-warning-light);
+    --status-warning-border: var(--status-warning);
+    --status-success-bg: var(--status-success-light);
+    --status-success-border: var(--status-success);
+    --error: var(--status-danger);
+    --error-text: var(--status-danger-text);
+    --border-primary: var(--border-default);
+    --border-secondary: var(--border-subtle);
+    --surface-hover: var(--surface-overlay-hover);
+
+    /* Code */
+    --code-text: #ededed;
+    --code-prompt: #737373;
+    --code-command: #ededed;
+  }
+}
+
+/* ============================================================================
+   LAYER 3: Base Styles & Semantic Class Overrides
+
+   Apply semantic tokens to HTML elements and override Tailwind utilities
+   to ensure consistent theming throughout the app
+   ============================================================================ */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased;
+    background: var(--surface-base);
+    color: var(--text-primary);
+    font-family: var(--font-family-sans);
+    letter-spacing: -0.015em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  a {
+    color: var(--text-link);
+    transition: color 0.15s ease;
+  }
+
+  a:hover {
+    color: var(--accent-light);
+  }
+
+  code {
+    color: var(--text-code);
+    font-family: var(--font-family-mono);
+  }
+
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--text-primary);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+/* Override Tailwind utility classes to use semantic tokens */
+@layer utilities {
+  .text-gray-400 {
+    color: var(--text-tertiary) !important;
+  }
+
+  .text-gray-500 {
+    color: var(--text-tertiary) !important;
+  }
+
+  .text-gray-600 {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-gray-700 {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-gray-900 {
+    color: var(--text-primary) !important;
+  }
+
+  .bg-white {
+    background-color: var(--surface-raised) !important;
+  }
+
+  .bg-gray-50 {
+    background-color: var(--surface-base) !important;
+  }
+
+  .bg-gray-100 {
+    background-color: var(--surface-sunken) !important;
+  }
+
+  .bg-gray-200 {
+    background-color: var(--border-subtle) !important;
+  }
+
+  .border-gray-100 {
+    border-color: var(--border-subtle) !important;
+  }
+
+  .border-gray-200 {
+    border-color: var(--border-subtle) !important;
+  }
+
+  .border-gray-300 {
+    border-color: var(--border-default) !important;
+  }
+
+  .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border-subtle) !important;
+  }
+
+  .hover\:bg-gray-50:hover {
+    background-color: var(--surface-overlay-hover) !important;
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: var(--surface-sunken) !important;
+  }
+
+  .placeholder\:text-gray-400::placeholder {
+    color: var(--text-tertiary) !important;
+  }
+
+  .shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  .shadow-md {
+    box-shadow: var(--shadow-md) !important;
+  }
+
+  .shadow-lg {
+    box-shadow: var(--shadow-lg) !important;
+  }
+
+  .hover\:shadow-md:hover {
+    box-shadow: var(--shadow-card-hover) !important;
+  }
+}
+
+/* ============================================================================
+   Component-Specific Styles
+   ============================================================================ */
+
+/* Gradient text — monochrome gradient */
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    #000000 0%,
+    #404040 50%,
+    #000000 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .gradient-text {
+  background: linear-gradient(
+    135deg,
+    #ededed 0%,
+    #a1a1a1 50%,
+    #ededed 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Section badge */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  text-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.section-badge:hover {
+  background: var(--surface-raised);
+}
+
+.dark .section-badge {
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  text-shadow: none;
+}
+
+/* Status pulse animation */
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Icon container — flat neutral background */
+.icon-container {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.icon-container:hover {
+  background: var(--border-subtle);
+  border-color: var(--border-default);
+}
+
+/* .green class now maps to neutral — backward compat */
+.icon-container.green {
+  background: var(--surface-sunken);
+  border-color: var(--border-subtle);
+}
+
+/* Card styles */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Button styles — monochrome */
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary {
+  background: var(--interactive-primary);
+  color: var(--text-on-accent);
+  border: 1px solid var(--interactive-primary);
+}
+
+.btn-primary:hover {
+  background: var(--interactive-primary-hover);
+  border-color: var(--interactive-primary-hover);
+}
+
+.btn-primary:active {
+  background: var(--interactive-primary-active);
+}
+
+.btn-secondary {
+  background: var(--surface-raised);
+  color: var(--interactive-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--interactive-secondary);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--glow-subtle);
+  border-color: var(--border-subtle);
+}
+
+/* Code block styles */
+.code-block {
+  background: var(--bg-code);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: var(--font-family-mono);
+  color: var(--text-code);
+}
+
+/* Focus states */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: var(--shadow-accent);
+  border-color: var(--border-interactive);
+}
+
+/* ============================================================================
+   Layout Components
+   ============================================================================ */
+
+/* Sidebar */
+.sidebar {
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border-subtle);
+  position: relative;
+  overflow: hidden;
+}
+
+:root .sidebar,
+.light .sidebar {
+  background: var(--sidebar-bg);
+  border-right-color: var(--sidebar-border);
+  box-shadow: none;
+}
+
+.dark .sidebar {
+  background: var(--sidebar-bg);
+  border-right-color: var(--sidebar-border);
+  box-shadow: 1px 0 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile header */
+.mobile-header {
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.dark .mobile-header {
+  background: rgba(10, 10, 10, 0.92);
+}
+
+/* Light mode sidebar: no decorative top stripe */
+:root .sidebar::before,
+.light .sidebar::before {
+  display: none;
+}
+
+/* Dark mode sidebar — subtle top line (monochrome) */
+.dark .sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  z-index: 1;
+}
+
+.sidebar-nav-item {
+  position: relative;
+}
+
+@keyframes dropdown-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ============================================================================
+   Visual Polish & Enhancements
+   ============================================================================ */
+
+.feature-card {
+  position: relative;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.feature-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.feature-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.feature-card:hover .feature-icon {
+  background: var(--border-subtle);
+  border-color: var(--border-default);
+}
+
+/* Dashboard cards */
+.dashboard-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Glass cards */
+.glass-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.dark .glass-card {
+  background: rgba(20, 20, 20, 0.7);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.dark .glass-card:hover {
+  background: rgba(30, 30, 30, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-card-hover), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.feature-icon svg,
+.feature-icon img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Enhanced buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Link buttons */
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.link-button:hover {
+  color: var(--text-secondary);
+  gap: 0.75rem;
+}
+
+.link-button svg {
+  transition: transform 0.2s ease;
+}
+
+.link-button:hover svg {
+  transform: translateX(2px);
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.status-success {
+  background: var(--status-success-light);
+  color: var(--status-success-text);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.status-warning {
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--status-warning);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.status-danger {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--status-danger);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.status-info {
+  background: rgba(6, 182, 212, 0.08);
+  color: var(--status-info);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+}
+
+/* Status dot */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04);
+  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Empty states */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-state-icon {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.empty-state-icon svg {
+  width: 40px;
+  height: 40px;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+}
+
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* Code blocks */
+.code-block {
+  background: var(--bg-code);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: var(--font-family-mono);
+  font-size: 0.8125rem;
+  color: var(--text-code);
+  overflow-x: auto;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.code-block:hover {
+  border-color: var(--border-default);
+}
+
+/* Section headers */
+.section-header {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.section-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* List items */
+.list-item {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  background: var(--glow-subtle);
+  border-bottom-color: transparent;
+}
+
+.list-item-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+/* Settings sections */
+.settings-section {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease;
+}
+
+.settings-section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-section-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-sunken);
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.settings-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    var(--surface-overlay-hover) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.8s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Staggered entrance animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-delay-1 { animation-delay: 0.05s; }
+.animate-delay-2 { animation-delay: 0.1s; }
+.animate-delay-3 { animation-delay: 0.15s; }
+.animate-delay-4 { animation-delay: 0.2s; }
+.animate-delay-5 { animation-delay: 0.25s; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 200ms ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slideDown { animation: slideDown 200ms cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.badge-success {
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
+}
+
+.badge-warning {
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+}
+
+.badge-info {
+  background: var(--badge-blue-bg);
+  color: var(--badge-blue-text);
+}
+
+.badge-neutral {
+  background: var(--badge-gray-bg);
+  color: var(--badge-gray-text);
+}
+
+.badge-danger {
+  background: var(--badge-red-bg);
+  color: var(--badge-red-text);
+}
+
+.badge-purple {
+  background: var(--badge-purple-bg);
+  color: var(--badge-purple-text);
+}
+
+/* Typography Hierarchy */
+.text-page-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.text-section-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.text-card-title {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+/* Tooltips */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  padding: 0.4375rem 0.75rem;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 12px 32px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  z-index: 1000;
+}
+
+.tooltip:hover .tooltip-content {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 1.5rem 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 100%;
+  background: var(--border-subtle);
+  margin: 0 1.5rem;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+/* ============================================================================
+   Light Mode Premium Enhancements
+   ============================================================================ */
+
+:root .dashboard-card [class*="text-2xl"],
+:root .dashboard-card [class*="text-3xl"],
+:root .glass-card [class*="text-2xl"],
+:root .glass-card [class*="text-3xl"],
+.light .dashboard-card [class*="text-2xl"],
+.light .dashboard-card [class*="text-3xl"],
+.light .glass-card [class*="text-2xl"],
+.light .glass-card [class*="text-3xl"] {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+:root input[type="text"],
+:root input[type="email"],
+:root input[type="password"],
+:root input[type="search"],
+:root input[type="url"],
+:root textarea,
+:root select,
+.light input[type="text"],
+.light input[type="email"],
+.light input[type="password"],
+.light input[type="search"],
+.light input[type="url"],
+.light textarea,
+.light select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:root input:focus,
+:root textarea:focus,
+:root select:focus,
+.light input:focus,
+.light textarea:focus,
+.light select:focus {
+  border-color: var(--border-interactive) !important;
+  box-shadow: var(--shadow-accent) !important;
+  outline: none;
+}
+
+:root tr:hover td,
+.light tr:hover td {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+:root a,
+:root button,
+:root [role="button"],
+:root input,
+:root select,
+:root textarea,
+.light a,
+.light button,
+.light [role="button"],
+.light input,
+.light select,
+.light textarea {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root nav a,
+.light nav a {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   Accessibility Helpers
+   ============================================================================ */
+
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #000000;
+    --text-secondary: #262626;
+    --border-default: #525252;
+  }
+
+  .dark {
+    --text-primary: #ffffff;
+    --text-secondary: #f5f5f5;
+    --border-default: rgba(255, 255, 255, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   Sidebar Footer Utilities (#3603)
+   ============================================================================ */
+
+/* Pulsing dot for live environment badge (Tailwind may not include this in v4) */
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* External link icon — nudge up-left on hover */
+.external-link-icon {
+  transition:
+    transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 150ms ease;
+}
+a:hover .external-link-icon {
+  transform: translate(-1px, -1px);
+}

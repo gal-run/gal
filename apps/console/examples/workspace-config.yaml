@@ -1,0 +1,69 @@
+apiVersion: gal/v1
+kind: WorkspaceConfig
+
+metadata:
+  id: scheduler-systems
+  displayName: Scheduler Systems
+  source: local
+  updatedAt: "2026-03-16T12:00:00Z"
+
+github:
+  owner: Scheduler-Systems
+  type: org
+
+defaults:
+  platforms:
+    - claude
+    - codex
+    - cursor
+  outputMode: merge
+
+platforms:
+  common:
+    instructions:
+      strategy: replace
+      content: |
+        Follow org-wide engineering standards.
+
+    commands:
+      review:
+        description: Standard review flow
+        content: |
+          Review for bugs, regressions, and missing tests.
+      test:
+        description: Standard test flow
+        content: |
+          Run the relevant automated checks before merge.
+
+    agents:
+      researcher:
+        description: Research-oriented helper
+        content: |
+          Focus on investigation, source-backed findings, and clear tradeoffs.
+
+    rules:
+      security:
+        content: |
+          Never commit secrets. Prefer least privilege and reversible changes.
+
+  codex:
+    instructions:
+      strategy: append
+      content: |
+        Prefer small patches and explicit verification output.
+
+policy:
+  domains:
+    mode: union
+    allow:
+      - github.com
+      - api.github.com
+      - openai.com
+
+sync:
+  nativeTargets:
+    claude: true
+    codex: true
+    cursor: true
+    gemini: false
+    windsurf: false

@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gal-accent: #00ff2a;
+  --color-gal-accent-hover: #00cc22;
+  --color-gal-bg-primary: #0a0a0a;
+  --color-gal-bg-secondary: #141414;
+  --color-gal-bg-tertiary: #1a1a1a;
+  --color-gal-border: rgba(255, 255, 255, 0.08);
+  --color-gal-text-primary: #ededed;
+  --color-gal-text-secondary: #a1a1a1;
+  --color-gal-text-muted: #737373;
+
+  --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  --gal-accent: #00ff2a;
+  --gal-accent-hover: #00cc22;
+  --gal-accent-bg: rgba(0, 255, 42, 0.08);
+  --gal-accent-border: rgba(0, 255, 42, 0.2);
+  --gal-surface-base: #0a0a0a;
+  --gal-surface-raised: #141414;
+  --gal-surface-overlay: #1a1a1a;
+  --gal-surface-overlay-hover: #242424;
+  --gal-border-subtle: rgba(255, 255, 255, 0.08);
+  --gal-border-default: rgba(255, 255, 255, 0.12);
+  --gal-border-strong: rgba(255, 255, 255, 0.2);
+  --gal-text-primary: #ededed;
+  --gal-text-secondary: #a1a1a1;
+  --gal-text-muted: #737373;
+  --gal-surface-chip: rgba(255, 255, 255, 0.08);
+}
+
+/* Base styles for extension popup */
+body {
+  background: var(--color-gal-bg-primary);
+  color: var(--color-gal-text-primary);
+  font-family: var(--font-family-sans);
+  margin: 0;
+  padding: 0;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(26, 26, 26, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-gal-border);
+  border-radius: 8px;
+}
+
+/* GAL accent colors */
+.gal-accent {
+  color: var(--color-gal-accent);
+}
+
+.bg-gal-accent {
+  background-color: var(--color-gal-accent);
+}
+
+.border-gal-accent {
+  border-color: var(--color-gal-accent);
+}
+
+/* Primary button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: var(--color-gal-accent);
+  color: black;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--color-gal-accent-hover);
+  box-shadow: 0 0 20px rgba(0, 255, 42, 0.3);
+}
+
+/* Secondary button */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: var(--color-gal-bg-tertiary);
+  color: var(--color-gal-text-primary);
+  border: 1px solid var(--color-gal-border);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-gal-text-muted);
+}
+
+/* Input field */
+.input-field {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background: var(--color-gal-bg-tertiary);
+  border: 1px solid var(--color-gal-border);
+  color: var(--color-gal-text-primary);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: var(--color-gal-text-muted);
+}
+
+.input-field:focus {
+  border-color: var(--color-gal-accent);
+  box-shadow: 0 0 0 2px rgba(0, 255, 42, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gal-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gal-bg-tertiary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 42, 0.3);
+}
+
+/* Glow effect */
+.glow {
+  box-shadow: 0 0 20px rgba(0, 255, 42, 0.2);
+}

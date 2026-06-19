@@ -1,0 +1,259 @@
+name: Sync Release
+
+on:
+  repository_dispatch:
+    types: [cli-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'CLI version to update'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version
+        id: version
+        run: |
+          VERSION="${{ github.event.client_payload.version || github.event.inputs.version }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update version in README
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/gal@[0-9]*\.[0-9]*\.[0-9]*/gal@${VERSION}/g" README.md
+          sed -i "s/gal\/v[0-9]*\.[0-9]*\.[0-9]*/gal\/v${VERSION}/g" README.md
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+          if ! grep -q "## \[$VERSION\]" CHANGELOG.md; then
+            {
+              head -1 CHANGELOG.md
+              echo ""
+              echo "## [$VERSION] - $DATE"
+              echo ""
+              echo "- See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/$VERSION) for details"
+              tail -n +2 CHANGELOG.md
+            } > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
+      - name: Update Homebrew Formula
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          HOMEBREW_PAYLOAD: ${{ toJson(github.event.client_payload.homebrew) }}
+        run: |
+          if [ -z "$HOMEBREW_PAYLOAD" ] || [ "$HOMEBREW_PAYLOAD" = "null" ]; then
+            echo "No Homebrew payload supplied; skipping Formula update"
+            exit 0
+          fi
+
+          python3 <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(os.environ["HOMEBREW_PAYLOAD"])
+          assets = payload["assets"]
+          base_url = f"https://github.com/Scheduler-Systems/gal-run/releases/download/v{os.environ['VERSION']}"
+
+          def tarball_sha(asset_key):
+            asset = assets.get(asset_key) or {}
+            tarball = asset.get("tarball") or {}
+            value = tarball.get("sha256")
+            if not value:
+              raise SystemExit(f"Missing Homebrew tarball sha256 for {asset_key}")
+            return value
+
+          formula = f"""class Gal < Formula
+            desc \"Governance Agentic Layer CLI\"
+            homepage \"https://gal.run\"
+            version \"{os.environ['VERSION']}\"
+
+            livecheck do
+              url :stable
+              strategy :github_latest
+            end
+
+            on_macos do
+              on_arm do
+                url \"{base_url}/gal-#{{version}}-darwin-arm64.tar.gz\"
+                sha256 \"{tarball_sha('darwinArm64')}\"
+              end
+
+              on_intel do
+                url \"{base_url}/gal-#{{version}}-darwin-x64.tar.gz\"
+                sha256 \"{tarball_sha('darwinX64')}\"
+              end
+            end
+
+            on_linux do
+              on_intel do
+                url \"{base_url}/gal-#{{version}}-linux-x64.tar.gz\"
+                sha256 \"{tarball_sha('linuxX64')}\"
+              end
+            end
+
+            def install
+              libexec.install \"gal\" => \"gal-real\"
+              bin.mkpath
+              bin.install_symlink(var/\"gal\"/version/\"gal\" => \"gal\")
+            end
+
+            def post_install
+              install_root = var/\"gal\"/version
+              install_root.mkpath
+
+              dest = install_root/\"gal\"
+              dest.delete if dest.exist?
+              dest.write((libexec/\"gal-real\").binread, mode: \"wb\")
+              dest.chmod(0755)
+            end
+
+            test do
+              assert_match version.to_s, shell_output(\"#{{bin}}/gal --version\")
+            end
+          end
+          """
+
+          Path("Formula").mkdir(exist_ok=True)
+          Path("Formula/gal.rb").write_text(formula)
+          PY
+
+      - name: Update Homebrew Cask
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          HOMEBREW_PAYLOAD: ${{ toJson(github.event.client_payload.homebrew) }}
+        run: |
+          if [ -z "$HOMEBREW_PAYLOAD" ] || [ "$HOMEBREW_PAYLOAD" = "null" ]; then
+            echo "No Homebrew payload supplied; skipping Cask update"
+            exit 0
+          fi
+
+          python3 <<'PY'
+          import json, os
+          from pathlib import Path
+
+          payload = json.loads(os.environ["HOMEBREW_PAYLOAD"])
+          assets = payload["assets"]
+          version = os.environ["VERSION"]
+          base_url = f"https://github.com/Scheduler-Systems/gal-run/releases/download/v{version}"
+
+          def tarball_sha(asset_key):
+            asset = assets.get(asset_key) or {}
+            tarball = asset.get("tarball") or {}
+            value = tarball.get("sha256")
+            if not value:
+              raise SystemExit(f"Missing Homebrew tarball sha256 for {asset_key}")
+            return value
+
+          cask = f"""cask "gal" do
+            arch arm: "arm64", intel: "x64"
+
+            version "{version}"
+            sha256 arm:    "{tarball_sha('darwinArm64')}",
+                   x86_64: "{tarball_sha('darwinX64')}"
+
+            url "{base_url}/gal-#{{version}}-darwin-#{{arch}}.tar.gz"
+            name "GAL"
+            desc "CLI for GAL — AI agent configuration governance"
+            homepage "https://gal.run"
+
+            livecheck do
+              url :stable
+              strategy :github_latest
+            end
+
+            binary "gal"
+
+            zap trash: [
+              "~/.gal",
+              "~/.config/gal",
+            ]
+          end
+          """
+
+          Path("Casks").mkdir(exist_ok=True)
+          Path("Casks/gal.rb").write_text(cask)
+          print(f"Updated Casks/gal.rb to v{version}")
+          PY
+
+      - name: Commit and push to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BRANCH="release/v${VERSION}"
+          PR_TITLE="[ci] Release v$VERSION"
+          PR_BODY="Automated release version update."
+          MERGE_SUBJECT="[ci] Release v$VERSION"
+
+          trigger_gate() {
+            gh workflow run gate.yml --ref "$BRANCH" --repo "${{ github.repository }}" || true
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md CHANGELOG.md Formula/gal.rb Casks/gal.rb
+          if ! git diff --staged --quiet; then
+            git commit -m "[ci] Release v$VERSION"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+
+            # Try pushing directly to main (works if bot has branch protection bypass)
+            if git push origin main 2>/dev/null; then
+              echo "Pushed release v$VERSION directly to main"
+            else
+              # Fallback: create PR with auto-merge
+              git checkout -b "$BRANCH"
+              git push origin "$BRANCH" --force
+              EXISTING_PR=$(gh pr list --repo "${{ github.repository }}" --head "$BRANCH" --base main --state open --json url --jq '.[0].url')
+              if [ -n "$EXISTING_PR" ]; then
+                echo "Release PR already open: $EXISTING_PR"
+                gh pr edit "$EXISTING_PR" --title "$PR_TITLE" --body "$PR_BODY" --repo "${{ github.repository }}"
+                trigger_gate
+                gh pr merge "$EXISTING_PR" --squash --auto --delete-branch --subject "$MERGE_SUBJECT" --body "$PR_BODY" --repo "${{ github.repository }}" || true
+              else
+                PR_URL=$(gh pr create --base main --head "$BRANCH" \
+                  --title "$PR_TITLE" \
+                  --body "$PR_BODY" \
+                  --repo "${{ github.repository }}")
+                echo "Created PR: $PR_URL"
+                trigger_gate
+                gh pr merge "$PR_URL" --squash --auto --delete-branch --subject "$MERGE_SUBJECT" --body "$PR_BODY" --repo "${{ github.repository }}" || true
+              fi
+            fi
+          else
+            echo "No changes to commit - version already up to date"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          # Skip if release already exists
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists, skipping"
+          else
+            gh release create "v$VERSION" \
+              --title "v$VERSION" \
+              --notes "Install or update:
+
+          \`brew tap scheduler-systems/gal-run https://github.com/Scheduler-Systems/gal-run.git && brew install gal\`
+
+          or
+
+          \`npm install -g @scheduler-systems/gal-run\`
+
+          See [npm package](https://www.npmjs.com/package/@scheduler-systems/gal-run/v/$VERSION) for details."
+          fi

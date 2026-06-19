@@ -1,0 +1,28 @@
+{
+  "name": "@gal-run/monorepo",
+  "private": true,
+  "description": "gal TS/JS workspace root (sdks/*, mcp/*, apps/*). Not published.",
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "sdks/*",
+    "mcp/*",
+    "apps/dashboard",
+    "apps/console",
+    "apps/browser-extension",
+    "apps/chrome-extension",
+    "apps/website",
+    "tools/demo-studio"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "build:affected": "turbo run build --filter='...[origin/main]'",
+    "test:affected": "turbo run test --filter='...[origin/main]'",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "@changesets/cli": "^2.27.0"
+  }
+}

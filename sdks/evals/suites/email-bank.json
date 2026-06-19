@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "gal.evals.suite.v1",
+  "id": "gal.ops-triage.email-bank.v1",
+  "name": "GAL Ops Bank Secure-Message Detection",
+  "description": "Detects bank encrypted secure-message notifications (secure@bank-example.com) so they can be labelled + surfaced, without confusing them with bank marketing (promo@bank-example.com, an explicit advertising tag). The agent never logs into the bank portal or handles 2FA. Synthetic fixtures; no real data.",
+  "subject": {
+    "kind": "managed_agent",
+    "agentId": "gal.ops-triage",
+    "taskType": "ops.email.bank_secure",
+    "repo": "example-org/example-repo"
+  },
+  "evaluatorId": "gal-evals.email-bank.v1",
+  "gates": [
+    { "metric": "overall", "minScore": 0.85 },
+    { "metric": "is_bank_secure", "minScore": 1.0 },
+    { "metric": "is_bank_marketing", "minScore": 0.9 }
+  ],
+  "fields": [
+    { "path": "is_bank_secure", "kind": "boolean_match", "weight": 2 },
+    { "path": "is_bank_marketing", "kind": "boolean_match", "weight": 1 }
+  ],
+  "cases": [
+    {
+      "id": "bank-secure-notification",
+      "title": "Bank secure-message notification -> secure",
+      "tags": ["bank", "secure", "positive"],
+      "input": {
+        "from": "secure@bank-example.com",
+        "senderName": "Example Bank",
+        "subject": "New secure message (reference 000000000)",
+        "body": "Hello, you have a new message in your secure mailbox. To view it, sign in to the secure site. Messages are sent encrypted."
+      },
+      "expected": { "is_bank_secure": true, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-secure-notification-2",
+      "title": "Another bank secure-message (different ref) -> secure",
+      "tags": ["bank", "secure", "positive"],
+      "input": {
+        "from": "secure@bank-example.com",
+        "senderName": "Example Bank",
+        "subject": "New secure message (reference 111111111)",
+        "body": "You have a new message in your secure mailbox. Messages are sent encrypted to the secure site."
+      },
+      "expected": { "is_bank_secure": true, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-marketing-promo",
+      "title": "Bank marketing -> NOT secure (marketing)",
+      "tags": ["bank", "marketing", "negative"],
+      "input": {
+        "from": "promo@bank-example.com",
+        "senderName": "Example Bank",
+        "subject": "How much will your pension be worth? (advertisement)",
+        "body": "New! A Smart service for managing your retirement savings. To unsubscribe from this mailing list, click here."
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": true }
+    },
+    {
+      "id": "bank-other-invoice",
+      "title": "A SaaS invoice is neither secure nor bank marketing",
+      "tags": ["negative", "invoice"],
+      "input": {
+        "from": "invoice+statements@billing.example.net",
+        "senderName": "Example SaaS",
+        "subject": "Your receipt from Example SaaS #0000-0000-0000",
+        "body": "Thanks for your payment."
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-other-bank",
+      "title": "A different bank's email is not an Example Bank secure message",
+      "tags": ["negative", "other-bank"],
+      "input": {
+        "from": "noreply@other-bank-example.com",
+        "senderName": "Other Bank",
+        "subject": "Monthly account statement",
+        "body": "Your statement is ready in the app."
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-noise-newsletter",
+      "title": "Generic newsletter is neither",
+      "tags": ["negative", "newsletter"],
+      "input": {
+        "from": "newsletter@news.example.net",
+        "senderName": "Example Newsletter",
+        "subject": "This week in AI",
+        "body": "Your weekly digest."
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-retailer-bank-word",
+      "title": "Retailer using the word 'bank' (+ a 'new message' phrase) is NEITHER",
+      "tags": ["negative", "collision", "guardrail"],
+      "input": {
+        "from": "promo@retailer-example.com",
+        "senderName": "Example Retailer",
+        "subject": "Bank-holiday mega deals",
+        "body": "You have a new message about our deals. Come to the store!"
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": false }
+    },
+    {
+      "id": "bank-marketing-sender-secure-words",
+      "title": "Bank marketing sender with secure-sounding body is MARKETING, not secure",
+      "tags": ["negative", "sender-precedence", "guardrail"],
+      "input": {
+        "from": "promo@bank-example.com",
+        "senderName": "Example Bank",
+        "subject": "Important update from the bank",
+        "body": "You have a new message in your secure area."
+      },
+      "expected": { "is_bank_secure": false, "is_bank_marketing": true }
+    }
+  ]
+}

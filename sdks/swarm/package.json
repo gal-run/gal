@@ -1,0 +1,38 @@
+{
+  "name": "@gal-run/swarm",
+  "version": "0.3.3",
+  "description": "GAL burst-compute swarm planning, leases, and provider-neutral scaling contracts",
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs/assets",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "proof:startup-latency": "npm run build && node scripts/proofs/startup-latency.mjs",
+    "proof:wave-300": "npm run build && node scripts/proofs/wave-300-dry-run.mjs",
+    "smoke:consumer": "node scripts/smoke/consumer-package.mjs",
+    "type-check": "tsc --noEmit",
+    "test": "npm run build && vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "Apache-2.0"
+}

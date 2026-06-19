@@ -1,0 +1,33 @@
+node_modules/
+.DS_Store
+*.log
+
+# build artifacts
+# kernel (C)
+kernel/dist/
+kernel/*.o
+kernel/src/*.o
+kernel/*.a
+kernel/*.so
+kernel/abi_conformance
+# cli (Rust)
+cli/target/
+# Go
+services/**/*.test
+# TS / turbo / next
+dist/
+.next/
+.turbo/
+
+# build artifacts
+services/**/server
+services/**/*.test
+**/dist/
+**/target/
+**/.next/
+node_modules/
+# Swift (apps/accessibility-app)
+**/.build/
+**/*.xcodeproj
+# Go tool binaries (tools/agent-git-graph builds ./cmd/agg)
+tools/agent-git-graph/agg-bin

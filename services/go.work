@@ -1,0 +1,7 @@
+// go.work - keeps the Go surface fast: one workspace over the single module.
+// A workspace (not a multi-module sprawl) so `go build ./...` stays cheap for
+// a small team. Cross-language fan-out happens only via the cgo binding to the
+// kernel ABI (kernel/include/gal/gal_decide.h).
+go 1.25.0
+
+use .

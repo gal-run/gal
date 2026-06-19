@@ -1,0 +1,83 @@
+name: Issue Public Surface Check
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan for internal references
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const title = context.payload.issue.title || '';
+            const body  = context.payload.issue.body  || '';
+            const text  = `${title}\n${body}`;
+
+            // Keep in sync with gate.yml — same patterns, applied to issue text
+            const internalPatterns = [
+              /gal-run-private/i,
+              /gal-private/i,
+              /gal-run\/gal-cli/,
+              /gal-run\/gal-vscode-extension/,
+              /gal-run\/gal-browser-extension/,
+              /gal-run\/agent-network/,
+              /gal-run\/gal-t/,
+              /gal-run\/gal-api/,
+              /gal-run\/gal-code/,
+              /Scheduler-Systems\/infra/,
+              /arc-linux/i,
+              /ci-standard-runc/i,
+              /docker-dind-x64/i,
+              /macos-host/i,
+              /bare-high-arm64/i,
+              /ARC_APP_ID/,
+              /ARC_PRIVATE_KEY/,
+              /gs:\/\/gal/i,
+            ];
+
+            const hit = internalPatterns.find(p => p.test(text));
+            if (!hit) {
+              core.info('Public surface clean.');
+              return;
+            }
+
+            const n = context.payload.issue.number;
+            core.warning(`Issue #${n} matched internal pattern — closing.`);
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: n,
+              state: 'closed',
+              state_reason: 'not_planned',
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: n,
+              body: [
+                '> [!CAUTION]',
+                '> **This issue has been automatically closed.**',
+                '>',
+                '> It contains references to internal infrastructure that must not appear in a public repository.',
+                '> Please transfer or re-open it in the appropriate **private** repository.',
+                '>',
+                '> If you believe this was triggered in error, contact a maintainer.',
+              ].join('\n'),
+            });
+
+            await github.rest.issues.lock({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: n,
+              lock_reason: 'off-topic',
+            });
+
+            core.setFailed(`Issue #${n} contained internal references — closed and locked.`);

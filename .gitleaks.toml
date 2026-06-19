@@ -1,0 +1,32 @@
+# gitleaks configuration for the gal open-source repo.
+#
+# Extends the built-in gitleaks ruleset and allowlists a small set of
+# KNOWN-FALSE-POSITIVE matches. None of these are live or real secrets:
+#   - cli/src/commands/capture.rs  : dummy tokens used as INPUT to the
+#     secret-redactor's own unit tests (the test asserts they get redacted).
+#   - packages/.../app/src/pages/layout.tsx : keyboard shortcut strings
+#     ("shift+alt+arrowup") mis-flagged as generic-api-key.
+#   - packages/.../docs/ai-tools/cursor.mdx : the literal placeholder
+#     "YOUR_API_KEY" in a documentation curl example.
+#   - sdks/swarm/docs/standard/requirements.md : the prose token "drain/shutdown".
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives: redactor test vectors, keybindings, doc placeholders"
+paths = [
+  '''cli/src/commands/capture\.rs''',
+  '''packages/gal-code/packages/app/src/pages/layout\.tsx''',
+  '''packages/gal-code/packages/docs/ai-tools/cursor\.mdx''',
+  '''sdks/swarm/docs/standard/requirements\.md''',
+]
+regexes = [
+  '''AKIAABCDEFGHIJ1234567890''',
+  '''AIzaSyA1234567890abcdefghij1234567890XY''',
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c''',
+  '''abcdef123456''',
+  '''YOUR_API_KEY''',
+  '''shift\+alt\+arrow(up|down)''',
+  '''drain/shutdown''',
+  '''-----BEGIN RSA PRIVATE KEY-----\\nMIIEowIBAAKCAQEA1234567890''',
+]

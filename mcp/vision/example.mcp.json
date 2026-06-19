@@ -1,0 +1,13 @@
+{
+  "mcp": {
+    "gal-vision": {
+      "type": "local",
+      "command": ["node", "/path/to/gal-vision-mcp-oss/dist/index.js"],
+      "environment": {
+        "GEMINI_API_KEY": "your-api-key-here",
+        "VISION_MODEL": "gemini-2.5-flash"
+      },
+      "enabled": true
+    }
+  }
+}

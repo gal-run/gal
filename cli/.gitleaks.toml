@@ -1,0 +1,10 @@
+# gitleaks config for gal-cli. Extends the default ruleset and allowlists the
+# redaction unit-test fixtures in src/commands/capture.rs — a redaction library
+# must contain sample/fake secrets to test that it redacts them. Verified
+# 2026-06-15: all secret matches are FAKE values inside the #[cfg(test)] module.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "capture.rs redaction-test fixtures (fake secrets by design)"
+paths = ['''src/commands/capture\.rs''']

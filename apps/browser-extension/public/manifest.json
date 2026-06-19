@@ -1,0 +1,134 @@
+{
+  "manifest_version": 3,
+  "name": "GAL - Governance Agentic Layer",
+  "version": "0.0.674",
+  "description": "Access your organization's approved AI agent commands and policies",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "identity",
+    "alarms",
+    "scripting"
+  ],
+  "optional_permissions": [
+    "downloads",
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://api.gal.run/*",
+    "https://app.gal.run/*",
+    "https://claude.ai/*",
+    "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
+    "https://github.com/*",
+    "https://lh3.googleusercontent.com/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>",
+    "https://aistudio.google.com/*",
+    "https://app.higgsfield.ai/*",
+    "https://app.klingai.com/*",
+    "https://higgsfield.ai/*",
+    "https://lab.klingai.com/*",
+    "https://ideogram.ai/*",
+    "https://jules.google.com/*",
+    "https://klingai.com/*",
+    "https://leonardo.ai/*",
+    "https://midjourney.com/*",
+    "https://pika.art/*",
+    "https://console.runpod.io/*",
+    "https://runpod.io/*",
+    "https://runwayml.com/*",
+    "https://sora.chatgpt.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "commands": {
+    "open-command-palette": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Open GAL command palette"
+    },
+    "_execute_workflow_palette": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+G",
+        "mac": "Command+Shift+G"
+      },
+      "description": "Open GAL workflow injection palette"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://app.gal.run/*"],
+      "js": ["auth-bridge.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://midjourney.com/*",
+        "https://ideogram.ai/*",
+        "https://leonardo.ai/*",
+        "https://runwayml.com/*",
+        "https://pika.art/*",
+        "https://aistudio.google.com/*",
+        "https://klingai.com/*",
+        "https://app.klingai.com/*",
+        "https://lab.klingai.com/*",
+        "https://higgsfield.ai/*",
+        "https://app.higgsfield.ai/*",
+        "https://jules.google.com/*",
+        "https://sora.chatgpt.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": [
+        "https://app.gal.run/*",
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://midjourney.com/*",
+        "https://ideogram.ai/*",
+        "https://leonardo.ai/*",
+        "https://runwayml.com/*",
+        "https://pika.art/*",
+        "https://aistudio.google.com/*",
+        "https://klingai.com/*",
+        "https://app.klingai.com/*",
+        "https://lab.klingai.com/*",
+        "https://higgsfield.ai/*",
+        "https://app.higgsfield.ai/*",
+        "https://jules.google.com/*",
+        "https://sora.chatgpt.com/*"
+      ]
+    }
+  ]
+}
