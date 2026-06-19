@@ -1,0 +1,57 @@
+name: Publish agents-schema
+
+# Manually-triggered trusted publish of @gal-run/gal-agents (sdks/agents-schema)
+# to the public npm registry via OIDC — no long-lived token, no 2FA prompt.
+#
+# One-time setup on npmjs.com (account/org owner): configure a Trusted Publisher
+# for the @gal-run/gal-agents package ->
+#   Repository: gal-run/gal
+#   Workflow:   publish-agents-schema.yml
+#   Environment: (leave blank)
+# Docs: https://docs.npmjs.com/trusted-publishers
+#
+# Bump sdks/agents-schema/package.json "version" before running (npm refuses to
+# republish an existing version). Use the dry-run input first to validate.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Pack and validate only — do NOT publish"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # required for npm trusted publishing (OIDC) + provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm (trusted publishing requires npm >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Install workspace dependencies
+        run: npm install
+
+      - name: Type-check, build, and test @gal-run/gal-agents
+        run: |
+          npm run type-check -w @gal-run/gal-agents
+          npm run build -w @gal-run/gal-agents
+          npm run test -w @gal-run/gal-agents
+
+      - name: Publish (dry run)
+        if: ${{ inputs.dry-run }}
+        run: npm publish -w @gal-run/gal-agents --provenance --access public --dry-run
+
+      - name: Publish to npm via trusted publishing (OIDC)
+        if: ${{ !inputs.dry-run }}
+        run: npm publish -w @gal-run/gal-agents --provenance --access public
