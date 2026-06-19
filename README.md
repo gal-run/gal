@@ -49,7 +49,7 @@ consumers, the rest).
 | `kernel/`     | C      | pure-C reference monitor (core + JSON shell) + frozen C ABI + tests | source (embedded via C ABI) + header |
 | `services/`   | Go     | auth, gateway, mcp-gateway, mcp, dispatch, repo, sdlc, team, swarm, governance, gal-rag, gal-inference, mal | `ghcr.io/gal-run/<svc>` images |
 | `sdks/`       | TS     | agents-schema, agent-network, contracts, swarm, prediction, evals, sandbox | npm `@gal-run/*` |
-| `mcp/`        | TS     | chrome, terminal, ide, vision, computer-use, gal-mcp             | npm `@gal-run/mcp-*` |
+| `mcp/`        | TS     | chrome, terminal, ide, vision, computer-use, gal-mcp             | npm `@gal-run/gal-*-mcp` |
 | `apps/`       | TS/JS  | `dashboard/` (Next.js, deployed), `console/`, `website/`, browser/chrome extensions, accessibility-app | deployed |
 | `packages/`   | TS     | `gal-code` — the coding agent (app + desktop/electron)           | app |
 | `agents/`     | Rust   | `agent-os`, `super-agent`                                        | source |
@@ -64,6 +64,10 @@ consumers, the rest).
 
 The root `justfile` (mirrored by a thin `Makefile`) delegates to each
 ecosystem's native tool — no Bazel.
+
+> **First-time setup:** `just all` compiles but does not install dependencies.
+> Run `npm install` (repo root — the `sdks/` + `mcp/` + `apps/` TS workspace) and
+> `bun install` in `packages/gal-code` once before building those ecosystems.
 
 ```bash
 just kernel     # make/cc  -> compile pure-C core (frozen C ABI header)
@@ -101,8 +105,9 @@ gal sync              # distribute the canonical config to your agents
 
 ## MCP servers
 
-gal publishes MCP servers as standalone npm packages: `@gal-run/mcp-chrome`,
-`@gal-run/mcp-terminal`, `@gal-run/mcp-ide`, `@gal-run/mcp-vision`. The hosted
+gal publishes MCP servers as standalone npm packages: `@gal-run/gal-chrome-mcp`,
+`@gal-run/gal-terminal-use-mcp`, `@gal-run/gal-ide-use-mcp`, `@gal-run/gal-vision-mcp`,
+`@gal-run/gal-computer-use-mcp`, and `@gal-run/gal-mcp`. The hosted
 governance MCP endpoint is `https://api.gal.run/mcp` (OAuth on first use):
 
 ```json
