@@ -163,8 +163,29 @@ demo-studio/
 ## Requirements
 
 - Node.js 18+
-- FFmpeg (auto-installed via npm)
+- FFmpeg and FFprobe (system prerequisite — must be installed and on your `PATH`)
 - macOS 10.15+ (Windows support planned)
+
+### Installing FFmpeg
+
+Demo Studio invokes the system `ffmpeg`/`ffprobe` binaries directly. They are
+**not** bundled with this package (the upstream `ffmpeg`/`ffprobe` builds are
+GPL-licensed and are intentionally not redistributed by this Apache-2.0 /
+MIT-licensed tool). Install them yourself:
+
+```bash
+# macOS
+brew install ffmpeg
+
+# Ubuntu / Debian
+sudo apt install ffmpeg
+
+# Windows
+choco install ffmpeg
+```
+
+Run `demo-studio check` (or `node dist/cli/index.js check`) to verify they are
+detected on your `PATH`.
 
 ## Environment Variables
 

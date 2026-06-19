@@ -30,8 +30,6 @@
     "commander": "^12.0.0",
     "chokidar": "^3.5.3",
     "fluent-ffmpeg": "^2.1.2",
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@ffprobe-installer/ffprobe": "^1.4.1",
     "sharp": "^0.33.2"
   },
   "devDependencies": {
