@@ -552,10 +552,10 @@ mod tests {
 
     // A minimal, valid manifest (flow style for compactness).
     const MIN: &str = r#"
-owners: [{id: shay, tier: human}]
+owners: [{id: alice, tier: human}]
 identities:
-  mi: {tier: agent, can_buy: false, issued_by: shay}
-  gh: {tier: agent, can_buy: false, issued_by: shay}
+  mi: {tier: agent, can_buy: false, issued_by: alice}
+  gh: {tier: agent, can_buy: false, issued_by: alice}
 funding:
   pool: {auto_recharge: false, ring_fenced: pending}
 grants:
@@ -565,7 +565,7 @@ grants:
     funding: pool
     identities: [mi, gh]
     capabilities:
-      - {capability: "read:repo", scope: "x", why: "y", granted_by: shay, revocable: true}
+      - {capability: "read:repo", scope: "x", why: "y", granted_by: alice, revocable: true}
 "#;
 
     fn has(v: &[String], needle: &str) -> bool {
@@ -587,33 +587,33 @@ grants:
 
     #[test]
     fn human_identity_reference_fails() {
-        let y = MIN.replace("identities: [mi, gh]", "identities: [mi, gh, shay]");
+        let y = MIN.replace("identities: [mi, gh]", "identities: [mi, gh, alice]");
         let e = errs(&y);
         assert!(has(&e, "HUMAN identity") && has(&e, "Rule #1"));
     }
 
     #[test]
     fn empty_owners_blocked() {
-        let y = MIN.replace("owners: [{id: shay, tier: human}]", "owners: []");
+        let y = MIN.replace("owners: [{id: alice, tier: human}]", "owners: []");
         assert!(has(&errs(&y), "owners is missing/empty"));
     }
 
     #[test]
     fn issued_by_must_be_human() {
-        let y = MIN.replace("mi: {tier: agent, can_buy: false, issued_by: shay}", "mi: {tier: agent, can_buy: false, issued_by: mallory}");
+        let y = MIN.replace("mi: {tier: agent, can_buy: false, issued_by: alice}", "mi: {tier: agent, can_buy: false, issued_by: mallory}");
         assert!(has(&errs(&y), "issuance chain broken"));
     }
 
     #[test]
     fn granted_by_non_owner_fails() {
-        let y = MIN.replace("granted_by: shay", "granted_by: mallory");
+        let y = MIN.replace("granted_by: alice", "granted_by: mallory");
         assert!(has(&errs(&y), "not a human owner"));
     }
 
     #[test]
     fn granted_by_non_string_fails_closed() {
         // Type confusion: a numeric granted_by must not silently skip the grantor check.
-        let y = MIN.replace("granted_by: shay", "granted_by: 123");
+        let y = MIN.replace("granted_by: alice", "granted_by: 123");
         assert!(has(&errs(&y), "granted_by must be a string"));
     }
 
@@ -667,7 +667,7 @@ grants:
 
     #[test]
     fn forbidden_grant_key_blocked() {
-        let y = MIN.replace("posture: report_only\n", "posture: report_only\n    acts_as: shay\n");
+        let y = MIN.replace("posture: report_only\n", "posture: report_only\n    acts_as: alice\n");
         assert!(has(&errs(&y), "forbidden key"));
     }
 
@@ -691,7 +691,7 @@ grants:
 
     #[test]
     fn identity_must_be_agent_tier() {
-        let y = MIN.replace("mi: {tier: agent, can_buy: false, issued_by: shay}", "mi: {tier: human, can_buy: false, issued_by: shay}");
+        let y = MIN.replace("mi: {tier: agent, can_buy: false, issued_by: alice}", "mi: {tier: human, can_buy: false, issued_by: alice}");
         assert!(has(&errs(&y), "must be tier: agent"));
     }
 
@@ -709,7 +709,7 @@ grants:
     posture: execute
     can_buy: "Y"
     funding: pool
-    acts_as: shay
+    acts_as: alice
     identities: [founder_pat]
     capabilities:
       - {capability: "transfer:funds", scope: "*", why: "x", granted_by: alpha, revocable: false}

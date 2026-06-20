@@ -295,9 +295,9 @@ mod tests {
     // a granted, signed mandate with SYNTHETIC non-zero caps for spend-routing logic tests
     fn granted(officer: i64, board: i64) -> Value {
         y(&format!(r#"
-owner: shay
+owner: alice
 status: granted
-granted_by: shay
+granted_by: alice
 mandate: {{max_officer_spend_usd: {officer}, max_board_spend_usd: {board}}}
 owner_reserved: [change_mandate, live_billing_or_pricing, security_rules_first_deploy,
                  entity_or_captable, bet_the_company_spend, appoint_or_replace_board]
