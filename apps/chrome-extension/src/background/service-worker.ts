@@ -1058,6 +1058,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  return true;
  }
 
+ // Browser-use: get enhanced interactive elements (with browser-use metadata)
+ if (message.type === "BROWSER_USE_GET_ENHANCED_ELEMENTS") {
+ (async () => {
+ try {
+ const tabs = await chrome.tabs.query({
+ active: true,
+ currentWindow: true,
+ });
+ const tabId = tabs[0]?.id;
+ if (!tabId) {
+ sendResponse({ error: "No active tab" });
+ return;
+ }
+ const [result] = await chrome.scripting.executeScript({
+ target: { tabId },
+ func: getInteractiveElements,
+ });
+ const elements = result?.result;
+ if (!elements) {
+ sendResponse({ error: "Failed to get elements" });
+ return;
+ }
+ // Optionally show labels as well so the user can see indices
+ await chrome.scripting.executeScript({
+ target: { tabId },
+ func: showLabels,
+ args: [elements.elements],
+ });
+ sendResponse({ elements: elements.elements });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
  // Browser-use: click element by index
  if (message.type === "BROWSER_USE_CLICK") {
  const index = message.index as number;
@@ -1159,6 +1195,121 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  func: removeLabels,
  });
  sendResponse({ cleared: true });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ // ── Chrome API Bridge ───────────────────────────────────────────────
+
+ if (message.type === "CHROME_API_TABS_QUERY") {
+ (async () => {
+ try {
+ const queryInfo = (message.queryInfo || {}) as chrome.tabs.QueryInfo;
+ const tabs = await chrome.tabs.query(queryInfo);
+ sendResponse({ tabs });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_TABS_CREATE") {
+ (async () => {
+ try {
+ const createProperties = (message.createProperties ||
+ {}) as chrome.tabs.CreateProperties;
+ const tab = await chrome.tabs.create(createProperties);
+ sendResponse({ tab });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_TABS_REMOVE") {
+ (async () => {
+ try {
+ const tabIds = message.tabIds as number | number[];
+ if (Array.isArray(tabIds)) {
+ await chrome.tabs.remove(tabIds);
+ } else {
+ await chrome.tabs.remove(tabIds);
+ }
+ sendResponse({ removed: true });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_TABGROUPS_QUERY") {
+ (async () => {
+ try {
+ const queryInfo = (message.queryInfo ||
+ {}) as chrome.tabGroups.QueryInfo;
+ const groups = await chrome.tabGroups.query(queryInfo);
+ sendResponse({ groups });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_TABGROUPS_UPDATE") {
+ (async () => {
+ try {
+ const groupId = message.groupId as number;
+ const updateProperties = (message.updateProperties ||
+ {}) as chrome.tabGroups.UpdateProperties;
+ const group = await chrome.tabGroups.update(groupId, updateProperties);
+ sendResponse({ group });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_BOOKMARKS_SEARCH") {
+ (async () => {
+ try {
+ const query = message.query as string;
+ const results = await chrome.bookmarks.search(query);
+ sendResponse({ results });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_HISTORY_SEARCH") {
+ (async () => {
+ try {
+ const query = (message.query || {}) as chrome.history.HistoryQuery;
+ const results = await chrome.history.search(query);
+ sendResponse({ results });
+ } catch (e) {
+ sendResponse({ error: String(e) });
+ }
+ })();
+ return true;
+ }
+
+ if (message.type === "CHROME_API_WINDOWS_CREATE") {
+ (async () => {
+ try {
+ const createData = (message.createData ||
+ {}) as chrome.windows.CreateData;
+ const window = await chrome.windows.create(createData);
+ sendResponse({ window });
  } catch (e) {
  sendResponse({ error: String(e) });
  }
