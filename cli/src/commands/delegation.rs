@@ -81,10 +81,15 @@ fn str_set(v: Option<&Value>) -> BTreeSet<String> {
 }
 
 fn is_granted(mandate: &Value) -> bool {
-    let owner = mandate.get("owner").and_then(|v| v.as_str());
-    owner.is_some()
-        && mandate.get("status").and_then(|v| v.as_str()) == Some("granted")
-        && mandate.get("granted_by").and_then(|v| v.as_str()) == owner
+    // Fail closed on a blank/whitespace owner or granted_by: a truncated or tampered
+    // mandate ("" == "") must stay inert, never count as a live owner signature.
+    let owner = mandate.get("owner").and_then(|v| v.as_str()).map(str::trim).filter(|s| !s.is_empty());
+    let granted_by = mandate.get("granted_by").and_then(|v| v.as_str()).map(str::trim).filter(|s| !s.is_empty());
+    match (owner, granted_by) {
+        (Some(owner), Some(granted_by)) =>
+            mandate.get("status").and_then(|v| v.as_str()) == Some("granted") && granted_by == owner,
+        _ => false,
+    }
 }
 
 fn within_limit(decision: &Value, caps: &Value) -> bool {
@@ -253,6 +258,13 @@ fn cmd_route(mandate_path: &Path, decision: &str, json: bool) -> Result<()> {
         let who = if v.approver == "owner" { v.approver.red().bold() } else { v.approver.green().bold() };
         println!("approver: {} ({})  active={}\n  {}", who, v.tier, v.active, v.reason);
     }
+    // Fail closed for shell/CI callers that gate on the exit code: a decision that is not
+    // autonomously actionable (routes to the owner, or the mandate is inert) exits non-zero,
+    // mirroring `gal capability validate`. JSON consumers read `.approver`/`.active` instead.
+    if v.approver == "owner" || !v.active {
+        let _ = std::io::Write::flush(&mut std::io::stdout());
+        std::process::exit(2);
+    }
     Ok(())
 }
 
@@ -264,6 +276,12 @@ fn cmd_hitl(action: &str, json: bool) -> Result<()> {
     } else {
         let r = if required { "HUMAN REQUIRED".red().bold() } else { "autonomous".green() };
         println!("{} — {}", r, reason);
+    }
+    // Fail closed: a human-in-the-loop verdict exits non-zero so a shell caller using
+    // `gal delegation hitl … && act` cannot slip the gate. JSON consumers read `.required`.
+    if required {
+        let _ = std::io::Write::flush(&mut std::io::stdout());
+        std::process::exit(2);
     }
     Ok(())
 }
@@ -327,6 +345,18 @@ authorities:
         let v = route(&d(r#"{kind: spend, amount_usd: 10}"#), &m);
         assert_eq!(v.approver, "owner");
         assert!(!v.active);
+    }
+    #[test] fn blank_owner_mandate_stays_inert() {
+        // An all-blank ("truncated"/tampered) mandate must NOT count as a live owner
+        // signature ("" == "" is not a grant) — it routes to owner AND stays inert.
+        for m in [
+            y("owner: \"\"\nstatus: granted\ngranted_by: \"\"\nmandate: {max_officer_spend_usd: 100, max_board_spend_usd: 1000}\nauthorities:\n  spend: {decider: cfo, escalates_to: [board, owner]}"),
+            y("owner: \"   \"\nstatus: granted\ngranted_by: \"   \"\nmandate: {max_officer_spend_usd: 100, max_board_spend_usd: 1000}\nauthorities:\n  spend: {decider: cfo, escalates_to: [board, owner]}"),
+        ] {
+            let v = route(&d(r#"{kind: spend, amount_usd: 10}"#), &m);
+            assert_eq!(v.approver, "owner", "blank mandate must route to owner");
+            assert!(!v.active, "blank mandate must be inert");
+        }
     }
     #[test] fn zero_caps_delegate_no_spend() {
         assert_eq!(route(&d(r#"{kind: spend, amount_usd: 1}"#), &granted(0, 0)).approver, "owner");
