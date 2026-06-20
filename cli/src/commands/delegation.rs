@@ -1,5 +1,5 @@
-//! `gal delegation` — the governance ENGINE (the PDP), ported from Scheduler-Systems'
-//! `agent_toolkit/authority.py` + `hitl.py` so the routing/HITL DECISION lives in GAL, not
+//! `gal delegation` — the governance ENGINE (the PDP), ported to Rust so the
+//! routing/HITL DECISION lives in GAL, not
 //! hardcoded in a product fleet. The fleet keeps only the thin PEP (it calls these and then does the
 //! LangGraph `interrupt()`); the decision of *who approves* / *does this need a human* is GAL's.
 //!

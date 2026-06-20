@@ -1,6 +1,6 @@
 //! `gal capability` — the CapabilityManifest governance gate.
 //!
-//! Faithful Rust port of Scheduler-Systems' `check_capability_coverage.py` so that **GAL**
+//! The governance coverage gate, ported to Rust so that **GAL**
 //! (not a bespoke Python script in a product repo) is the enforcing authority for the
 //! governance charter. Machine-enforces, over a CapabilityManifest (`capabilities.yaml`):
 //!   * Rule #1 — never mix human/agent identities (no human-tier identity referenced by a
