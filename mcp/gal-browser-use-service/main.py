@@ -31,7 +31,7 @@ class HealthResponse(BaseModel):
 
 class AgentRunRequest(BaseModel):
     task: str
-    model: str = "gpt-4o"
+    model: str = "gemini-2.5-flash"  # cost default; override per-request
     max_steps: int = Field(default=10, ge=1, le=100)
     start_url: str | None = None
     extension_bridge_url: str | None = None
@@ -143,7 +143,7 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     try:
         from browser_use.agent.service import Agent
         from browser_use.browser.session import BrowserSession
-        from browser_use.llm.models import ChatOpenAI
+        from browser_use.llm.models import ChatOpenAI, ChatGoogle
     except ImportError as exc:
         raise HTTPException(status_code=500, detail=f"browser-use not installed: {exc}")
 
@@ -167,7 +167,8 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     )
     await browser.start()
 
-    llm = ChatOpenAI(model=req.model)
+    # Provider routing: Gemini Flash by default (cost), OpenAI still available on request.
+    llm = ChatGoogle(model=req.model) if req.model.startswith("gemini") else ChatOpenAI(model=req.model)
     agent = Agent(
         task=req.task,
         llm=llm,
