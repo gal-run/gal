@@ -1,5 +1,6 @@
 export const GAL_EVAL_SUITE_SCHEMA_VERSION = 'gal.evals.suite.v1' as const
 export const GAL_EVAL_REPORT_SCHEMA_VERSION = 'gal.evals.report.v1' as const
+export const GAL_EVAL_PREDICTIONS_SCHEMA_VERSION = 'gal.evals.predictions.v1' as const
 
 export type GalEvalSubjectKind =
   | 'managed_agent'
@@ -101,4 +102,19 @@ export interface GalEvalReport {
   metrics: GalEvalMetricResult[]
   cases: GalEvalCaseResult[]
   suggestions: string[]
+}
+
+export interface GalEvalPrediction {
+  caseId: string
+  output: Record<string, unknown>
+  metadata?: Record<string, unknown>
+}
+
+export interface GalEvalPredictionFile {
+  schemaVersion: typeof GAL_EVAL_PREDICTIONS_SCHEMA_VERSION
+  suiteId: string
+  subject?: GalEvalSubject
+  generatedAt?: string
+  predictions: GalEvalPrediction[]
+  metadata?: Record<string, unknown>
 }

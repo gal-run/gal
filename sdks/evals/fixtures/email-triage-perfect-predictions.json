@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gal.evals.predictions.v1",
+  "suiteId": "gal.ops-triage.email.v1",
+  "subject": {
+    "kind": "managed_agent",
+    "agentId": "gal.ops-triage",
+    "taskType": "ops.email.triage",
+    "version": "fixture-perfect"
+  },
+  "generatedAt": "2026-05-16T00:00:00.000Z",
+  "predictions": [
+    {
+      "caseId": "email-newsletter-news",
+      "output": { "label": "example-news", "createTask": false, "archive": true }
+    },
+    {
+      "caseId": "email-cloud-billing",
+      "output": { "label": "cloud", "createTask": true, "archive": false }
+    },
+    {
+      "caseId": "email-review-digest",
+      "output": { "label": "review", "createTask": false, "archive": true }
+    },
+    {
+      "caseId": "email-vcs-ci-success",
+      "output": { "label": "vcs", "createTask": false, "archive": true }
+    },
+    {
+      "caseId": "email-directory-report",
+      "output": { "label": "directory", "createTask": false, "archive": true }
+    },
+    {
+      "caseId": "email-bank-transaction",
+      "output": { "label": "bank-example", "createTask": false, "archive": false }
+    },
+    {
+      "caseId": "email-platform-action",
+      "output": { "label": "platform", "createTask": true, "archive": false }
+    }
+  ],
+  "metadata": {
+    "source": "synthetic fixture"
+  }
+}
