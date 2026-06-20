@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal-evals-predictions.schema.json",
+  "title": "GAL Evaluation Predictions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "suiteId", "predictions"],
+  "properties": {
+    "schemaVersion": { "const": "gal.evals.predictions.v1" },
+    "suiteId": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "predictions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["caseId", "output"],
+        "properties": {
+          "caseId": { "type": "string", "minLength": 1 },
+          "output": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
