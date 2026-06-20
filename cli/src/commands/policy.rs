@@ -81,7 +81,11 @@ async fn cmd_list(client: ApiClient, org: Option<String>, json: bool) -> Result<
             }
 
             let empty = Vec::new();
-            let items = policies.as_array().unwrap_or(&empty);
+            // governance-svc returns an envelope: {"policies": [...], "total": N}
+            let items = policies
+                .get("policies")
+                .and_then(|v| v.as_array())
+                .unwrap_or(&empty);
             println!(
                 "\n{} Policies for {} ({})",
                 "Policies:".blue().bold(),
@@ -93,7 +97,7 @@ async fn cmd_list(client: ApiClient, org: Option<String>, json: bool) -> Result<
             for policy in items {
                 let id = policy.get("id").and_then(|v| v.as_str()).unwrap_or("—");
                 let name = policy.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
-                let enabled = policy.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
+                let enabled = policy.get("isActive").and_then(|v| v.as_bool()).unwrap_or(false);
                 let icon = if enabled { "✓".green() } else { "✗".red() };
                 println!("  {} {} [{}] {}", icon, name.white(), id.dimmed(), if enabled { "enabled" } else { "disabled" });
             }
@@ -126,10 +130,12 @@ async fn cmd_create(
     spinner.set_message(format!("Creating policy '{}'...", name));
     spinner.enable_steady_tick(std::time::Duration::from_millis(100));
 
+    // governance-svc expects {name, rules:<string>}; it reads org from the JWT.
+    // `rules` is stored as a JSON string, so serialize the parsed content object.
     let body = serde_json::json!({
         "org": org,
         "name": name,
-        "content": parsed_content,
+        "rules": parsed_content.to_string(),
     });
 
     match client
@@ -161,12 +167,13 @@ async fn cmd_update(client: ApiClient, id: &str, content: &str) -> Result<()> {
     spinner.set_message(format!("Updating policy {}...", id));
     spinner.enable_steady_tick(std::time::Duration::from_millis(100));
 
+    // governance-svc routes PATCH /policies/{id} and expects {rules:<string>}.
     let body = serde_json::json!({
-        "content": parsed_content,
+        "rules": parsed_content.to_string(),
     });
 
     match client
-        .put::<serde_json::Value>(&format!("/policies/{}", id), Some(&body))
+        .patch::<serde_json::Value>(&format!("/policies/{}", id), Some(&body))
         .await
     {
         Ok(result) => {
