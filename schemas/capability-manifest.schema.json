@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/capability-manifest.schema.json",
+  "$id": "https://schemas.gal.run/gal/v1/capability-manifest.schema.json",
   "title": "GAL Capability Manifest",
   "description": "Declares which AGENT (never human) identities each deployed agent authenticates as, the capabilities it is granted, and the ring-fenced funding it may spend from. The structural invariants below are encoded in this schema; the RELATIONAL invariants (granted_by must be a declared human owner, identity references must resolve, every deployed graph must have a grant) are enforced by `gal capability validate`. Boolean fields MUST be canonical true/false (never the YAML-1.1 on/off/yes/no, which parsers disagree on).",
   "type": "object",
