@@ -13,7 +13,7 @@ import { spawnSync } from "child_process"
 export default defineConfig({
   site: config.url,
   base: "/docs",
-  output: "server",
+  output: "static",
   adapter: cloudflare({
     imageService: "passthrough",
   }),

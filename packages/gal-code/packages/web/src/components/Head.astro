@@ -52,3 +52,24 @@ if (isDocs) {
   <meta property="og:image" content={ogImage} />
   <meta property="twitter:image" content={ogImage} />
 )}
+
+{/*
+  Locale auto-redirect, client-side. Previously handled by src/middleware.ts, but
+  middleware does not run for static pages under `output: "static"`. Only fires at
+  the `/docs` root; reuses the same `matchLocale` so the behavior is unchanged.
+*/}
+<script>
+  import { matchLocale } from "../i18n/locales"
+  const p = location.pathname
+  if (p === "/docs" || p === "/docs/") {
+    const ck = document.cookie
+      .split(";")
+      .map((s) => s.trim())
+      .find((s) => s.startsWith("oc_locale="))
+    const fromCookie = ck ? matchLocale(decodeURIComponent(ck.slice("oc_locale=".length))) : null
+    const fromNav =
+      (navigator.languages ?? [navigator.language]).map((l) => matchLocale(l)).find(Boolean) ?? null
+    const loc = fromCookie ?? fromNav
+    if (loc && loc !== "root") location.replace("/docs/" + loc + "/")
+  }
+</script>
