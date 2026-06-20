@@ -1,0 +1,8 @@
+[
+  {
+    "name": "example-public-fact",
+    "task": "On the page, find and report the latest stable Python version number.",
+    "start_url": "https://www.python.org/downloads/",
+    "success_substring": "3.1"
+  }
+]

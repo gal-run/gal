@@ -58,6 +58,13 @@ class AgentRunResponse(BaseModel):
     steps_taken: int
     gif_path: str | None = None
     video_path: str | None = None
+    # M4a metrics: populated none-guarded from the AgentHistoryList. usage may be
+    # None (no LLM calls / cost calc off); is_successful() returns bool | None.
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_cost: float | None = None
+    duration_s: float | None = None
+    is_successful: bool | None = None
 
 class DOMEnhancedParseRequest(BaseModel):
     url: str
@@ -261,14 +268,30 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     )
     await browser.start()
 
-    # Provider routing: Gemini Flash by default (cost), OpenAI still available on request.
-    llm = ChatGoogle(model=req.model) if req.model.startswith("gemini") else ChatOpenAI(model=req.model)
+    # Code-controlled entry URL: deterministic navigation (the harness owns where the run
+    # starts); grounding stays with the LLM. start_url is already SSRF-validated above.
+    if req.start_url:
+        await browser.navigate_to(req.start_url)
+
+    # Provider routing: Gemini Flash by default (cost). Non-gemini models use the
+    # OpenAI-compatible client; when LLM_BASE_URL is set it targets a local/self-hosted
+    # endpoint (e.g. MLX UI-TARS), otherwise the default OpenAI API.
+    if req.model.startswith("gemini"):
+        llm = ChatGoogle(model=req.model)
+    else:
+        _openai_kwargs: dict[str, Any] = {"model": req.model}
+        _base_url = os.getenv("LLM_BASE_URL")
+        if _base_url:
+            _openai_kwargs["base_url"] = _base_url
+            _openai_kwargs["api_key"] = os.getenv("LLM_API_KEY", "mlx")
+        llm = ChatOpenAI(**_openai_kwargs)
     agent = Agent(
         task=req.task,
         llm=llm,
         browser_session=browser,
         use_vision=True,
         generate_gif=str(gif_path),
+        calculate_cost=True,
     )
 
     try:
@@ -282,12 +305,18 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     await bridge.close()
 
     videos = sorted(str(p) for p in replay_dir.glob("*.webm"))
+    usage = history.usage  # UsageSummary | None (None if cost calc off / no LLM calls)
     return AgentRunResponse(
         success=True,
         result=history.final_result() or "",
         steps_taken=history.number_of_steps(),
         gif_path=str(gif_path) if gif_path.exists() else None,
         video_path=videos[0] if videos else None,
+        input_tokens=usage.total_prompt_tokens if usage else None,
+        output_tokens=usage.total_completion_tokens if usage else None,
+        total_cost=usage.total_cost if usage else None,
+        duration_s=history.total_duration_seconds(),
+        is_successful=history.is_successful(),
     )
 
 @app.post(
