@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 )
 
 type contextKey string
@@ -26,7 +26,9 @@ const (
 func Middleware(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, _, err := jwtauth.FromContext(r.Context())
+			// jwx v3's jwt.Token dropped PrivateClaims(); read the claims map that
+			// jwtauth.FromContext already returns (second value) instead.
+			token, claims, err := jwtauth.FromContext(r.Context())
 			if err != nil {
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
@@ -37,7 +39,6 @@ func Middleware(ja *jwtauth.JWTAuth) func(http.Handler) http.Handler {
 				return
 			}
 
-			claims := token.PrivateClaims()
 			ctx := r.Context()
 
 			if sub, ok := claims["user_id"].(string); ok {
