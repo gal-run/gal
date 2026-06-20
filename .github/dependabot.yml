@@ -30,12 +30,14 @@ updates:
         applies-to: version-updates
         patterns: ["*"]
 
-  # npm — the app dirs that currently carry open security alerts
+  # npm — the app dirs that currently carry open security alerts.
+  # NOTE: packages/gal-code/packages/web is BUN-managed (bun.lock), not npm —
+  # an npm bump there can't update bun.lock and breaks `bun install
+  # --frozen-lockfile` in the gal-code CI job, so it is intentionally excluded.
   - package-ecosystem: npm
     directories:
       - "/"
       - "/apps/website"
-      - "/packages/gal-code/packages/web"
       - "/tools/demo-studio"
     schedule:
       interval: weekly
