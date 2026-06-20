@@ -170,6 +170,10 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env().add_directive("gal=info".parse()?))
         .with_target(false)
+        // Diagnostic logs MUST go to stderr: the MCP servers (terminal/vision/browser/
+        // chrome-extension/computer-use) speak JSON-RPC 2.0 over stdout, so any log line
+        // on stdout corrupts the protocol stream for the connected client.
+        .with_writer(std::io::stderr)
         .init();
 
     let cli = Cli::parse();
