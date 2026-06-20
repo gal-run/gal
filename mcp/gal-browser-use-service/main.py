@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 import aiosqlite
@@ -40,6 +42,8 @@ class AgentRunResponse(BaseModel):
     success: bool
     result: str
     steps_taken: int
+    gif_path: str | None = None
+    video_path: str | None = None
 
 class DOMEnhancedParseRequest(BaseModel):
     url: str
@@ -161,9 +165,15 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
         "--disable-setuid-sandbox",
     ]
 
+    # Replay capture (video evidence): annotated GIF + Playwright session video.
+    replay_dir = Path(os.getenv("REPLAY_OUTPUT_DIR", "/tmp/gal-replays")) / uuid.uuid4().hex
+    replay_dir.mkdir(parents=True, exist_ok=True)
+    gif_path = replay_dir / "run.gif"
+
     browser = BrowserSession(
         headless=False,
         args=extra_chromium_args,
+        record_video_dir=str(replay_dir),
     )
     await browser.start()
 
@@ -174,6 +184,7 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
         llm=llm,
         browser_session=browser,
         use_vision=True,
+        generate_gif=str(gif_path),
     )
 
     try:
@@ -186,10 +197,13 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     await browser.close()
     await bridge.close()
 
+    videos = sorted(str(p) for p in replay_dir.glob("*.webm"))
     return AgentRunResponse(
         success=True,
         result=str(result),
         steps_taken=getattr(agent, "steps_taken", 0),
+        gif_path=str(gif_path) if gif_path.exists() else None,
+        video_path=videos[0] if videos else None,
     )
 
 @app.post("/dom/enhanced-parse", response_model=DOMEnhancedParseResponse)
