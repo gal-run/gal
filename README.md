@@ -99,8 +99,8 @@ cargo install gal-cli
 
 ```bash
 gal scan              # discover existing AI agent configs
-gal approve --local   # standardize into ~/.gal/config.yaml
-gal sync              # distribute the canonical config to your agents
+gal init              # scaffold gal config in this project (.gal/config.yaml)
+gal sync              # pull + apply the approved org config (~/.gal/config.yaml)
 ```
 
 ## MCP servers
