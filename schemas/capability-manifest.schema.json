@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal/v1/capability-manifest.schema.json",
+  "title": "GAL Capability Manifest",
+  "description": "Declares which AGENT (never human) identities each deployed agent authenticates as, the capabilities it is granted, and the ring-fenced funding it may spend from. The structural invariants below are encoded in this schema; the RELATIONAL invariants (granted_by must be a declared human owner, identity references must resolve, every deployed graph must have a grant) are enforced by `gal capability validate`. Boolean fields MUST be canonical true/false (never the YAML-1.1 on/off/yes/no, which parsers disagree on).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "owners", "identities", "grants"],
+  "properties": {
+    "apiVersion": { "const": "gal/v1" },
+    "kind": { "const": "CapabilityManifest" },
+    "version": { "type": "integer" },
+    "owners": {
+      "description": "Humans — the top tier. Own/grant/approve; never given to an agent. Must be non-empty with at least one tier:human.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/owner" }
+    },
+    "identities": {
+      "description": "Agent (NHI) identities. Each is spend-only (can_buy:false) and issued by a human owner.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/identity" }
+    },
+    "funding": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/funding" }
+    },
+    "grants": {
+      "description": "One capability grant per deployed graph (langgraph.json). Default-deny.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/grant" }
+    }
+  },
+  "$defs": {
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tier"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "tier": { "const": "human" },
+        "role": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "can_buy", "issued_by"],
+      "properties": {
+        "tier": { "const": "agent" },
+        "kind": { "type": "string" },
+        "can_buy": { "const": false, "description": "Agents never procure — must be the boolean false." },
+        "issued_by": { "type": "string", "minLength": 1, "description": "The human owner who issued this identity (the only legal cross-tier link)." },
+        "env": { "type": "string" },
+        "secret_ref": { "type": "string" },
+        "shared": { "type": "boolean" },
+        "spends_from": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "funding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["auto_recharge", "ring_fenced"],
+      "properties": {
+        "purpose": { "type": "string" },
+        "auto_recharge": { "type": "boolean", "description": "Must be a real boolean; may not be true unless ring_fenced is true." },
+        "ring_fenced": {
+          "description": "true (provisioned), false, or the literal 'pending' (founder action outstanding).",
+          "oneOf": [ { "type": "boolean" }, { "const": "pending" } ]
+        },
+        "max_usd_exposure": { "type": ["number", "null"] },
+        "separate_from_main_card": { "type": ["string", "boolean"] },
+        "funds_identities": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      }
+    },
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["posture", "can_buy", "identities", "capabilities"],
+      "properties": {
+        "posture": { "const": "report_only", "description": "Probation: agents propose, never execute." },
+        "can_buy": { "const": false },
+        "funding": { "type": "string" },
+        "runtime": { "type": "string" },
+        "identities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/capability" }
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "scope", "why", "granted_by", "revocable"],
+      "properties": {
+        "capability": {
+          "type": "string",
+          "description": "verb:scope. The verb prefix MUST be allow-listed (read/post/propose/write/git) — never a procurement/execute verb.",
+          "pattern": "^(read|post|propose|write|git):"
+        },
+        "scope": { "type": "string", "minLength": 1 },
+        "why": { "type": "string", "minLength": 1 },
+        "granted_by": { "type": "string", "minLength": 1, "description": "Must be a declared human owner (enforced by the validator)." },
+        "revocable": { "const": true }
+      }
+    }
+  }
+}
