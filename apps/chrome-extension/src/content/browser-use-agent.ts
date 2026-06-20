@@ -32,8 +32,19 @@ interface WindowWithGal extends Window {
  __galBrowserUseLabelOverlayId?: string;
 }
 
-/** Check if an element has inline or likely JS event listeners. */
-function hasJsListener(el: Element): boolean {
+export function getInteractiveElements(): ElementMap {
+ // NOTE: This function is serialized via Function.prototype.toString and
+ // re-parsed in the page context by chrome.scripting.executeScript, so it
+ // must be fully SELF-CONTAINED. All helpers it depends on
+ // (hasJsListener, isInViewport, getComputedAx, collectInteractiveElements)
+ // are inlined below as nested function declarations so the serialized
+ // source references nothing from module scope.
+ const win = window as WindowWithGal;
+ const results: LabeledElement[] = [];
+ const seen = new Set<Element>();
+
+ /** Check if an element has inline or likely JS event listeners. */
+ function hasJsListener(el: Element): boolean {
  const htmlEl = el as HTMLElement;
  if (
  htmlEl.onclick != null ||
@@ -73,10 +84,10 @@ function hasJsListener(el: Element): boolean {
  // ignore
  }
  return false;
-}
+ }
 
-/** Determine whether an element's bounding rect is within the viewport + threshold. */
-function isInViewport(rect: DOMRect, threshold = 1000): boolean {
+ /** Determine whether an element's bounding rect is within the viewport + threshold. */
+ function isInViewport(rect: DOMRect, threshold = 1000): boolean {
  const vw = window.innerWidth;
  const vh = window.innerHeight;
  const scrollX = window.scrollX;
@@ -87,10 +98,10 @@ function isInViewport(rect: DOMRect, threshold = 1000): boolean {
  rect.right >= -threshold + scrollX &&
  rect.left <= vw + threshold + scrollX
  );
-}
+ }
 
-/** Try to get computed role / name from Chrome's experimental AX APIs. */
-function getComputedAx(el: Element): { role?: string; name?: string } {
+ /** Try to get computed role / name from Chrome's experimental AX APIs. */
+ function getComputedAx(el: Element): { role?: string; name?: string } {
  try {
  const anyEl = el as unknown as Record<string, unknown>;
  const role =
@@ -105,16 +116,16 @@ function getComputedAx(el: Element): { role?: string; name?: string } {
  } catch {
  return {};
  }
-}
+ }
 
-/** Recursively collect interactive elements from a root document/shadow root. */
-function collectInteractiveElements(
+ /** Recursively collect interactive elements from a root document/shadow root. */
+ function collectInteractiveElements(
  root: Document | ShadowRoot,
  results: LabeledElement[],
  seen: Set<Element>,
  inShadow: boolean,
  inIframe: boolean,
-): number {
+ ): number {
  let index = results.length;
 
  const interactiveSelectors = [
@@ -284,12 +295,7 @@ function collectInteractiveElements(
  }
 
  return index;
-}
-
-export function getInteractiveElements(): ElementMap {
- const win = window as WindowWithGal;
- const results: LabeledElement[] = [];
- const seen = new Set<Element>();
+ }
 
  // Start from the top-level document
  collectInteractiveElements(document, results, seen, false, false);
@@ -315,8 +321,24 @@ export function getInteractiveElements(): ElementMap {
 }
 
 export function showLabels(elements?: LabeledElement[]): { labeled: number } {
+ // NOTE: This function is serialized via Function.prototype.toString and
+ // re-parsed in the page context by chrome.scripting.executeScript, so it
+ // must be fully SELF-CONTAINED. The module-scope helper it depends on
+ // (removeLabels) is inlined below as a nested function declaration so the
+ // serialized source references nothing from module scope.
  const win = window as WindowWithGal;
  const elems = elements || win.__galBrowserUseElementMap || [];
+
+ /** Remove any existing label overlay container. */
+ function removeLabels(): void {
+ const win = window as WindowWithGal;
+ const existing = win.__galBrowserUseLabelOverlayId
+ ? document.getElementById(win.__galBrowserUseLabelOverlayId)
+ : document.getElementById("gal-browser-use-label-container");
+ if (existing) existing.remove();
+ win.__galBrowserUseLabelOverlayId = undefined;
+ }
+
  removeLabels();
 
  const container = document.createElement("gal-browser-use-labels");
