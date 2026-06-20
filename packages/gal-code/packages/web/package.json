@@ -15,15 +15,15 @@
     "@astrojs/cloudflare": "12.6.6",
     "@astrojs/markdown-remark": "6.3.1",
     "@astrojs/solid-js": "5.1.0",
-    "@astrojs/starlight": "0.40.0",
-    "@fontsource/ibm-plex-mono": "5.2.7",
+    "@astrojs/starlight": "0.34.3",
+    "@fontsource/ibm-plex-mono": "5.2.5",
     "@shikijs/transformers": "3.20.0",
     "@solid-primitives/resize-observer": "2.1.5",
     "@types/luxon": "catalog:",
     "ai": "catalog:",
     "astro": "5.18.2",
     "diff": "catalog:",
-    "js-base64": "3.7.8",
+    "js-base64": "3.7.7",
     "lang-map": "0.4.0",
     "luxon": "catalog:",
     "marked": "catalog:",
@@ -33,12 +33,12 @@
     "shiki": "catalog:",
     "solid-js": "catalog:",
     "toolbeam-docs-theme": "0.4.8",
-    "vscode-languageserver-types": "3.18.0"
+    "vscode-languageserver-types": "3.17.5"
   },
   "devDependencies": {
     "@gal-run/code": "workspace:*",
     "@types/node": "catalog:",
-    "@astrojs/check": "0.9.9",
+    "@astrojs/check": "0.9.6",
     "typescript": "catalog:"
   }
 }
