@@ -182,6 +182,181 @@ const CHROME_EXTENSION_GAL_TOOLS = [
       properties: {},
     },
   },
+  {
+    name: "chrome_extension_tabGroups_create",
+    description: "Create a tab group from the specified tab IDs.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabIds: {
+          type: "array",
+          items: { type: "number" },
+          description: "Array of tab IDs to group",
+        },
+        title: {
+          type: "string",
+          description: "Optional title for the tab group",
+        },
+        color: {
+          type: "string",
+          description:
+            "Optional color for the tab group (e.g., grey, blue, red, yellow, green, pink, purple, cyan)",
+        },
+      },
+      required: ["tabIds"],
+    },
+  },
+  {
+    name: "chrome_extension_tabGroups_list",
+    description: "List all tab groups in the current window.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
+    name: "chrome_extension_tabs_query",
+    description: "Query tabs matching the given criteria.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        active: {
+          type: "boolean",
+          description: "Whether the tab is active",
+        },
+        currentWindow: {
+          type: "boolean",
+          description: "Whether the tab is in the current window",
+        },
+        url: {
+          type: "string",
+          description: "Match tabs with this URL or URL pattern",
+        },
+      },
+    },
+  },
+  {
+    name: "chrome_extension_tabs_create",
+    description: "Create a new browser tab.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: {
+          type: "string",
+          description: "URL to open in the new tab",
+        },
+        active: {
+          type: "boolean",
+          description:
+            "Whether the new tab should become active (default: true)",
+        },
+      },
+      required: ["url"],
+    },
+  },
+  {
+    name: "chrome_extension_tabs_remove",
+    description: "Close one or more tabs by their IDs.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabIds: {
+          type: "array",
+          items: { type: "number" },
+          description: "Array of tab IDs to close",
+        },
+      },
+      required: ["tabIds"],
+    },
+  },
+  {
+    name: "chrome_extension_bookmarks_search",
+    description: "Search bookmarks by query string.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        query: {
+          type: "string",
+          description: "Text to search for in bookmarks",
+        },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "chrome_extension_history_search",
+    description: "Search browser history by text.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        text: {
+          type: "string",
+          description: "Text to search for in history",
+        },
+        maxResults: {
+          type: "number",
+          description: "Maximum number of results to return (default: 100)",
+        },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "chrome_extension_windows_create",
+    description: "Create a new browser window.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: {
+          type: "string",
+          description: "Optional URL to open in the new window",
+        },
+        type: {
+          type: "string",
+          description: "Window type: normal, popup, panel, or app",
+        },
+      },
+    },
+  },
+  {
+    name: "chrome_extension_agent_run",
+    description:
+      "Run a browser-use agent task via the Python service (default: http://127.0.0.1:8123).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        task: {
+          type: "string",
+          description: "Natural language task description for the agent",
+        },
+        start_url: {
+          type: "string",
+          description: "Optional starting URL for the agent",
+        },
+        max_steps: {
+          type: "number",
+          description:
+            "Maximum number of steps the agent may take (default: 50)",
+        },
+      },
+      required: ["task"],
+    },
+  },
+  {
+    name: "chrome_extension_enhanced_parse",
+    description:
+      "Get enhanced DOM + accessibility tree via the Python service (default: http://127.0.0.1:8123).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: {
+          type: "string",
+          description: "URL to parse",
+        },
+      },
+      required: ["url"],
+    },
+  },
 ] as const;
 
 function toJsonContent(payload: unknown) {
@@ -193,6 +368,18 @@ function toJsonContent(payload: unknown) {
       },
     ],
   };
+}
+
+/**
+ * Base URL of the companion browser-use Python service that backs the
+ * agent_run and enhanced_parse tools (see mcp/gal-browser-use-service).
+ * Defaults to the loopback service the README documents; overridable via
+ * GAL_BROWSER_USE_SERVICE_URL so deployments can point at a co-located host.
+ */
+function browserUseServiceUrl(): string {
+  const raw = process.env.GAL_BROWSER_USE_SERVICE_URL;
+  const url = raw && raw.length > 0 ? raw : "http://127.0.0.1:8123";
+  return url.replace(/\/+$/, "");
 }
 
 /**
@@ -1340,6 +1527,419 @@ export function createChromeExtensionGalServer(
         case "chrome_extension_close": {
           await closeSession();
           return toJsonContent({ success: true });
+        }
+
+        case "chrome_extension_tabGroups_create": {
+          const activeSession = await getSession();
+          const tabIds = Array.isArray(safeArgs.tabIds)
+            ? (safeArgs.tabIds as number[])
+            : [];
+          if (tabIds.length === 0) {
+            throw new Error("tabIds is required and must be a non-empty array");
+          }
+          const title =
+            typeof safeArgs.title === "string" ? safeArgs.title : undefined;
+          const color =
+            typeof safeArgs.color === "string" ? safeArgs.color : undefined;
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let result: { groupId?: number } = {};
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const groupResult = await bp.evaluate(
+                async ([ids, t, c]) => {
+                  const api = (globalThis as any).chrome || (self as any).chrome;
+                  if (!api?.tabs?.group) return null;
+                  const groupId = await api.tabs.group({ tabIds: ids });
+                  if (t || c) {
+                    await api.tabGroups.update(groupId, {
+                      ...(t ? { title: t } : {}),
+                      ...(c ? { color: c } : {}),
+                      collapsed: false,
+                    });
+                  }
+                  return { groupId };
+                },
+                [tabIds, title, color] as const,
+              );
+              if (groupResult) {
+                result = groupResult;
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "tabGroups_create failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({
+            success: true,
+            groupId: result.groupId,
+            title,
+            color,
+          });
+        }
+
+        case "chrome_extension_tabGroups_list": {
+          const activeSession = await getSession();
+          const bgPages = activeSession.context.serviceWorkers();
+          let groups: unknown[] = [];
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const listResult = await bp.evaluate(async () => {
+                const api = (globalThis as any).chrome || (self as any).chrome;
+                if (!api?.tabGroups?.query) return null;
+                return await api.tabGroups.query({});
+              });
+              if (listResult) {
+                groups = listResult as unknown[];
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "tabGroups_list failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({ success: true, groups });
+        }
+
+        case "chrome_extension_tabs_query": {
+          const activeSession = await getSession();
+          const query: Record<string, unknown> = {};
+          if (typeof safeArgs.active === "boolean")
+            query.active = safeArgs.active;
+          if (typeof safeArgs.currentWindow === "boolean")
+            query.currentWindow = safeArgs.currentWindow;
+          if (typeof safeArgs.url === "string") query.url = safeArgs.url;
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let tabs: unknown[] = [];
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const queryResult = await bp.evaluate(async (q) => {
+                const api = (globalThis as any).chrome || (self as any).chrome;
+                if (!api?.tabs?.query) return null;
+                return await api.tabs.query(q);
+              }, query);
+              if (queryResult) {
+                tabs = queryResult as unknown[];
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "tabs_query failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({ success: true, tabs });
+        }
+
+        case "chrome_extension_tabs_create": {
+          const activeSession = await getSession();
+          const url = typeof safeArgs.url === "string" ? safeArgs.url : "";
+          if (!url) throw new Error("url is required");
+          const active = safeArgs.active !== false;
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let tab: unknown = null;
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const createResult = await bp.evaluate(
+                async ([u, a]) => {
+                  const api = (globalThis as any).chrome || (self as any).chrome;
+                  if (!api?.tabs?.create) return null;
+                  return await api.tabs.create({ url: u, active: a });
+                },
+                [url, active] as const,
+              );
+              if (createResult) {
+                tab = createResult;
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            // Fallback: open via Playwright page. Route through the same SSRF
+            // validation + network guard the rest of the server enforces.
+            const navigableUrl = await assertNavigableUrl(url, safeArgs);
+            await applySsrfPolicy(activeSession.context, safeArgs);
+            const newPage = await activeSession.context.newPage();
+            await newPage.goto(navigableUrl, { waitUntil: "domcontentloaded" });
+            activeSession.currentPage = newPage;
+            tab = { id: null, url: newPage.url(), active: true };
+          }
+
+          return toJsonContent({ success: true, tab });
+        }
+
+        case "chrome_extension_tabs_remove": {
+          const activeSession = await getSession();
+          const tabIds = Array.isArray(safeArgs.tabIds)
+            ? (safeArgs.tabIds as number[])
+            : [];
+          if (tabIds.length === 0) {
+            throw new Error("tabIds is required and must be a non-empty array");
+          }
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              await bp.evaluate(async (ids) => {
+                const api = (globalThis as any).chrome || (self as any).chrome;
+                if (!api?.tabs?.remove) return false;
+                await api.tabs.remove(ids);
+                return true;
+              }, tabIds);
+              success = true;
+              break;
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "tabs_remove failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({ success: true, removed: tabIds });
+        }
+
+        case "chrome_extension_bookmarks_search": {
+          const activeSession = await getSession();
+          const query =
+            typeof safeArgs.query === "string" ? safeArgs.query : "";
+          if (!query) throw new Error("query is required");
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let results: unknown[] = [];
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const searchResult = await bp.evaluate(async (q) => {
+                const api = (globalThis as any).chrome || (self as any).chrome;
+                if (!api?.bookmarks?.search) return null;
+                return await api.bookmarks.search(q);
+              }, query);
+              if (searchResult) {
+                results = searchResult as unknown[];
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "bookmarks_search failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({ success: true, results });
+        }
+
+        case "chrome_extension_history_search": {
+          const activeSession = await getSession();
+          const text = typeof safeArgs.text === "string" ? safeArgs.text : "";
+          if (!text) throw new Error("text is required");
+          const maxResults =
+            typeof safeArgs.maxResults === "number" ? safeArgs.maxResults : 100;
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let results: unknown[] = [];
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const searchResult = await bp.evaluate(
+                async ([t, m]) => {
+                  const api = (globalThis as any).chrome || (self as any).chrome;
+                  if (!api?.history?.search) return null;
+                  return await api.history.search({
+                    text: t,
+                    maxResults: m,
+                  });
+                },
+                [text, maxResults] as const,
+              );
+              if (searchResult) {
+                results = searchResult as unknown[];
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            throw new Error(
+              "history_search failed: Chrome extension APIs unavailable.",
+            );
+          }
+
+          return toJsonContent({ success: true, results });
+        }
+
+        case "chrome_extension_windows_create": {
+          const activeSession = await getSession();
+          const url =
+            typeof safeArgs.url === "string" ? safeArgs.url : undefined;
+          const type =
+            typeof safeArgs.type === "string" ? safeArgs.type : undefined;
+
+          const bgPages = activeSession.context.serviceWorkers();
+          let win: unknown = null;
+          let success = false;
+
+          for (const bp of bgPages) {
+            try {
+              const createResult = await bp.evaluate(
+                async ([u, t]) => {
+                  const api = (globalThis as any).chrome || (self as any).chrome;
+                  if (!api?.windows?.create) return null;
+                  const opts: Record<string, unknown> = {};
+                  if (u) opts.url = u;
+                  if (t) opts.type = t;
+                  return await api.windows.create(opts);
+                },
+                [url, type] as const,
+              );
+              if (createResult) {
+                win = createResult;
+                success = true;
+                break;
+              }
+            } catch {
+              /* try next bg page */
+            }
+          }
+
+          if (!success) {
+            // Fallback: open via Playwright context new page. Route any URL
+            // through the same SSRF validation + network guard.
+            const newPage = await activeSession.context.newPage();
+            if (url) {
+              const navigableUrl = await assertNavigableUrl(url, safeArgs);
+              await applySsrfPolicy(activeSession.context, safeArgs);
+              await newPage.goto(navigableUrl, {
+                waitUntil: "domcontentloaded",
+              });
+            }
+            activeSession.currentPage = newPage;
+            win = { id: null, tabs: [{ url: newPage.url() }] };
+          }
+
+          return toJsonContent({ success: true, window: win });
+        }
+
+        case "chrome_extension_agent_run": {
+          const task = typeof safeArgs.task === "string" ? safeArgs.task : "";
+          if (!task) throw new Error("task is required");
+          const startUrl =
+            typeof safeArgs.start_url === "string"
+              ? safeArgs.start_url
+              : undefined;
+          const maxSteps =
+            typeof safeArgs.max_steps === "number" ? safeArgs.max_steps : 50;
+
+          const payload: Record<string, unknown> = {
+            task,
+            max_steps: maxSteps,
+          };
+          if (startUrl) payload.start_url = startUrl;
+
+          const serviceUrl = browserUseServiceUrl();
+          let response: Response;
+          try {
+            response = await fetch(`${serviceUrl}/agent/run`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+          } catch (fetchErr: unknown) {
+            throw new Error(
+              `agent_run failed to connect to ${serviceUrl}: ${
+                fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+              }`,
+            );
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              `agent_run service returned ${response.status}: ${await response.text()}`,
+            );
+          }
+
+          const data = await response.json();
+          return toJsonContent({ success: true, ...data });
+        }
+
+        case "chrome_extension_enhanced_parse": {
+          const url = typeof safeArgs.url === "string" ? safeArgs.url : "";
+          if (!url) throw new Error("url is required");
+
+          const serviceUrl = browserUseServiceUrl();
+          let response: Response;
+          try {
+            response = await fetch(`${serviceUrl}/dom/enhanced-parse`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url }),
+            });
+          } catch (fetchErr: unknown) {
+            throw new Error(
+              `enhanced_parse failed to connect to ${serviceUrl}: ${
+                fetchErr instanceof Error ? fetchErr.message : String(fetchErr)
+              }`,
+            );
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              `enhanced_parse service returned ${response.status}: ${await response.text()}`,
+            );
+          }
+
+          const data = await response.json();
+          return toJsonContent({ success: true, ...data });
         }
 
         default:
