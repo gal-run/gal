@@ -165,15 +165,25 @@ pub fn constitution_paths(paths: &[String]) -> Vec<String> {
     paths.iter().filter(|p| GOVERNANCE_PATHS.iter().any(|g| p.contains(g))).cloned().collect()
 }
 
+/// Reads a boolean safety flag fail-closed: absent → false; real bool → its value;
+/// present-but-non-bool → TRUE (a type-confused safety flag must never downgrade an
+/// outward action to autonomous and slip the human-in-the-loop gate).
+fn bool_flag_fail_closed(action: &Value, key: &str) -> bool {
+    match action.get(key) {
+        None | Some(Value::Null) => false,
+        Some(Value::Bool(b)) => *b,
+        Some(_) => true,
+    }
+}
+
 /// Port of hitl.human_required(). Returns (required, reason).
 pub fn human_required(action: &Value) -> (bool, String) {
     let kind = action.get("kind").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
     if HUMAN_REQUIRED_KINDS.contains(&kind.as_str()) {
         return (true, format!("'{}' is a ratified human-in-the-loop action", kind));
     }
-    let external = action.get("external").and_then(|v| v.as_bool()).unwrap_or(false)
-        || action.get("public").and_then(|v| v.as_bool()).unwrap_or(false);
-    let outward = action.get("outward").and_then(|v| v.as_bool()).unwrap_or(false) || external;
+    let external = bool_flag_fail_closed(action, "external") || bool_flag_fail_closed(action, "public");
+    let outward = bool_flag_fail_closed(action, "outward") || external;
     let cap = action.get("capability").and_then(|v| v.as_str()).unwrap_or("");
     let verb = cap.split(':').next().unwrap_or("").trim().to_lowercase();
 
@@ -341,5 +351,11 @@ authorities:
     }
     #[test] fn hitl_internal_post_autonomous() {
         assert!(!human_required(&d(r#"{capability: "post:slack"}"#)).0);
+    }
+    #[test] fn hitl_non_bool_outward_fails_closed() {
+        // A type-confused safety flag (string instead of bool) must NOT downgrade an
+        // outward action to autonomous — it fails closed to human-required.
+        assert!(human_required(&d(r#"{capability: "post:slack", outward: "true"}"#)).0);
+        assert!(human_required(&d(r#"{capability: "post:slack", external: "yes"}"#)).0);
     }
 }

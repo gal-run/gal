@@ -39,11 +39,14 @@ const FORBIDDEN_GRANT_KEYS: [&str; 6] =
 const ALLOWED_POSTURES: [&str; 1] = ["report_only"];
 const WILDCARD_SCOPES: [&str; 7] = ["", "*", "all", "any", "everything", "everywhere", "global"];
 
+/// Required-string-field presence check. A required field must be a NON-EMPTY
+/// STRING; a present-but-non-string value (number/bool/map) is type confusion and
+/// is treated as MISSING (fail closed) so it cannot smuggle past field validation.
 fn truthy_field(c: &Value, key: &str) -> bool {
     match c.get(key) {
         None | Some(Value::Null) => false,
         Some(Value::String(s)) => !s.is_empty(),
-        Some(_) => true,
+        Some(_) => false,
     }
 }
 
@@ -280,14 +283,19 @@ pub fn validate(graphs: &BTreeSet<String>, manifest: &Value) -> (Vec<String>, Ve
                                 agent, cap
                             ));
                         }
-                        if let Some(gb) = c.get("granted_by").and_then(|v| v.as_str()) {
-                            if !human_ids.contains(gb) {
-                                errors.push(format!(
-                                    "grant '{}' capability '{}' granted_by '{}' is not a human owner \
-                                     (no self-grant / forged grantor)",
-                                    agent, cap, gb
-                                ));
-                            }
+                        // Fail closed on type confusion: a missing or non-string
+                        // granted_by must error, never silently skip the grantor check.
+                        match c.get("granted_by").and_then(|v| v.as_str()) {
+                            None => errors.push(format!(
+                                "grant '{}' capability '{}' granted_by must be a string naming a human owner",
+                                agent, cap
+                            )),
+                            Some(gb) if !human_ids.contains(gb) => errors.push(format!(
+                                "grant '{}' capability '{}' granted_by '{}' is not a human owner \
+                                 (no self-grant / forged grantor)",
+                                agent, cap, gb
+                            )),
+                            _ => {}
                         }
                         if c.get("revocable").and_then(|v| v.as_bool()) != Some(true) {
                             errors.push(format!(
@@ -419,11 +427,16 @@ fn load_graphs(coverage: Option<&Path>) -> Result<BTreeSet<String>> {
         .map_err(|e| anyhow!("cannot read coverage {}: {}", path.display(), e))?;
     let j: serde_json::Value = serde_json::from_str(&text)
         .map_err(|e| anyhow!("coverage {} is not valid JSON: {}", path.display(), e))?;
-    Ok(j
-        .get("graphs")
-        .and_then(|g| g.as_object())
-        .map(|o| o.keys().cloned().collect())
-        .unwrap_or_default())
+    // Fail closed: a supplied coverage file MUST declare a `graphs` object.
+    // Previously a missing/mistyped `graphs` key yielded an empty set, silently
+    // skipping coverage enforcement.
+    match j.get("graphs").and_then(|g| g.as_object()) {
+        Some(o) => Ok(o.keys().cloned().collect()),
+        None => Err(anyhow!(
+            "coverage {} must contain a 'graphs' object (fail closed: refusing to skip coverage)",
+            path.display()
+        )),
+    }
 }
 
 fn cmd_validate(manifest_path: &Path, coverage: Option<&Path>, json: bool) -> Result<()> {
@@ -595,6 +608,13 @@ grants:
     fn granted_by_non_owner_fails() {
         let y = MIN.replace("granted_by: shay", "granted_by: mallory");
         assert!(has(&errs(&y), "not a human owner"));
+    }
+
+    #[test]
+    fn granted_by_non_string_fails_closed() {
+        // Type confusion: a numeric granted_by must not silently skip the grantor check.
+        let y = MIN.replace("granted_by: shay", "granted_by: 123");
+        assert!(has(&errs(&y), "granted_by must be a string"));
     }
 
     #[test]
