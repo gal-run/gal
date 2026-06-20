@@ -1,0 +1,318 @@
+/**
+ * Paragraphs
+ */
+.sl-markdown-content :not(a, strong, em, del, span, input, code)
+  + :not(a, strong, em, del, span, input, code, :where(.not-content *)) {
+  margin-top: var(--paragraph-spacing);
+}
+/* Space around asides and code blocks */
+.sl-markdown-content :not(a, strong, em, del, span, input, code)
+  + :is(.starlight-aside, .expressive-code) {
+  margin-top: calc(var(--paragraph-spacing) + 0.4375rem);
+}
+/* .sl-markdown-content :is(.starlight-aside, .expressive-code, table) */
+/*   + :not(a, strong, em, del, span, input, code, h1, h2, h3, h4, h5, h6, :where(.not-content *)) { */
+/*   margin-top: calc(var(--paragraph-spacing) + 0.5rem); */
+/* } */
+.sl-markdown-content :is(.starlight-aside, .expressive-code)
+  + :is(.starlight-aside, .expressive-code) {
+  margin-top: calc(var(--paragraph-spacing) + 1.125rem);
+}
+/* Space around sections */
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6)
+  + :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)),
+.sl-markdown-content :not(a, strong, em, del, span, input, code)
+  + hr:not(:where(.not-content *)),
+.sl-markdown-content hr:not(:where(.not-content *)) + :not(a, strong, em, del, span, input, code, :where(.not-content *))
+{
+  margin-top: calc(var(--paragraph-spacing) + 2rem);
+}
+/**
+ * Links
+ */
+.sl-markdown-content a:not(:where(.not-content *)),
+.sl-markdown-content a:not(:where(.not-content *)) code {
+	color: var(--sl-color-text);
+	text-underline-offset: 0.25rem;
+	text-decoration: underline;
+}
+.sl-markdown-content a:hover:not(:where(.not-content *)) {
+	color: var(--sl-color-text);
+}
+
+/**
+ * Blockquotes
+ */
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+	border-inline-start: 2px solid var(--sl-color-hairline);
+	padding-inline-start: 1rem;
+	font-size: var(--sl-text-h5);
+	color: var(--color-text-secondary);
+}
+
+/**
+ * Inline code
+ */
+.sl-markdown-content code:not(:where(.not-content *)) {
+	padding: 0;
+	background: none;
+	font-weight: 600;
+	font-size: var(--sl-text-sm);
+	color: var(--sl-color-text);
+}
+.sl-markdown-content strong code:not(:where(.not-content *)) {
+	font-weight: 700;
+}
+.sl-markdown-content code:not(:where(.not-content *)):before,
+.sl-markdown-content code:not(:where(.not-content *)):after {
+	content: "`";
+}
+
+/**
+ * Code blocks
+ */
+/* Plain blocks */
+.sl-markdown-content
+	.expressive-code
+	.frame:not(.has-title):not(.is-terminal)
+	pre {
+	border-color: var(--sl-color-border);
+	border-radius: 0;
+	background-color: transparent;
+}
+.sl-markdown-content .expressive-code .copy {
+	inset-block-start: calc(var(--ec-brdWd) + var(--button-spacing) + 0.1rem);
+}
+.sl-markdown-content .expressive-code .copy .feedback {
+	--tooltip-bg: var(--sl-color-gray-3);
+
+	font-size: 0.75rem;
+	line-height: 1;
+	padding: 0.375rem 0.5rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+.sl-markdown-content .expressive-code .copy button {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 0;
+	background-color: var(--sl-color-bg);
+
+	&::before {
+		opacity: 1;
+		border-color: var(--sl-color-border);
+	}
+
+	& div {
+		background-color: transparent;
+	}
+}
+@media (hover: hover) {
+	.sl-markdown-content .expressive-code .frame:hover .copy button:not(:hover),
+	.sl-markdown-content
+		.expressive-code
+		.frame:focus-within
+		:focus-visible
+		~ .copy
+		button:not(:hover),
+	.sl-markdown-content
+		.expressive-code
+		.frame
+		.copy
+		.feedback.show
+		~ button:not(:hover) {
+		opacity: 1;
+	}
+}
+/* Frames */
+.sl-markdown-content
+	.expressive-code
+	.frame.has-title:not(.is-terminal)
+	.header {
+	background: transparent;
+	border-bottom: 1px solid var(--sl-color-border);
+	border-radius: 0;
+}
+.sl-markdown-content
+	.expressive-code
+	.frame.has-title:not(.is-terminal)
+	.header:before {
+	border-color: var(--sl-color-border);
+}
+.sl-markdown-content
+	.expressive-code
+	.frame.has-title:not(.is-terminal)
+	.title {
+	border-width: 1px 1px 0;
+	border-style: solid;
+	font-size: var(--sl-text-sm);
+	background: transparent;
+	border-radius: 0;
+	border-color: var(--sl-color-border) var(--sl-color-border) transparent;
+}
+.sl-markdown-content
+	.expressive-code
+	.frame.has-title:not(.is-terminal)
+	.title:after {
+	border: none;
+}
+.sl-markdown-content .expressive-code .frame pre {
+	background: transparent;
+}
+.sl-markdown-content .expressive-code .frame.has-title pre {
+	border-color: var(--sl-color-border);
+}
+/* Terminal */
+.sl-markdown-content .expressive-code .frame.is-terminal .header {
+	font-size: var(--sl-text-sm);
+	font-weight: normal;
+	border-radius: 0;
+	background: transparent;
+	border-color: var(--sl-color-border);
+}
+.sl-markdown-content .expressive-code .frame.is-terminal .header:after {
+	border-color: var(--sl-color-border);
+}
+.sl-markdown-content .expressive-code .frame.is-terminal pre {
+	border-color: var(--sl-color-border);
+}
+/* Code markers */
+:root[data-theme="light"] .expressive-code .frame,
+.expressive-code[data-theme="light"] .frame {
+	--ec-tm-markBg: #00000011;
+	--ec-tm-insBg: #90c87e72;
+	--ec-tm-delBg: #ff9c8f7f;
+}
+:root[data-theme="dark"] .expressive-code .frame,
+.expressive-code[data-theme="dark"] .frame {
+	--ec-tm-markBg: #ffffff0f;
+	--ec-tm-insBg: #1e561572;
+	--ec-tm-delBg: #862d2766;
+}
+.sl-markdown-content .expressive-code .ec-line.mark > .code,
+.sl-markdown-content .expressive-code .ec-line.ins > .code,
+.sl-markdown-content .expressive-code .ec-line.del > .code {
+	border-inline-start-color: transparent;
+}
+.sl-markdown-content .expressive-code .ec-line mark:before,
+.sl-markdown-content .expressive-code .ec-line ins:before,
+.sl-markdown-content .expressive-code .ec-line del:before {
+	border-width: 0px;
+}
+
+/**
+ * Tabs
+ */
+.sl-markdown-content [role="tablist"] {
+	border-color: var(--sl-color-hairline);
+}
+.sl-markdown-content .tab > [role="tab"] {
+	font-weight: 600;
+	color: var(--sl-color-text-dimmed);
+	border-color: var(--sl-color-hairline);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-size: var(--sl-text-code-sm);
+	padding-block-end: 0.375rem;
+}
+.sl-markdown-content .tab > [role="tab"][aria-selected="true"] {
+	color: var(--sl-color-text);
+	border-color: var(--sl-color-border);
+}
+
+/**
+ * Tables
+ */
+.sl-markdown-content thead th:not(:where(.not-content *)) {
+	border-bottom: 1px solid var(--sl-color-border);
+}
+.sl-markdown-content :is(th):not(:where(.not-content *)) {
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-size: var(--sl-text-code-sm);
+	text-align: left;
+	padding-block-start: 0;
+}
+.sl-markdown-content tbody > tr td:not(:where(.not-content *)) {
+	font-size: var(--sl-text-sm);
+	border-bottom: 1px solid var(--sl-color-hairline);
+}
+.sl-markdown-content :is(td):not(:where(.not-content *)) {
+	padding-block: 0.5rem;
+	border: none;
+}
+.sl-markdown-content tr:nth-child(2n):not(:where(.not-content *)) {
+	background-color: transparent;
+}
+
+/**
+ * Asides
+ */
+.starlight-aside {
+	border: none;
+	border-radius: 0;
+	padding: 0.9375rem 1rem 0.875rem;
+}
+.starlight-aside__title {
+	text-transform: uppercase;
+	font-size: var(--sl-text-code-sm);
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	gap: 0.4rem;
+}
+.starlight-aside__icon {
+	font-size: 0.875rem;
+	width: 0.8125rem;
+	height: 0.8125rem;
+	opacity: 0.9;
+}
+.starlight-aside__title + .starlight-aside__content {
+	margin-top: 0.75rem;
+	font-size: var(--sl-text-sm);
+}
+.sl-markdown-content
+	.starlight-aside__content
+	code:not(:where(.not-content *)) {
+	background-color: transparent;
+	font-size: var(--sl-text-xs);
+}
+.custom-aside-video .starlight-aside__title {
+	font-weight: normal;
+	font-size: var(--sl-text-sm);
+	text-transform: none;
+	letter-spacing: 0;
+	line-height: normal;
+	gap: 0.5rem;
+}
+.custom-aside-video .starlight-aside__title a {
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.custom-aside-video .starlight-aside__title a:hover {
+	text-decoration: underline;
+}
+.custom-aside-video .starlight-aside__title a svg {
+	opacity: 0.8;
+}
+
+/**
+* Lists
+*/
+.sl-markdown-content li:not(:where(.not-content *)) > ol,
+.sl-markdown-content li:not(:where(.not-content *)) > ul,
+.sl-markdown-content li + li:not(:where(.not-content *)) {
+  margin-top: 0.625rem;
+}
+.sl-markdown-content li > :last-child:not(li, ul, ol):not(a, strong, em, del, span, input, :where(.not-content *)) {
+  margin-bottom: calc(var(--paragraph-spacing) + 0.5rem);
+}
+
+/**
+* Details
+*/
+.sl-markdown-content details:not(:where(.not-content *)) {
+	--sl-details-border-color--hover: var(--sl-details-border-color);
+}

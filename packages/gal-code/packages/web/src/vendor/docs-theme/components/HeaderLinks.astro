@@ -1,0 +1,22 @@
+---
+// Vendored from toolbeam-docs-theme (see ../LICENSE). Originally read
+// globalThis.toolbeamDocsThemeConfig (set by the theme plugin); now reads the
+// site config directly so no plugin/global is needed.
+import config from "../../../../config.mjs"
+const { headerLinks } = config
+---
+{
+  headerLinks?.map(({ name, url }) => (
+    <a class="links" href={url}>{name}</a>
+  ))
+}
+
+<style>
+  a.links {
+		text-transform: uppercase;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-text-secondary);
+    line-height: normal;
+  }
+</style>
+

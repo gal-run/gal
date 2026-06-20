@@ -3,7 +3,6 @@ import { defineConfig } from "astro/config"
 import starlight from "@astrojs/starlight"
 import solidJs from "@astrojs/solid-js"
 import cloudflare from "@astrojs/cloudflare"
-import theme from "toolbeam-docs-theme"
 import config from "./config.mjs"
 import { rehypeHeadingIds } from "@astrojs/markdown-remark"
 import rehypeAutolinkHeadings from "rehype-autolink-headings"
@@ -165,7 +164,20 @@ export default defineConfig({
       markdown: {
         headingLinks: false,
       },
-      customCss: ["./src/styles/custom.css"],
+      // Was injected by the toolbeam-docs-theme plugin (now vendored). Order
+      // preserved: fonts + vendored theme CSS, then the site's own custom.css.
+      customCss: [
+        "@fontsource/ibm-plex-mono/400.css",
+        "@fontsource/ibm-plex-mono/400-italic.css",
+        "@fontsource/ibm-plex-mono/500.css",
+        "@fontsource/ibm-plex-mono/600.css",
+        "@fontsource/ibm-plex-mono/700.css",
+        "./src/vendor/docs-theme/styles/theme.css",
+        "./src/vendor/docs-theme/styles/tsdoc.css",
+        "./src/vendor/docs-theme/styles/markdown.css",
+        "./src/vendor/docs-theme/styles/headings.css",
+        "./src/styles/custom.css",
+      ],
       logo: {
         light: "./src/assets/logo-light.svg",
         dark: "./src/assets/logo-dark.svg",
@@ -298,12 +310,10 @@ export default defineConfig({
         Header: "./src/components/Header.astro",
         Footer: "./src/components/Footer.astro",
         SiteTitle: "./src/components/SiteTitle.astro",
+        // Was provided by the toolbeam-docs-theme plugin; now vendored.
+        PageTitle: "./src/vendor/docs-theme/overrides/PageTitle.astro",
       },
-      plugins: [
-        theme({
-          headerLinks: config.headerLinks,
-        }),
-      ],
+      pagination: false,
     }),
   ],
 })
