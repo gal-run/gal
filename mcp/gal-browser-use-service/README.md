@@ -13,7 +13,7 @@ A FastAPI microservice that wraps [browser-use](https://github.com/browser-use/b
 
 ```bash
 cd mcp/gal-browser-use-service
-python3.14 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
@@ -22,7 +22,7 @@ playwright install chromium
 export EXTENSION_BRIDGE_URL=http://localhost:9222
 export CHROME_EXTENSION_PATH=/path/to/gal-extension
 
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8123
 ```
 
 ## Endpoints
@@ -39,8 +39,9 @@ uvicorn main:app --reload --port 8000
 ### Example: run an agent
 
 ```bash
-curl -X POST http://localhost:8000/agent/run \
+curl -X POST http://localhost:8123/agent/run \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $SERVICE_AUTH_TOKEN" \
   -d '{
     "task": "Find the pricing page and extract the starter plan price",
     "model": "gpt-4o",
@@ -52,8 +53,9 @@ curl -X POST http://localhost:8000/agent/run \
 ### Example: enhanced DOM parse
 
 ```bash
-curl -X POST http://localhost:8000/dom/enhanced-parse \
+curl -X POST http://localhost:8123/dom/enhanced-parse \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $SERVICE_AUTH_TOKEN" \
   -d '{"url": "https://example.com"}'
 ```
 
@@ -61,7 +63,8 @@ curl -X POST http://localhost:8000/dom/enhanced-parse \
 
 ```bash
 docker build -t gal-browser-use-service .
-docker run -p 8000:8000 -v /path/to/gal-extension:/app/gal-extension gal-browser-use-service
+# The container binds 127.0.0.1 by default; set HOST=0.0.0.0 to expose the port.
+docker run -e HOST=0.0.0.0 -p 8123:8123 -v /path/to/gal-extension:/app/gal-extension gal-browser-use-service
 ```
 
 ## Environment Variables
@@ -71,3 +74,7 @@ docker run -p 8000:8000 -v /path/to/gal-extension:/app/gal-extension gal-browser
 | `BROWSER_USE_DB` | `/tmp/browser_use_cache.db` | SQLite cache path |
 | `EXTENSION_BRIDGE_URL` | `http://localhost:9222` | GAL extension HTTP bridge |
 | `CHROME_EXTENSION_PATH` | `/app/gal-extension` | Path to the unpacked extension |
+| `SERVICE_AUTH_TOKEN` | _(unset)_ | If set, `/agent/run` and `/dom/enhanced-parse` require `Authorization: Bearer <token>`. Unset = dev mode (no auth, logs a warning). |
+| `GAL_BROWSER_ALLOW_PRIVATE` | _(unset)_ | Set to `1` to bypass the SSRF guard and allow navigation to private/loopback/link-local hosts. |
+| `HOST` | `127.0.0.1` | Bind address (Docker `CMD`). Set to `0.0.0.0` to expose. |
+| `PORT` | `8123` | Bind port (Docker `CMD`). |

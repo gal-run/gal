@@ -1717,14 +1717,16 @@ export function createChromeExtensionGalServer(
 
           for (const bp of bgPages) {
             try {
-              await bp.evaluate(async (ids) => {
+              const removeResult = await bp.evaluate(async (ids) => {
                 const api = (globalThis as any).chrome || (self as any).chrome;
                 if (!api?.tabs?.remove) return false;
                 await api.tabs.remove(ids);
                 return true;
               }, tabIds);
-              success = true;
-              break;
+              if (removeResult) {
+                success = true;
+                break;
+              }
             } catch {
               /* try next bg page */
             }

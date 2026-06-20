@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # Builder — compile Python dependencies
 # ---------------------------------------------------------------------------
-FROM python:3.14-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -20,13 +20,15 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # ---------------------------------------------------------------------------
 # Runtime — Playwright + extension + app
 # ---------------------------------------------------------------------------
-FROM python:3.14-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     BROWSER_USE_DB=/data/browser_use_cache.db \
     CHROME_EXTENSION_PATH=/app/gal-extension \
+    HOST=127.0.0.1 \
+    PORT=8123 \
     PATH="/root/.local/bin:${PATH}"
 
 # System deps for Chromium + Playwright
@@ -48,12 +50,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy pre-built wheels from builder
+# Copy pre-built wheels from builder (includes playwright from requirements.txt)
 COPY --from=builder /root/.local /root/.local
 
-# Install Playwright browsers (Chromium only to keep image size down)
-RUN pip install --no-cache-dir playwright && \
-    playwright install chromium && \
+# Install Playwright browser binaries (Chromium only to keep image size down)
+RUN playwright install chromium && \
     playwright install-deps chromium
 
 WORKDIR /app
@@ -64,6 +65,7 @@ COPY main.py chrome_bridge.py ./
 # Placeholder for the GAL Chrome extension (mounted or copied at build time)
 RUN mkdir -p /app/gal-extension
 
-EXPOSE 8000
+EXPOSE 8123
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Bind to localhost by default; override HOST/PORT (e.g. HOST=0.0.0.0) to expose.
+CMD ["sh", "-c", "uvicorn main:app --host \"$HOST\" --port \"$PORT\""]

@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
+import logging
 import os
+import socket
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import aiosqlite
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from chrome_bridge import ChromeBridge
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -23,6 +29,14 @@ from chrome_bridge import ChromeBridge
 DB_PATH = os.getenv("BROWSER_USE_DB", "/tmp/browser_use_cache.db")
 EXTENSION_URL = os.getenv("EXTENSION_BRIDGE_URL", "http://localhost:9222")
 CHROME_EXTENSION_PATH = os.getenv("CHROME_EXTENSION_PATH", "/app/gal-extension")
+
+# Bearer-token guard for mutating/navigation endpoints. When unset, the service
+# runs in dev mode (no auth) and logs a warning.
+SERVICE_AUTH_TOKEN = os.getenv("SERVICE_AUTH_TOKEN")
+
+# SSRF guard: by default, block navigation to private/loopback/link-local hosts.
+# Opt out (e.g. for trusted internal targets) with GAL_BROWSER_ALLOW_PRIVATE=1.
+ALLOW_PRIVATE_HOSTS = os.getenv("GAL_BROWSER_ALLOW_PRIVATE") == "1"
 
 # ---------------------------------------------------------------------------
 # Pydantic models
@@ -130,6 +144,73 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="GAL Browser Use Service", lifespan=lifespan)
 
 # ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+
+async def require_auth(authorization: str | None = Header(default=None)) -> None:
+    """Bearer-token guard for navigation endpoints.
+
+    If SERVICE_AUTH_TOKEN is set, require `Authorization: Bearer <token>` and
+    401 on mismatch. If unset, allow (dev) but log a warning.
+    """
+    if not SERVICE_AUTH_TOKEN:
+        logger.warning(
+            "SERVICE_AUTH_TOKEN is unset; serving request without authentication (dev mode)."
+        )
+        return
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or token != SERVICE_AUTH_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing bearer token")
+
+# ---------------------------------------------------------------------------
+# SSRF guard
+# ---------------------------------------------------------------------------
+
+def assert_navigable_url(url: str) -> None:
+    """Validate a caller-supplied navigation URL against SSRF.
+
+    Require an http/https scheme; resolve the host and block private,
+    loopback, link-local, and metadata ranges unless GAL_BROWSER_ALLOW_PRIVATE=1.
+    Raises HTTPException(400) on violation.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="URL scheme must be http or https")
+    host = parsed.hostname
+    if not host:
+        raise HTTPException(status_code=400, detail="URL must include a host")
+
+    if ALLOW_PRIVATE_HOSTS:
+        return
+
+    try:
+        infos = socket.getaddrinfo(host, parsed.port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as exc:
+        raise HTTPException(status_code=400, detail=f"Could not resolve host: {exc}")
+
+    for info in infos:
+        addr = info[4][0]
+        try:
+            ip = ipaddress.ip_address(addr)
+        except ValueError:
+            continue
+        # Block private/loopback/link-local (incl. 169.254.169.254 metadata),
+        # plus IPv6 loopback (::1) and unique-local fc00::/7. is_private covers
+        # 10/8, 172.16/12, 192.168/16 and fc00::/7; is_link_local covers
+        # 169.254/16 and fe80::/10.
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Navigation to private/loopback/link-local host is blocked: {host} -> {addr}",
+            )
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
@@ -137,13 +218,16 @@ app = FastAPI(title="GAL Browser Use Service", lifespan=lifespan)
 async def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
-@app.post("/agent/run", response_model=AgentRunResponse)
+@app.post("/agent/run", response_model=AgentRunResponse, dependencies=[Depends(require_auth)])
 async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     """Run a browser-use Agent to execute *task*.
 
     The Agent is launched with Playwright and the GAL Chrome extension
     pre-loaded via `--load-extension` / `--disable-extensions-except`.
     """
+    if req.start_url is not None:
+        assert_navigable_url(req.start_url)
+
     try:
         from browser_use.agent.service import Agent
         from browser_use.browser.session import BrowserSession
@@ -188,7 +272,7 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     )
 
     try:
-        result = await agent.run(max_steps=req.max_steps)
+        history = await agent.run(max_steps=req.max_steps)
     except Exception as exc:
         await browser.close()
         await bridge.close()
@@ -200,17 +284,23 @@ async def agent_run(req: AgentRunRequest) -> AgentRunResponse:
     videos = sorted(str(p) for p in replay_dir.glob("*.webm"))
     return AgentRunResponse(
         success=True,
-        result=str(result),
-        steps_taken=getattr(agent, "steps_taken", 0),
+        result=history.final_result() or "",
+        steps_taken=history.number_of_steps(),
         gif_path=str(gif_path) if gif_path.exists() else None,
         video_path=videos[0] if videos else None,
     )
 
-@app.post("/dom/enhanced-parse", response_model=DOMEnhancedParseResponse)
+@app.post(
+    "/dom/enhanced-parse",
+    response_model=DOMEnhancedParseResponse,
+    dependencies=[Depends(require_auth)],
+)
 async def dom_enhanced_parse(req: DOMEnhancedParseRequest) -> DOMEnhancedParseResponse:
     """Navigate to *url*, retrieve the enhanced DOM + AX tree, and return
     a structured element list using browser-use's DOM parser.
     """
+    assert_navigable_url(req.url)
+
     try:
         from browser_use.browser.session import BrowserSession
         from browser_use.dom.service import DomService
