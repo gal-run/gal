@@ -22,8 +22,9 @@ mod ee;
 
 use clap::{Parser, Subcommand};
 use commands::{
-    admin, approve, audit, auth, browser, capture, check, chrome_extension, compliance, config,
-    discover, distribute, docs, enforce, feedback, fetch, flags, fleet, governance, hooks,
+    admin, approve, audit, auth, browser, capability, capture, check, chrome_extension, compliance,
+    config, delegation, discover, distribute, docs, enforce, feedback, fetch, flags, fleet,
+    governance, hooks,
     init, install, join, maintain, memory, ops, policy, protect, propose, quality,
     queue, research, run, sandbox, scan, sdlc, security, sesh, setup, status, swarm,
     sync, template, terminal, test_cmd, trigger, uninstall, update, vision, vscode,
@@ -54,12 +55,16 @@ enum Commands {
     Join(join::JoinArgs),
     #[command(name = "agent-session")]
     Session(sesh::SessionArgs),
+    /// CapabilityManifest governance gate (agent-only, spend-only, report-only grants)
+    Capability(capability::CapabilityArgs),
     /// Capture a Claude Code Stop-hook transcript and ship it to telemetry (best-effort)
     #[command(name = "capture-session")]
     Capture(capture::CaptureArgs),
     Queue(queue::QueueArgs),
     Workflow(workflow::WorkflowArgs),
     Admin(admin::AdminArgs),
+    /// Delegation/HITL routing engine (who approves a decision; does it need a human)
+    Delegation(delegation::DelegationArgs),
     /// Discover repos and AI configs across the organization
     Discover(discover::DiscoverArgs),
     /// Scan for AI agent configuration files
@@ -200,10 +205,12 @@ async fn main() -> anyhow::Result<()> {
         Commands::Propose(args) => propose::run(client, args).await,
         Commands::Join(args) => join::run(client, args).await,
         Commands::Session(args) => sesh::run(client, args).await,
+        Commands::Capability(args) => capability::run(client, args).await,
         Commands::Capture(args) => capture::run(client, args).await,
         Commands::Queue(args) => queue::run(client, args).await,
         Commands::Workflow(args) => workflow::run(client, args).await,
         Commands::Admin(args) => admin::run(client, args).await,
+        Commands::Delegation(args) => delegation::run(client, args).await,
         Commands::Discover(args) => discover::run(client, args).await,
         Commands::Scan(args) => scan::run(client, args).await,
         Commands::Approve(args) => approve::run(client, args).await,
