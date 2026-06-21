@@ -1,0 +1,19 @@
+# Locale-alias canonicalization. Ports the docsAlias logic from the old src/middleware.ts,
+# which can no longer run under `output: "static"` (alias paths have no page → 404, so a
+# client-side redirect can't fire). Cloudflare Pages reads this file from the deploy root;
+# :splat carries the path tail. Each alias mirrors src/i18n/locales.ts `localeAlias`.
+# (`/docs/zh/*` does NOT match `/docs/zh-cn/` — the prefixes differ — so no real locale collides.)
+/docs/br/*   /docs/pt-br/:splat   301
+/docs/br     /docs/pt-br/         301
+/docs/pt/*   /docs/pt-br/:splat   301
+/docs/pt     /docs/pt-br/         301
+/docs/nn/*   /docs/nb/:splat      301
+/docs/nn     /docs/nb/            301
+/docs/no/*   /docs/nb/:splat      301
+/docs/no     /docs/nb/            301
+/docs/zh/*   /docs/zh-cn/:splat   301
+/docs/zh     /docs/zh-cn/         301
+/docs/zht/*  /docs/zh-tw/:splat   301
+/docs/zht    /docs/zh-tw/         301
+/docs/en/*   /docs/:splat         301
+/docs/en     /docs/               301

@@ -57,6 +57,9 @@ if (isDocs) {
   Locale auto-redirect, client-side. Previously handled by src/middleware.ts, but
   middleware does not run for static pages under `output: "static"`. Only fires at
   the `/docs` root; reuses the same `matchLocale` so the behavior is unchanged.
+  (The middleware's docsAlias canonicalization of /docs/<alias>/... — which cannot run
+  client-side because alias paths have no static page and 404 — is reproduced as static
+  Cloudflare redirects in `public/_redirects`.)
 */}
 <script>
   import { matchLocale } from "../i18n/locales"
