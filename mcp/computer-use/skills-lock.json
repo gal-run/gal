@@ -5,19 +5,19 @@
       "source": "runpod/skills",
       "sourceType": "github",
       "skillPath": "companion-clis/SKILL.md",
-      "computedHash": "5ed7e388eaa94501995edee5e8fb5b9028d0a2f8029b1f4ea531f7adf98ac6ce"
+      "computedHash": "854afe9ccc1f62685a3240896b7cc6efcdedd0a954d6cbbf9d516f593e73183e"
     },
     "flash": {
       "source": "runpod/skills",
       "sourceType": "github",
       "skillPath": "flash/SKILL.md",
-      "computedHash": "135a8c0a488aee2d1ca2170f5b8bf194febbf10bbb11c1ced3d123df0436847b"
+      "computedHash": "145041db131cd494852520f86237baf726205a4df439808c1c088cdcd9c0c4e8"
     },
     "runpodctl": {
       "source": "runpod/skills",
       "sourceType": "github",
       "skillPath": "runpodctl/SKILL.md",
-      "computedHash": "fd7a47f981eefecfc7d96f80856074aae382e49cbe611a6fad4eee8ef3bed5c4"
+      "computedHash": "7029208518ff084532fc060c0af72740cbe973f637ded4cc16f71fdeb55c6745"
     }
   }
 }
