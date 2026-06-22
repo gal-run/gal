@@ -6,7 +6,7 @@ const ROOT =
   process.env.GAL_CODE_WORKSPACE_ROOT ||
   process.env.GAL_DEV_WORKSPACE_ROOT ||
   process.env.GITHUB_WORKSPACE ||
-  "/Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run"
+  process.cwd()
 
 describe("MCP config — no broken 'gal' command references", () => {
   test(".mcp.json does not use 'gal' as command", () => {
