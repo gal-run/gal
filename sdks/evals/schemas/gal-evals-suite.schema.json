@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal-evals-suite.schema.json",
+  "title": "GAL Evaluation Suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "subject",
+    "evaluatorId",
+    "gates",
+    "fields",
+    "cases"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "gal.evals.suite.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "subject": { "$ref": "#/$defs/subject" },
+    "evaluatorId": { "type": "string", "minLength": 1 },
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gate" }
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/field" }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "managed_agent",
+            "agent_card",
+            "runtime_adapter",
+            "tool_connector",
+            "policy"
+          ]
+        },
+        "agentId": { "type": "string" },
+        "taskType": { "type": "string" },
+        "version": { "type": "string" },
+        "repo": { "type": "string" }
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "minScore"],
+      "properties": {
+        "metric": { "type": "string", "minLength": 1 },
+        "minScore": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["exact_match", "boolean_match", "number_range", "custom"]
+        },
+        "weight": { "type": "number", "exclusiveMinimum": 0 },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "input", "expected"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "input": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/field" }
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@
 #   cli       <- cli/**
 #   agents    <- agents/**                           (separate cargo workspace)
 #   model     <- model/**                            (Python ML governance model)
+#   gal-code  <- packages/gal-code/**                 (bun workspace: typecheck + astro build)
 #   fence     <- ALWAYS (fast license check)
 #
 # Repo ruleset: every commit message must contain "[ci]".
@@ -32,9 +33,10 @@ jobs:
       cli: ${{ steps.filter.outputs.cli }}
       agents: ${{ steps.filter.outputs.agents }}
       model: ${{ steps.filter.outputs.model }}
+      gal_code: ${{ steps.filter.outputs.gal_code }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -53,13 +55,15 @@ jobs:
               - 'agents/**'
             model:
               - 'model/**'
+            gal_code:
+              - 'packages/gal-code/**'
 
   # Always-on, fast license-by-location fence.
   fence:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: "20" }
       - run: node tools/check-license-fence.mjs
 
@@ -68,7 +72,7 @@ jobs:
     if: ${{ needs.changes.outputs.kernel == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: build + unit/shell tests (pure C, -Werror)
         run: |
           make -C kernel all
@@ -79,8 +83,8 @@ jobs:
     if: ${{ needs.changes.outputs.services == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
         with: { go-version: "1.25" }
       - name: compile kernel (ABI source the cgo binding embeds)
         run: make -C kernel all
@@ -95,9 +99,9 @@ jobs:
     if: ${{ needs.changes.outputs.ts == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: "20" }
       - run: npm install
       - name: turbo affected build + test
@@ -110,7 +114,7 @@ jobs:
     if: ${{ needs.changes.outputs.cli == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo build + test (default and OSS)
         working-directory: cli
@@ -124,7 +128,7 @@ jobs:
     if: ${{ needs.changes.outputs.agents == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo build + test (workspace)
         working-directory: agents
@@ -140,8 +144,8 @@ jobs:
       run:
         working-directory: model
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
         with: { python-version: "3.11" }
       # Lightweight install: the package's runtime deps (numpy/onnx/onnxruntime/
       # torch via pyproject) are enough to import gal_model and run the suite.
@@ -161,3 +165,25 @@ jobs:
           make train-smoke PYTHON=python
           make infer-smoke PYTHON=python
           make eval-smoke PYTHON=python
+
+  # gal-code is a SEPARATE bun workspace (not part of the npm/turbo `ts` job),
+  # so it had no CI coverage. Mirrors the local validation: install (frozen),
+  # turbo typecheck across all gal-code packages, and the astro web build
+  # (the web package has no typecheck task, so build is its coverage).
+  gal-code:
+    needs: changes
+    if: ${{ needs.changes.outputs.gal_code == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/gal-code
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: "1.3.13" }
+      - name: install (frozen lockfile)
+        run: bun install --frozen-lockfile
+      - name: typecheck (turbo, all gal-code packages)
+        run: bun run typecheck
+      - name: astro build (web app)
+        run: bun run --cwd packages/web build

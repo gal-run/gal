@@ -12,6 +12,8 @@
   "files": [
     "dist",
     "docs",
+    "fixtures",
+    "schemas",
     "suites",
     "README.md"
   ],
@@ -20,7 +22,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "eval:email": "npm run build && node dist/cli/evaluate.js --suite suites/email-triage.json --adapter email-rules",
-    "eval:all": "npm run eval:email"
+    "eval:email:predictions": "npm run build && node dist/cli/evaluate.js --suite suites/email-triage.json --adapter prediction-file --predictions fixtures/email-triage-perfect-predictions.json",
+    "eval:all": "npm run eval:email && npm run eval:email:predictions"
   },
   "devDependencies": {
     "@types/node": "^25.8.0",
