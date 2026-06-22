@@ -62,10 +62,12 @@ export function HeroSection() {
                 variants={fadeInUp}
                 className="text-lg text-gray-600 max-w-lg leading-relaxed"
               >
-                Runtime security that watches what agents{" "}
-                <em className="text-gray-900 not-italic font-medium">do</em>,
-                not just what they say. One dashboard to see and control every
-                AI coding agent in your organization.
+                gal is an open-source governance toolkit for AI coding
+                agents — git SDLC hooks and MCP servers today, with a{" "}
+                <em className="text-gray-900 not-italic font-medium">
+                  config-and-policy control plane
+                </em>{" "}
+                in active development.
               </motion.p>
 
               {/* CTA button */}

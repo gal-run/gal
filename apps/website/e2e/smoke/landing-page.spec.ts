@@ -100,7 +100,7 @@ test.describe('Landing Page - Hero Section', () => {
   })
 
   test('displays subheading', async ({ page }) => {
-    await expect(page.getByText(/Runtime security that watches/i)).toBeVisible()
+    await expect(page.getByText(/config-and-policy control plane/i)).toBeVisible()
   })
 
   // SKIPPED: Email form not yet implemented on website

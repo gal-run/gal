@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'AI Security Software & Coding Security | GAL',
-    description: 'AI coding security for agents. Block dangerous commands, restrict file access, enforce policies.',
+    description: 'AI coding security for agents. Define one canonical ruleset for dangerous commands and file access (blocking enforcement coming in v1.0).',
   alternates: {
     canonical: 'https://gal.run/features/security',
   },
   openGraph: {
     title: 'AI Security Software & Coding Security | GAL',
-  description: 'AI coding security for agents. Block dangerous commands, restrict file access, enforce policies.',
+  description: 'AI coding security for agents. Define one canonical ruleset for dangerous commands and file access (blocking enforcement coming in v1.0).',
     url: 'https://gal.run/features/security',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'SecurityApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/features/security',
-  description: 'AI coding security for agents. Block dangerous commands, restrict file access, enforce policies.',
+  description: 'AI coding security for agents. Define one canonical ruleset for dangerous commands and file access (blocking enforcement coming in v1.0).',
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
   },
 }
 
@@ -118,7 +113,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Runtime protection for Claude Code, Cursor, Copilot, and other AI coding agents. Block dangerous commands, restrict file access, and prevent security issues before they happen.
+            Governance for Claude Code, Cursor, Copilot, and other AI coding agents. Define one canonical ruleset for dangerous commands, file access, and network operations. Active blocking enforcement at the execution layer is coming in v1.0.
           </p>
           
           <div className="flex flex-wrap gap-4">
@@ -211,7 +206,7 @@ function SolutionSection() {
           </h2>
           
           <p className="text-lg text-black/60 mb-8">
-            GAL intercepts every operation your AI agents attempt, classifies it against your security policies, and enforces rules in real-time. Think of it as a firewall for AI coding agents.
+            GAL installs your security policies as one canonical ruleset across every agent and logs what they do. Real-time interception and enforcement — a firewall for AI coding agents — is in active development for v1.0.
           </p>
           
           <div className="flex flex-wrap gap-4">
@@ -272,7 +267,7 @@ function AICodingSecuritySection() {
             </div>
             <h3 className="text-lg font-medium text-black mb-2">Secrets Protection</h3>
             <p className="text-black/60">
-              Coding security prevents AI agents from reading or exposing environment files, API keys, and credentials during code generation.
+              Coding security is built to stop AI agents from reading or exposing environment files, API keys, and credentials during code generation. Active blocking is coming in v1.0.
             </p>
           </div>
           
@@ -296,28 +291,28 @@ function SecurityFeaturesSection() {
     {
       icon: Ban,
       title: 'Command Blocking',
-      description: 'Block dangerous shell commands before they execute. Prevent rm -rf, curl | bash, sudo, chmod 777, and other risky operations.',
+      description: 'Define rules to flag dangerous shell commands like rm -rf, curl | bash, sudo, and chmod 777. Blocking these before they execute is coming in v1.0.',
       examples: ['rm -rf', 'curl | bash', 'sudo', 'chmod 777', '> /dev/'],
       color: 'red',
     },
     {
       icon: Lock,
       title: 'File Access Restrictions',
-      description: 'Restrict which files agents can read, write, or modify. Protect .env files, secrets directories, credentials, and sensitive configuration.',
+      description: 'Define rules for which files agents can read, write, or modify — .env files, secrets directories, credentials, and sensitive configuration (active enforcement coming in v1.0).',
       examples: ['.env', '.env.*', 'secrets/', '*.pem', 'credentials.json'],
       color: 'orange',
     },
     {
       icon: Globe,
       title: 'Network Restrictions',
-      description: 'Control which domains and endpoints agents can access. Prevent data exfiltration and unauthorized API calls.',
+      description: 'Define which domains and endpoints agents can access to guard against data exfiltration and unauthorized API calls. Active blocking is coming in v1.0.',
       examples: ['Block: *.internal', 'Allow: api.github.com', 'Block: attacker.com'],
       color: 'blue',
     },
     {
       icon: Zap,
       title: 'Runtime Enforcement',
-      description: 'Policies are enforced in real-time at the execution layer. No agent modifications required. Works with Claude Code, Cursor, Copilot, and more.',
+      description: 'Real-time policy enforcement at the execution layer is in active development for v1.0. Today gal installs git SDLC hooks and ships MCP servers; cross-agent hook install and per-tool blocking are in active development.',
       examples: ['Intercept', 'Classify', 'Enforce', 'Log'],
       color: 'green',
     },
@@ -380,7 +375,7 @@ function HowItWorksSection() {
     },
     {
       title: 'Enforce',
-      description: 'Based on classification, GAL allows, blocks, or logs the operation. Blocked operations are prevented before any damage occurs.',
+      description: 'GAL records agent activity today (best-effort). Based on classification, allowing or blocking operations before any damage occurs is coming in v1.0.',
       icon: Shield,
     },
   ]
@@ -391,9 +386,9 @@ function HowItWorksSection() {
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-black mb-6">
           How AI security enforcement works
         </h2>
-        
+
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          GAL intercepts operations at the runtime level, blocking threats before they can execute.
+          GAL observes operations at the runtime level today; intercepting and blocking threats before they execute is in active development for v1.0.
         </p>
         
         <div className="grid md:grid-cols-3 gap-8">
@@ -434,7 +429,7 @@ function BalanceSection() {
             </div>
             <h3 className="text-lg font-medium text-black mb-2">Allow by Default</h3>
             <p className="text-black/60">
-              GAL blocks only explicitly dangerous operations. Normal coding workflows continue uninterrupted.
+              The ruleset targets only explicitly dangerous operations. Normal coding workflows continue uninterrupted, and active blocking is coming in v1.0.
             </p>
           </div>
           
@@ -454,7 +449,7 @@ function BalanceSection() {
             </div>
             <h3 className="text-lg font-medium text-black mb-2">Audit & Review</h3>
             <p className="text-black/60">
-              Every blocked operation is logged. Review false positives and refine policies over time.
+              Every agent action is logged today; once active blocking ships (v1.0), blocked operations are logged too. Review activity, tune false positives, and refine policies over time.
             </p>
           </div>
         </div>
@@ -471,7 +466,7 @@ function ComplianceSection() {
     },
     {
       standard: 'HIPAA',
-      description: 'Prevent unauthorized access to PHI through AI agent guardrails and audit logging.',
+      description: 'Define guardrails for PHI access with audit logging (active blocking coming in v1.0).',
     },
     {
       standard: 'ISO 27001',
@@ -479,7 +474,7 @@ function ComplianceSection() {
     },
     {
       standard: 'PCI DSS',
-      description: 'Restrict access to cardholder data and maintain audit trails for AI-driven code changes.',
+      description: 'Define rules for cardholder-data access and maintain audit trails for AI-driven code changes (active enforcement coming in v1.0).',
     },
   ]
   
@@ -491,7 +486,7 @@ function ComplianceSection() {
         </h2>
         
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          GAL helps organizations meet compliance requirements by providing security controls and audit trails for AI coding agents.
+          GAL is building toward common compliance frameworks, providing the security controls and audit trails organizations need for AI coding agents. GAL itself does not hold a SOC 2 or ISO 27001 certification.
         </p>
         
         <div className="grid md:grid-cols-2 gap-8">
@@ -528,11 +523,11 @@ function FAQSection() {
     },
     {
       question: 'Does GAL work with all AI coding agents?',
-      answer: 'GAL supports Claude Code, Cursor, GitHub Copilot, Windsurf, Aider, and other popular AI coding agents. The runtime interception layer works without agent modifications.',
+      answer: 'GAL is designed to define one canonical ruleset for agents like Claude Code, Cursor, Windsurf, and Gemini. Today gal installs git SDLC hooks and ships MCP servers; cross-agent hook install, per-tool blocking, and the runtime interception layer are in active development for v1.0.',
     },
     {
-      question: 'Does security enforcement slow down agents?',
-      answer: 'No. GAL adds less than 5ms of latency per operation. The overhead is negligible for interactive development workflows.',
+      question: 'Will security enforcement slow down agents?',
+      answer: 'GAL is designed to keep overhead negligible for interactive development workflows. Active blocking enforcement is in development for v1.0, and we will publish measured latency once it ships.',
     },
     {
       question: 'Can I customize security policies?',
