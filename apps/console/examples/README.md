@@ -6,7 +6,7 @@ This directory contains examples and guides for using GAL.
 
 ```bash
 # Install GAL
-npm install -g @scheduler-systems/gal-run
+npm install -g @gal-run/cli
 
 # Authenticate
 gal auth login

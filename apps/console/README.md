@@ -70,8 +70,8 @@ gal update
 
 # or with your package manager
 brew upgrade gal
-npm install -g @scheduler-systems/gal-run@latest
-pnpm add -g @scheduler-systems/gal-run@latest
+npm install -g @gal-run/cli@latest
+pnpm add -g @gal-run/cli@latest
 ```
 
 ## MCP Server

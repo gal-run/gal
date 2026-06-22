@@ -303,7 +303,7 @@ function TerminalDemoSection() {
         <div className="bg-gray-900 rounded-lg p-6 overflow-x-auto">
           <pre className="text-sm text-gray-300 font-mono">
 {`# Install the GAL CLI
-npm install -g @scheduler-systems/gal-run
+npm install -g @gal-run/cli
 
 # Authenticate with your GitHub account
 gal auth login
@@ -327,7 +327,7 @@ function UseCasesSection() {
   const useCases = [
     {
       title: 'Security Teams',
-      description: 'Define rules for what files Copilot can index. Prevent sensitive data exposure. Ensure every Copilot session follows security policy.',
+      description: 'Define rules for what files Copilot can index. Surface sensitive-data exposure risks (active prevention coming in v1.0). Aim for every Copilot session follows security policy.',
     },
     {
       title: 'Engineering Leads',

@@ -298,7 +298,7 @@ function SecurityFeaturesSection() {
     {
       icon: Lock,
       title: 'File Access Restrictions',
-      description: 'Restrict which files agents can read, write, or modify. Protect .env files, secrets directories, credentials, and sensitive configuration.',
+      description: 'Define rules for which files agents can read, write, or modify — .env files, secrets directories, credentials, and sensitive configuration (active enforcement coming in v1.0).',
       examples: ['.env', '.env.*', 'secrets/', '*.pem', 'credentials.json'],
       color: 'orange',
     },
@@ -375,7 +375,7 @@ function HowItWorksSection() {
     },
     {
       title: 'Enforce',
-      description: 'GAL logs every operation today. Based on classification, allowing or blocking operations before any damage occurs is coming in v1.0.',
+      description: 'GAL records agent activity today (best-effort). Based on classification, allowing or blocking operations before any damage occurs is coming in v1.0.',
       icon: Shield,
     },
   ]
@@ -466,7 +466,7 @@ function ComplianceSection() {
     },
     {
       standard: 'HIPAA',
-      description: 'Prevent unauthorized access to PHI through AI agent guardrails and audit logging.',
+      description: 'Define guardrails for PHI access with audit logging (active blocking coming in v1.0).',
     },
     {
       standard: 'ISO 27001',
@@ -474,7 +474,7 @@ function ComplianceSection() {
     },
     {
       standard: 'PCI DSS',
-      description: 'Restrict access to cardholder data and maintain audit trails for AI-driven code changes.',
+      description: 'Define rules for cardholder-data access and maintain audit trails for AI-driven code changes (active enforcement coming in v1.0).',
     },
   ]
   

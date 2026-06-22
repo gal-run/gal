@@ -189,7 +189,7 @@ function SolutionSection() {
             GAL is the governance layer for AI coding agents
           </h2>
           <p className="text-lg text-black/60 mb-10 leading-relaxed">
-            GAL sits between your organization and your AI coding agents. Define policy once and install one canonical ruleset across Claude Code, Cursor, Copilot, and more, with visibility into agent operations (per-tool blocking enforcement is in active development).
+            GAL sits between your organization and your AI coding agents. Define policy once as one canonical ruleset for Claude Code, Cursor, Copilot, and more, with visibility into agent operations (cross-agent install and per-tool blocking enforcement are in active development).
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
@@ -341,7 +341,7 @@ function PlatformsSection() {
           Govern all major AI coding agents
         </h2>
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          Define policy once and install it everywhere. GAL translates your governance rules to each platform&apos;s native configuration format (per-tool blocking enforcement is in active development).
+          Define policy once as a canonical ruleset. Translating it to each platform&apos;s native configuration format (cross-agent install) and per-tool blocking enforcement are in active development.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           {platforms.map((platform, index) => (

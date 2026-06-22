@@ -107,8 +107,7 @@ cargo install gal-cli
 
 ```bash
 # Local, no account needed:
-gal hooks install     # git pre-commit (tests-before-commit) + issue-ref + post-commit hooks
-gal init              # scaffold gal config in this project (.gal/config.yaml)
+gal hooks install     # git pre-commit hook that flags staged AI-config changes + a post-commit hook
 gal mcp terminal      # bundled MCP server for your agent (also: gal mcp vision | gal mcp browser)
 
 # Hosted config discovery + sync (requires an account):
