@@ -67,6 +67,7 @@ function OnboardingStep({
   actionHref,
   actionLabel,
   command,
+  upcoming,
 }: {
   title: string
   description: string
@@ -74,6 +75,7 @@ function OnboardingStep({
   actionHref?: string
   actionLabel?: string
   command?: string
+  upcoming?: boolean
 }) {
   return (
     <div className="rounded-xl p-5" style={{ border: '1px solid var(--border-primary)' }}>
@@ -98,6 +100,7 @@ function OnboardingStep({
               style={{ background: 'var(--surface-raised)', color: 'var(--text-secondary)' }}
             >
               {command}
+              {upcoming ? ' (coming in v1.0)' : ''}
             </code>
           )}
         </div>
@@ -108,7 +111,7 @@ function OnboardingStep({
             color: complete ? 'var(--status-success)' : 'var(--text-muted)',
           }}
         >
-          {complete ? 'Done' : 'Next'}
+          {complete ? 'Done' : upcoming ? 'Upcoming' : 'Next'}
         </span>
       </div>
       {actionHref && actionLabel && (
@@ -268,9 +271,10 @@ export default function EnforcementLandingPage() {
       },
       {
         title: 'Install the sandbox runtime',
-        description: 'Developers install the pinned runtime locally once per machine.',
+        description: 'Developers will install the pinned runtime locally once per machine. Per-machine runtime install is in active development.',
         complete: (snapshot.fleet?.developers ?? []).some((developer) => developer.enforcementStatus.runtime?.srtInstalled),
         command: 'gal enforce install',
+        upcoming: true,
       },
       {
         title: 'Compile and sync org rules',
@@ -362,7 +366,7 @@ export default function EnforcementLandingPage() {
                 Upgrade to the Enforcement tier
               </h2>
               <p className="text-sm mt-2 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
-                Enforcement tier adds runtime sandboxing, machine-level compliance reporting, and violation telemetry. After upgrade, your admins can publish approved bundles, onboard developers with `gal enforce install`, and confirm SRT is active from this workspace.
+                Enforcement tier adds runtime sandboxing, machine-level compliance reporting, and violation telemetry. After upgrade, your admins can publish approved bundles and confirm SRT is active from this workspace. Per-machine onboarding via `gal enforce install` is coming in v1.0.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <StatusCard label="Published Platforms" value={publishedPlatforms.length} />

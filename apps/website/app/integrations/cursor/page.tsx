@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'Cursor Governance & Config Sync | GAL',
-  description: 'Sync Cursor rules across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Cursor rules across your team. Standardize policies, maintain audit trails, stay aligned.',
   alternates: {
     canonical: 'https://gal.run/integrations/cursor',
   },
   openGraph: {
     title: 'Cursor Governance & Config Sync | GAL',
-    description: 'Sync Cursor rules across your team. Enforce policies, maintain audit trails, stay aligned.',
+    description: 'Sync Cursor rules across your team. Standardize policies, maintain audit trails, stay aligned.',
     url: 'https://gal.run/integrations/cursor',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/integrations/cursor',
-  description: 'Sync Cursor rules across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Cursor rules across your team. Standardize policies, maintain audit trails, stay aligned.',
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '89',
   },
 }
 
@@ -121,7 +116,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Sync .cursorrules across your team with one command. Enforce governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
+            Sync .cursorrules across your team with one command. Standardize governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
             <a href="https://cursor.com" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 underline">
               Cursor
             </a>.
@@ -206,7 +201,7 @@ function FeaturesSection() {
     {
       icon: Shield,
       title: 'Governance Policies',
-      description: 'Define org-wide rules for what Cursor can and cannot do. Block sensitive file indexing, restrict context boundaries, enforce security standards.',
+      description: 'Define org-wide rules for what Cursor can and cannot do — sensitive file indexing, context boundaries, and security standards. Active blocking enforcement is on the roadmap.',
     },
     {
       icon: Terminal,
@@ -341,7 +336,7 @@ function UseCasesSection() {
     },
     {
       title: 'Compliance Officers',
-      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance during SOC 2 or ISO 27001 audits.',
+      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance when you are audited for SOC 2 or ISO 27001.',
     },
   ]
   

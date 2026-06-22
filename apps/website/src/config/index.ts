@@ -89,7 +89,7 @@ export const NAV_LINKS = [
  * Social media links for footer.
  */
 export const SOCIAL_LINKS = {
-  github: "https://github.com/gal-run/gal-run",
+  github: "https://github.com/gal-run/gal",
   twitter: "https://x.com/gal_runtime",
   linkedin: "https://linkedin.com/company/gal-run",
 } as const;

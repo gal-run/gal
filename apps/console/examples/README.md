@@ -27,7 +27,7 @@ cat <<'JSON' > .mcp.json
   "mcpServers": {
     "gal": {
       "command": "npx",
-      "args": ["-y", "@scheduler-systems/gal-mcp-session"]
+      "args": ["-y", "@gal-run/gal-mcp"]
     }
   }
 }
@@ -43,7 +43,7 @@ cat <<'JSON' > .cursor/mcp.json
   "mcpServers": {
     "gal": {
       "command": "npx",
-      "args": ["-y", "@scheduler-systems/gal-mcp-session"]
+      "args": ["-y", "@gal-run/gal-mcp"]
     }
   }
 }
@@ -59,7 +59,7 @@ cat <<'JSON' > .windsurf/mcp_config.json
   "mcpServers": {
     "gal": {
       "command": "npx",
-      "args": ["-y", "@scheduler-systems/gal-mcp-session"]
+      "args": ["-y", "@gal-run/gal-mcp"]
     }
   }
 }
@@ -75,7 +75,7 @@ cat <<'JSON' > .gemini/settings.json
   "mcpServers": {
     "gal": {
       "command": "npx",
-      "args": ["-y", "@scheduler-systems/gal-mcp-session"]
+      "args": ["-y", "@gal-run/gal-mcp"]
     }
   }
 }

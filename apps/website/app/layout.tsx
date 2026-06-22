@@ -17,7 +17,7 @@ const inter = Inter({
 const siteUrl = 'https://gal.run'
 const siteTitle = 'GAL — Governance Agentic Layer'
 const siteDescription =
-  'Runtime security that watches what agents do, not just what they say. One dashboard to see and control every AI coding agent in your organization.'
+  'gal is a config-and-policy control plane for AI coding agents — it discovers, standardizes, and installs one canonical ruleset as hooks across Claude Code, Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in active development).'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -121,7 +121,7 @@ export default async function RootLayout({
                 name: 'Scheduler Systems',
                 url: 'https://gal.run',
                 logo: 'https://gal.run/logo.svg',
-                sameAs: ['https://github.com/gal-run/gal-run'],
+                sameAs: ['https://github.com/gal-run/gal'],
               },
               {
                 '@context': 'https://schema.org',

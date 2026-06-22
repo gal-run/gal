@@ -1,8 +1,11 @@
 # gal Architecture
 
-gal is an open governance platform. **The kernel is at head**: a small pure-C
-reference monitor with a frozen ABI is the one contract the entire monorepo
-binds to. Everything else is downstream of it.
+gal is a config-and-policy control plane for AI coding agents — it discovers,
+standardizes, and installs one canonical ruleset as hooks across Claude Code,
+Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in
+active development). **The kernel is at head**: a small pure-C reference monitor
+with a frozen ABI is the one contract the entire monorepo binds to. Everything
+else is downstream of it.
 
 ## Kernel at head
 

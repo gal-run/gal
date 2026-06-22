@@ -30,11 +30,6 @@ const jsonLd = {
     price: '0',
     priceCurrency: 'USD',
   },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
-  },
 }
 
 export default function ConfigFeaturePage() {

@@ -30,11 +30,6 @@ const jsonLd = {
     price: '10',
     priceCurrency: 'USD',
   },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
-  },
 }
 
 export default function AIGovernancePage() {
@@ -194,7 +189,7 @@ function SolutionSection() {
             GAL is the governance layer for AI coding agents
           </h2>
           <p className="text-lg text-black/60 mb-10 leading-relaxed">
-            GAL sits between your organization and your AI coding agents. Define policy once, enforce everywhere, and maintain complete visibility into agent operations across Claude Code, Cursor, Copilot, and more.
+            GAL sits between your organization and your AI coding agents. Define policy once and install one canonical ruleset across Claude Code, Cursor, Copilot, and more, with visibility into agent operations (per-tool blocking enforcement is in active development).
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
@@ -227,7 +222,7 @@ function SolutionSection() {
             <div>
               <h3 className="text-lg font-medium text-black mb-2">Policy Enforcement</h3>
               <p className="text-black/60">
-                Block dangerous operations before they happen. Enforce guardrails on file access, shell commands, and network operations at the CLI level.
+                Define guardrails for file access, shell commands, and network operations as one canonical ruleset. Active blocking at the CLI level is coming in v1.0.
               </p>
             </div>
           </div>
@@ -236,9 +231,9 @@ function SolutionSection() {
               <FileCheck className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-black mb-2">Compliance Ready</h3>
+              <h3 className="text-lg font-medium text-black mb-2">Built for Compliance</h3>
               <p className="text-black/60">
-                SOC 2, ISO 27001, and enterprise security requirements. Generate reports, demonstrate control, pass audits with documentation.
+                Designed to support enterprise security requirements as we build toward common compliance frameworks. Generate reports and demonstrate control with documentation.
               </p>
             </div>
           </div>
@@ -280,15 +275,14 @@ function ThreePillarsSection() {
       icon: FileCheck,
       title: 'Compliance',
       subtitle: 'Prove governance',
-      description: 'Maintain audit trails, generate compliance reports, and demonstrate control to auditors and stakeholders. Aligned with the NIST AI Risk Management Framework.',
+      description: 'Maintain audit trails, generate compliance reports, and demonstrate control to auditors and stakeholders as we build toward common compliance frameworks.',
       features: [
         'Complete audit logging',
         'Compliance dashboard and reports',
         'Policy version history',
-        'SOC 2 and ISO 27001 ready',
+        'Building toward common compliance frameworks',
       ],
       link: '/compliance',
-      externalLink: 'https://www.nist.gov/itl/ai-risk-management-framework',
     },
   ]
 
@@ -322,11 +316,6 @@ function ThreePillarsSection() {
                 <Link href={pillar.link} className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors inline-flex items-center gap-1">
                   Learn more <ArrowRight className="w-4 h-4" />
                 </Link>
-                {pillar.externalLink && (
-                  <a href={pillar.externalLink} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                    NIST AI RMF ↗
-                  </a>
-                )}
               </div>
             </div>
           ))}
@@ -352,7 +341,7 @@ function PlatformsSection() {
           Govern all major AI coding agents
         </h2>
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          Define policy once, enforce everywhere. GAL translates your governance rules to each platform&apos;s native configuration format.
+          Define policy once and install it everywhere. GAL translates your governance rules to each platform&apos;s native configuration format (per-tool blocking enforcement is in active development).
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           {platforms.map((platform, index) => (
@@ -374,10 +363,10 @@ function FeaturesSection() {
   const features = [
     { icon: Globe, title: 'Config Discovery', description: 'Auto-discover all AI agent configurations across your repositories. CLAUDE.md, .cursorrules, copilot instructions, and more.' },
     { icon: RefreshCw, title: 'Config Sync', description: 'Push approved configurations to every developer with a single CLI command. Keep everyone aligned with organizational standards.' },
-    { icon: Shield, title: 'Policy Enforcement', description: 'Define guardrails for what agents can do. Block dangerous commands, restrict file access, enforce security boundaries.' },
+    { icon: Shield, title: 'Policy Enforcement', description: 'Define guardrails for what agents can do — dangerous commands, file access, and security boundaries — as one canonical ruleset. Active blocking is coming in v1.0.' },
     { icon: Clock, title: 'Audit Trails', description: 'Every config change, every policy update, every enforcement action logged and searchable. Compliance made simple.' },
-    { icon: Terminal, title: 'CLI Integration', description: 'GAL wraps your existing AI agent workflow. Sync configs, check compliance, and enforce policies from the command line.' },
-    { icon: Zap, title: 'Automated Remediation', description: 'Detect misconfigured agents and automatically bring them back into compliance.' },
+    { icon: Terminal, title: 'CLI Integration', description: 'GAL wraps your existing AI agent workflow. Sync configs, check compliance, and install policy hooks from the command line (active blocking coming in v1.0).' },
+    { icon: Zap, title: 'Automated Remediation', description: 'Detect misconfigured agents and surface the drift; one-click remediation back into compliance is coming in v1.0.' },
   ]
 
   return (
@@ -500,7 +489,7 @@ function FAQSection() {
     { question: 'Which AI coding agents does GAL support?', answer: 'GAL supports Claude Code, Cursor, GitHub Copilot, Gemini Code Assist, and Codex. You define policies once, and GAL translates them to each platform\'s native configuration format.' },
     { question: 'Does GAL replace my AI coding agent?', answer: 'No. GAL is a governance layer that works alongside your AI coding agents. Your developers continue using Claude Code, Cursor, or Copilot as normal. GAL ensures they all operate within approved boundaries.' },
     { question: 'How long does it take to implement GAL governance?', answer: 'Most teams are up and running in under 5 minutes. Install the GAL CLI, connect your GitHub organization, and your team can start syncing approved configurations immediately.' },
-    { question: 'Is GAL SOC 2 and ISO 27001 compliant?', answer: 'Yes. GAL provides the audit trails, policy documentation, and access controls required for SOC 2 and ISO 27001 compliance. The compliance dashboard generates reports for auditors.' },
+    { question: 'Does GAL help with compliance frameworks?', answer: 'GAL is building toward common compliance frameworks. It provides audit trails, policy documentation, and access controls, and the compliance dashboard generates reports you can share with auditors. GAL itself does not hold a SOC 2 or ISO 27001 certification.' },
   ]
 
   return (

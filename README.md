@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="hero-banner.png" alt="gal - open governance platform" width="700">
+  <img src="hero-banner.png" alt="gal - config-and-policy control plane for AI coding agents" width="700">
 </p>
 
 <p align="center">
@@ -8,12 +8,19 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-brightgreen" alt="License"></a>
 </p>
 
-# gal — open governance platform; kernel at head; build from source today
+# gal — a config-and-policy control plane for AI coding agents
 
-gal governs AI agents from a small, auditable core. A pure-C **reference
-monitor** sits at the head of the repo behind a **frozen ABI**; every other
-surface — Go services, TypeScript SDKs and MCP servers, the Rust CLI, the
-dashboard — binds to that one contract. gal is Apache-2.0, open core, and you
+gal is a config-and-policy control plane for AI coding agents — it discovers,
+standardizes, and installs one canonical ruleset as hooks across Claude Code,
+Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in
+active development).
+
+**Status:** pre-1.0, building toward v1.0 enforcement — see ROADMAP.md.
+
+Under the hood, gal binds every surface to a small, auditable core: a pure-C
+**reference monitor** sits at the head of the repo behind a **frozen ABI**, and
+every other surface — Go services, TypeScript SDKs and MCP servers, the Rust CLI,
+the dashboard — binds to that one contract. gal is Apache-2.0, open core, and you
 build the whole platform **from source today**:
 
 ```bash

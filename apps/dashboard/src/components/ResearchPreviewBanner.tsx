@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, FlaskConical } from "lucide-react";
 
-const FEEDBACK_URL = "https://github.com/Scheduler-Systems/gal-run/issues";
+const FEEDBACK_URL = "https://github.com/gal-run/gal/issues";
 const DISMISS_KEY = "gal-research-preview-dismissed";
 const DISMISS_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day
 

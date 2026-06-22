@@ -30,11 +30,6 @@ const jsonLd = {
     price: '0',
     priceCurrency: 'USD',
   },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
-  },
 }
 
 export default function ObservabilityFeaturePage() {
@@ -117,10 +112,7 @@ function HeroSection() {
           </h1>
           
         <p className="text-xl text-black/60 mb-8 leading-relaxed">
-          Complete visibility into AI agent operations. Track git commits, shell commands, file changes, and API calls in real-time. SOC 2 compliant audit trails for compliance and security. For broader AI risk management guidance, see the{' '}
-          <a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 underline">
-            NIST AI Risk Management Framework
-          </a>.
+          Complete visibility into AI agent operations. Track git commits, shell commands, file changes, and API calls in real-time. Audit trails for compliance and security that map to common frameworks as we build toward them.
         </p>
           
           <div className="flex flex-wrap gap-4">
@@ -313,7 +305,7 @@ function UseCasesSection() {
     {
       icon: CheckCircle2,
       title: 'Compliance Audits',
-      description: 'Generate audit reports showing every operation during a given period. Demonstrate to SOC 2, ISO 27001, or HIPAA auditors that AI agents operated within approved boundaries. Aligned with the NIST AI Risk Management Framework for responsible AI governance.',
+      description: 'Generate audit reports showing every operation during a given period. Demonstrate to SOC 2, ISO 27001, or HIPAA auditors that AI agents operated within approved boundaries.',
     },
     {
       icon: Search,
@@ -513,7 +505,7 @@ function FAQSection() {
     },
     {
       question: 'Can I export operation logs for compliance audits?',
-      answer: 'Yes. GAL supports one-click export of operation logs in CSV and JSON formats. Generate reports filtered by date range, agent, operation type, or user for SOC 2, ISO 27001, and HIPAA audits.',
+      answer: 'Yes. GAL supports one-click export of operation logs in CSV and JSON formats. Generate reports filtered by date range, agent, operation type, or user to support SOC 2, ISO 27001, and HIPAA audits.',
     },
   ]
   

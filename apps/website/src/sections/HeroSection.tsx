@@ -62,10 +62,14 @@ export function HeroSection() {
                 variants={fadeInUp}
                 className="text-lg text-gray-600 max-w-lg leading-relaxed"
               >
-                Runtime security that watches what agents{" "}
-                <em className="text-gray-900 not-italic font-medium">do</em>,
-                not just what they say. One dashboard to see and control every
-                AI coding agent in your organization.
+                gal is a config-and-policy control plane for AI coding
+                agents — it discovers, standardizes, and installs one{" "}
+                <em className="text-gray-900 not-italic font-medium">
+                  canonical ruleset
+                </em>{" "}
+                as hooks across Claude Code, Cursor, Copilot, Gemini,
+                Windsurf, and Codex (per-tool blocking enforcement is in
+                active development).
               </motion.p>
 
               {/* CTA button */}

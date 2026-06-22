@@ -269,7 +269,7 @@ function APIReference() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <a
-            href="https://github.com/Scheduler-Systems/gal"
+            href="https://github.com/gal-run/gal"
             target="_blank"
             rel="noopener noreferrer"
             className="dashboard-card p-4 transition-colors group flex items-center justify-between"

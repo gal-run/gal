@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'Claude Code Governance & Config Sync | GAL',
-  description: 'Sync CLAUDE.md and settings across your team. Enforce policies, maintain audit trails, keep Claude Code aligned.',
+  description: 'Sync CLAUDE.md and settings across your team. Standardize policies, maintain audit trails, keep Claude Code aligned.',
   alternates: {
     canonical: 'https://gal.run/integrations/claude-code',
   },
   openGraph: {
     title: 'Claude Code Governance & Config Sync | GAL',
-    description: 'Sync CLAUDE.md and settings across your team. Enforce policies, maintain audit trails, keep Claude Code aligned.',
+    description: 'Sync CLAUDE.md and settings across your team. Standardize policies, maintain audit trails, keep Claude Code aligned.',
     url: 'https://gal.run/integrations/claude-code',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/integrations/claude-code',
-  description: 'Sync CLAUDE.md and settings across your team. Enforce policies, maintain audit trails, keep Claude Code aligned.',
+  description: 'Sync CLAUDE.md and settings across your team. Standardize policies, maintain audit trails, keep Claude Code aligned.',
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
   },
 }
 
@@ -121,7 +116,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Sync CLAUDE.md, settings.json, and custom commands across your team with one command. Enforce governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
+            Sync CLAUDE.md, settings.json, and custom commands across your team with one command. Standardize governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
             <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 underline">
               Claude Code
             </a>.
@@ -206,7 +201,7 @@ function FeaturesSection() {
     {
       icon: Shield,
       title: 'Governance Policies',
-      description: 'Define org-wide rules for what Claude Code can and cannot do. Block dangerous commands, restrict file access, enforce security standards.',
+      description: 'Define org-wide rules for what Claude Code can and cannot do — dangerous commands, file access, and security standards. Active blocking enforcement is on the roadmap.',
     },
     {
       icon: Terminal,
@@ -343,7 +338,7 @@ function UseCasesSection() {
     },
     {
       title: 'Compliance Officers',
-      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance during SOC 2 or ISO 27001 audits.',
+      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance when you are audited for SOC 2 or ISO 27001.',
     },
   ]
   

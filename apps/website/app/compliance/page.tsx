@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'AI Compliance for AI Agents | GAL',
-  description: 'Achieve AI compliance with GAL. SOC 2, ISO 27001, HIPAA-ready audit trails for AI agents.',
+  description: 'Build toward AI compliance with GAL. Audit trails for AI agents that map to common compliance frameworks.',
   alternates: {
     canonical: 'https://gal.run/compliance',
   },
   openGraph: {
     title: 'AI Compliance for AI Agents | GAL',
-    description: 'Achieve AI compliance with GAL. SOC 2, ISO 27001, HIPAA-ready audit trails for AI agents.',
+    description: 'Build toward AI compliance with GAL. Audit trails for AI agents that map to common compliance frameworks.',
     url: 'https://gal.run/compliance',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/compliance',
-  description: 'Achieve AI compliance with GAL. SOC 2, ISO 27001, HIPAA-ready audit trails for AI agents.',
+  description: 'Build toward AI compliance with GAL. Audit trails for AI agents that map to common compliance frameworks.',
   offers: {
     '@type': 'Offer',
     price: '10',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '127',
   },
 }
 
@@ -111,7 +106,7 @@ function HeroSection() {
             </span>
             <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium">
               <CheckCircle2 className="w-4 h-4" />
-              SOC 2 Ready
+              Audit-ready trails
             </span>
           </div>
           
@@ -120,7 +115,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Achieve AI compliance with GAL. SOC 2, ISO 27001, and HIPAA-ready audit trails for AI coding agents. Track operations, enforce policies, and demonstrate governance across your entire AI agent fleet.
+            Build toward AI compliance with GAL. Audit trails for AI coding agents that map to common frameworks like SOC 2, ISO 27001, and HIPAA. Track operations, define policies, and demonstrate governance across your entire AI agent fleet.
           </p>
           
           <div className="flex flex-wrap gap-4">
@@ -246,12 +241,12 @@ function FeaturesSection() {
     {
       icon: Shield,
       title: 'Policy Enforcement',
-      description: 'Define what agents can and cannot do. Block dangerous commands, restrict file access, enforce security standards automatically.',
+      description: 'Define what agents can and cannot do as one canonical ruleset for dangerous commands and file access. Active blocking enforcement is coming in v1.0.',
     },
     {
       icon: BarChart3,
       title: 'Compliance Reporting',
-      description: 'Generate SOC 2, ISO 27001, and HIPAA-ready reports with one click. Demonstrate governance to auditors without manual documentation.',
+      description: 'Generate audit reports that map to common frameworks like SOC 2, ISO 27001, and HIPAA. Demonstrate governance to auditors without manual documentation.',
     },
     {
       icon: FileCheck,
@@ -314,11 +309,11 @@ function FrameworksSection() {
     <section className="py-20 px-8">
       <div className="max-w-[1376px] mx-auto">
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-black mb-6">
-          Compliance frameworks supported
+          Compliance frameworks we map to
         </h2>
-        
+
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          GAL helps organizations meet requirements across major compliance frameworks for AI agent governance.
+          GAL is building toward common compliance frameworks for AI agent governance, mapping its audit trails and controls to the requirements organizations need to meet.
         </p>
         
         <div className="grid md:grid-cols-3 gap-8">
@@ -361,7 +356,7 @@ function UseCasesSection() {
     {
       icon: FileCheck,
       title: 'Compliance Officers',
-      description: 'Generate audit-ready reports for SOC 2, ISO 27001, and HIPAA. Demonstrate governance controls without manual documentation.',
+      description: 'Generate audit-ready reports that map to common frameworks like SOC 2, ISO 27001, and HIPAA. Demonstrate governance controls without manual documentation.',
       link: '/governance',
     },
     {
@@ -418,7 +413,7 @@ function FAQSection() {
     },
     {
       question: 'How does GAL help with SOC 2 compliance for AI agents?',
-      answer: 'GAL provides audit trails for all AI operations, access controls for what agents can do, change management for configuration updates, and monitoring dashboards for ongoing oversight. These map directly to SOC 2 control requirements.',
+      answer: 'GAL provides audit trails for all AI operations, policy definitions for what agents can do, change management for configuration updates, and monitoring dashboards for ongoing oversight. These map to common SOC 2 control areas. GAL itself does not hold a SOC 2 certification.',
     },
     {
       question: 'Does GAL work with all AI coding agents?',
@@ -459,7 +454,7 @@ function CTASection() {
         </h2>
         
         <p className="text-lg text-black/60 mb-8 max-w-xl mx-auto">
-          Start tracking and controlling AI agent operations with SOC 2, ISO 27001, and HIPAA-ready audit trails.
+          Start tracking and governing AI agent operations with audit trails that map to common compliance frameworks.
         </p>
         
         <a

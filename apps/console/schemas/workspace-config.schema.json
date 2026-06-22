@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/workspace-config.schema.json",
+  "$id": "https://github.com/gal-run/gal/schemas/workspace-config.schema.json",
   "title": "GAL Workspace Config",
   "type": "object",
   "additionalProperties": false,
