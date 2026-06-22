@@ -57,6 +57,7 @@ jobs:
               - 'model/**'
             gal_code:
               - 'packages/gal-code/**'
+              - '.github/workflows/ci.yml'
 
   # Always-on, fast license-by-location fence.
   fence:
