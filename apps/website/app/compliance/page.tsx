@@ -197,7 +197,7 @@ function SolutionSection() {
     {
       step: '2',
       title: 'Define Compliance Policies',
-      description: 'Set organizational policies for file access, command execution, and acceptable operations. GAL enforces these across all connected agents.',
+      description: 'Set organizational policies for file access, command execution, and acceptable operations. GAL standardizes these across your connected agents (active enforcement coming in v1.0).',
     },
     {
       step: '3',

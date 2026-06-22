@@ -497,7 +497,7 @@ function FAQSection() {
     },
     {
       question: 'Does observability slow down my agents?',
-      answer: 'No. GAL adds less than 5ms of latency to each operation. The overhead is negligible for interactive use and imperceptible for automated workflows.',
+      answer: 'Observability captures operations as they happen without altering agent behavior. We will publish measured latency once active enforcement ships.',
     },
     {
       question: 'How long is operation history retained?',

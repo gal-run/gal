@@ -303,7 +303,7 @@ function TerminalDemoSection() {
         <div className="bg-gray-900 rounded-lg p-6 overflow-x-auto">
           <pre className="text-sm text-gray-300 font-mono">
 {`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @scheduler-systems/gal-run
 
 # Authenticate with your GitHub account
 gal auth login

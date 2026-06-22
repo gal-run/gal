@@ -126,8 +126,8 @@ export const PRICING_TIERS = [
     description: "Policy enforcement at the CLI level",
     features: [
       "Everything in Convenience",
-      "Policy enforcement hooks",
-      "Command blocking",
+      "Policy enforcement hooks (coming in v1.0)",
+      "Command blocking (coming in v1.0)",
       "Audit logging",
     ],
     cta: "Get Started",
@@ -140,7 +140,7 @@ export const PRICING_TIERS = [
     description: "Automated compliance workflows",
     features: [
       "Everything in Enforcement",
-      "Automated remediation",
+      "Automated remediation (coming in v1.0)",
       "Custom workflows",
       "Advanced reporting",
     ],

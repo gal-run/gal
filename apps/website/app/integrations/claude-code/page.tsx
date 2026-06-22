@@ -303,7 +303,7 @@ function TerminalDemoSection() {
         <div className="bg-gray-900 rounded-lg p-6 overflow-x-auto">
           <pre className="text-sm text-gray-300 font-mono">
 {`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @scheduler-systems/gal-run
 
 # Authenticate with your GitHub account
 gal auth login
@@ -330,7 +330,7 @@ function UseCasesSection() {
   const useCases = [
     {
       title: 'Security Teams',
-      description: 'Define rules for what tools Claude Code can use. Prevent dangerous commands like `rm -rf` or `sudo`. Ensure every session follows security policy.',
+      description: 'Define rules for what tools Claude Code can use. Define rules to flag dangerous commands like `rm -rf` or `sudo` (active blocking coming in v1.0). Ensure every session follows security policy.',
     },
     {
       title: 'Engineering Leads',

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="hero-banner.png" alt="gal - config-and-policy control plane for AI coding agents" width="700">
+  <img src="hero-banner.png" alt="gal — open-source governance toolkit for AI coding agents" width="700">
 </p>
 
 <p align="center">
@@ -8,14 +8,15 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-brightgreen" alt="License"></a>
 </p>
 
-# gal — a config-and-policy control plane for AI coding agents
+# gal — open-source governance toolkit for AI coding agents (git SDLC hooks + MCP servers today; config-and-policy control plane in active development)
 
-gal is a config-and-policy control plane for AI coding agents — it discovers,
-standardizes, and installs one canonical ruleset as hooks across Claude Code,
-Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in
-active development).
+gal is an open-source toolkit building toward a config-and-policy control plane
+for AI coding agents. Today it installs git SDLC hooks (tests-before-commit and
+issue-reference checks) and ships MCP servers (terminal, vision, browser) for
+your agents. Hosted config discovery and sync need an account; cross-agent hook
+install and per-tool blocking enforcement are in active development.
 
-**Status:** pre-1.0, building toward v1.0 enforcement — see ROADMAP.md.
+**Status:** pre-1.0 — building toward v1.0 enforcement.
 
 Under the hood, gal binds every surface to a small, auditable core: a pure-C
 **reference monitor** sits at the head of the repo behind a **frozen ABI**, and
@@ -96,9 +97,14 @@ cargo install gal-cli
 ```
 
 ```bash
-gal scan              # discover existing AI agent configs
-gal approve --local   # standardize into ~/.gal/config.yaml
-gal sync              # distribute the canonical config to your agents
+# Local, no account needed:
+gal hooks install     # git pre-commit (tests-before-commit) + issue-ref + post-commit hooks
+gal mcp terminal      # bundled MCP server for your agent (also: gal mcp vision | gal mcp browser)
+
+# Hosted config discovery + sync (requires an account):
+gal auth login
+gal scan              # discover agent configs across your repos
+gal sync              # distribute the approved ruleset
 ```
 
 ## MCP servers

@@ -314,7 +314,7 @@ export default function DocsPage() {
                 <div className="rounded-xl bg-black/50 border border-white/10 p-4 mb-6 font-mono text-sm">
                   <div className="text-gray-500 mb-2"># Install via npm</div>
                   <div className="text-[#00FF2A]">
-                    npm install -g @anthropic-ai/gal
+                    npm install -g @scheduler-systems/gal-run
                   </div>
                   <div className="text-gray-500 mt-4 mb-2">
                     # Or via Homebrew (macOS)

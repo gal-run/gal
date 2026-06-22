@@ -62,14 +62,12 @@ export function HeroSection() {
                 variants={fadeInUp}
                 className="text-lg text-gray-600 max-w-lg leading-relaxed"
               >
-                gal is a config-and-policy control plane for AI coding
-                agents — it discovers, standardizes, and installs one{" "}
+                gal is an open-source governance toolkit for AI coding
+                agents — git SDLC hooks and MCP servers today, with a{" "}
                 <em className="text-gray-900 not-italic font-medium">
-                  canonical ruleset
+                  config-and-policy control plane
                 </em>{" "}
-                as hooks across Claude Code, Cursor, Copilot, Gemini,
-                Windsurf, and Codex (per-tool blocking enforcement is in
-                active development).
+                in active development.
               </motion.p>
 
               {/* CTA button */}

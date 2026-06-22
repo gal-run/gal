@@ -267,7 +267,7 @@ function AICodingSecuritySection() {
             </div>
             <h3 className="text-lg font-medium text-black mb-2">Secrets Protection</h3>
             <p className="text-black/60">
-              Coding security prevents AI agents from reading or exposing environment files, API keys, and credentials during code generation.
+              Coding security is built to stop AI agents from reading or exposing environment files, API keys, and credentials during code generation. Active blocking is coming in v1.0.
             </p>
           </div>
           
@@ -305,14 +305,14 @@ function SecurityFeaturesSection() {
     {
       icon: Globe,
       title: 'Network Restrictions',
-      description: 'Control which domains and endpoints agents can access. Prevent data exfiltration and unauthorized API calls.',
+      description: 'Define which domains and endpoints agents can access to guard against data exfiltration and unauthorized API calls. Active blocking is coming in v1.0.',
       examples: ['Block: *.internal', 'Allow: api.github.com', 'Block: attacker.com'],
       color: 'blue',
     },
     {
       icon: Zap,
       title: 'Runtime Enforcement',
-      description: 'Real-time policy enforcement at the execution layer is in active development for v1.0. The canonical ruleset installs today as hooks across Claude Code, Cursor, Copilot, and more, with no agent modifications required.',
+      description: 'Real-time policy enforcement at the execution layer is in active development for v1.0. Today gal installs git SDLC hooks and ships MCP servers; cross-agent hook install and per-tool blocking are in active development.',
       examples: ['Intercept', 'Classify', 'Enforce', 'Log'],
       color: 'green',
     },
@@ -486,7 +486,7 @@ function ComplianceSection() {
         </h2>
         
         <p className="text-lg text-black/60 mb-12 max-w-2xl">
-          GAL is building toward common compliance frameworks, providing the security controls and audit trails organizations need for AI coding agents.
+          GAL is building toward common compliance frameworks, providing the security controls and audit trails organizations need for AI coding agents. GAL itself does not hold a SOC 2 or ISO 27001 certification.
         </p>
         
         <div className="grid md:grid-cols-2 gap-8">
@@ -523,7 +523,7 @@ function FAQSection() {
     },
     {
       question: 'Does GAL work with all AI coding agents?',
-      answer: 'GAL supports Claude Code, Cursor, GitHub Copilot, Windsurf, Gemini, and Codex. It installs the canonical ruleset as hooks without agent modifications; the runtime interception layer is in active development for v1.0.',
+      answer: 'GAL is designed to define one canonical ruleset for agents like Claude Code, Cursor, Windsurf, and Gemini. Today gal installs git SDLC hooks and ships MCP servers; cross-agent hook install, per-tool blocking, and the runtime interception layer are in active development for v1.0.',
     },
     {
       question: 'Will security enforcement slow down agents?',

@@ -17,7 +17,7 @@ const inter = Inter({
 const siteUrl = 'https://gal.run'
 const siteTitle = 'GAL — Governance Agentic Layer'
 const siteDescription =
-  'gal is a config-and-policy control plane for AI coding agents — it discovers, standardizes, and installs one canonical ruleset as hooks across Claude Code, Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in active development).'
+  'gal — open-source governance toolkit for AI coding agents (git SDLC hooks + MCP servers today; config-and-policy control plane in active development).'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

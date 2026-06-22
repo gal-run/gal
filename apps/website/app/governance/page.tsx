@@ -262,7 +262,7 @@ function ThreePillarsSection() {
       icon: Lock,
       title: 'Control',
       subtitle: 'Define boundaries',
-      description: 'Set organization-wide policies for what AI agents can and cannot do. Enforce rules consistently across all platforms.',
+      description: 'Set organization-wide policies for what AI agents can and cannot do. Standardize rules consistently across all platforms (active blocking coming in v1.0).',
       features: [
         'Policy-as-code for agent permissions',
         'Command and file access restrictions',

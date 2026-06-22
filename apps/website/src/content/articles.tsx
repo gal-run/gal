@@ -314,7 +314,7 @@ team-dotfiles/
             </p>
             <pre>
               <code>{`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @scheduler-systems/gal-run
 
 # Authenticate with your GitHub account
 gal auth login
@@ -1381,7 +1381,7 @@ gal sync --pull
             </p>
             <pre>
               <code>{`# Developer workflow — one command to governance
-npm install -g @scheduler-systems/gal
+npm install -g @scheduler-systems/gal-run
 gal auth login
 gal sync --pull
 
@@ -1822,7 +1822,7 @@ echo "Claude Code team config installed."`}</code>
             </p>
             <pre>
               <code>{`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @scheduler-systems/gal-run
 
 # Authenticate with your GitHub account
 gal auth login
@@ -2126,7 +2126,7 @@ gal sync --pull
             </p>
             <ol>
               <li>
-                Install the CLI: <code>npm install -g @scheduler-systems/gal</code>
+                Install the CLI: <code>npm install -g @scheduler-systems/gal-run</code>
               </li>
               <li>
                 Authenticate: <code>gal auth login</code>

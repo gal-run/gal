@@ -1,9 +1,10 @@
 # gal Architecture
 
-gal is a config-and-policy control plane for AI coding agents — it discovers,
-standardizes, and installs one canonical ruleset as hooks across Claude Code,
-Cursor, Copilot, Gemini, Windsurf, and Codex (per-tool blocking enforcement is in
-active development). **The kernel is at head**: a small pure-C reference monitor
+gal is an open-source toolkit building toward a config-and-policy control plane
+for AI coding agents. Today it installs git SDLC hooks (tests-before-commit and
+issue-reference checks) and ships MCP servers (terminal, vision, browser) for
+your agents. Hosted config discovery and sync need an account; cross-agent hook
+install and per-tool blocking enforcement are in active development. **The kernel is at head**: a small pure-C reference monitor
 with a frozen ABI is the one contract the entire monorepo binds to. Everything
 else is downstream of it.
 
