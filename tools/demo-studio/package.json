@@ -32,7 +32,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffprobe-installer/ffprobe": "^1.4.1",
-    "sharp": "^0.33.2"
+    "sharp": "^0.35.2"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.24",
@@ -40,9 +40,9 @@
     "typescript": "^5.3.3",
     "vitest": "^1.6.0",
     "eslint": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.0.0",
-    "typescript-eslint": "^8.0.0"
+    "typescript-eslint": "^8.61.1"
   },
   "engines": {
     "node": ">=18.0.0"

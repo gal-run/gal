@@ -24,7 +24,9 @@
     "activeTab",
     "identity",
     "alarms",
-    "scripting"
+    "scripting",
+    "bookmarks",
+    "history"
   ],
   "optional_permissions": [
     "downloads",
