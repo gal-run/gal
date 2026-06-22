@@ -38,7 +38,6 @@ updates:
     directories:
       - "/"
       - "/apps/website"
-      - "/tools/demo-studio"
     schedule:
       interval: weekly
       day: monday
