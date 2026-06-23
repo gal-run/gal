@@ -17,7 +17,9 @@
 use crate::mcp::{
     param_bool_or, param_str, param_u64_or, ContentItem, McpServer, Tool, ToolResult,
 };
-use chromiumoxide::cdp::browser_protocol::network::{EnableParams as NetworkEnableParams, EventRequestWillBeSent};
+use chromiumoxide::cdp::browser_protocol::network::{
+    EnableParams as NetworkEnableParams, EventRequestWillBeSent,
+};
 use chromiumoxide::cdp::js_protocol::runtime::EventConsoleApiCalled;
 use futures::StreamExt;
 use serde_json::Value;
