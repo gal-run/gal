@@ -725,8 +725,12 @@ function Discovery() {
           )}
           {!scanning && (() => {
             const org = organizations.find(o => o.name === orgName)
-            if (!org?.lastScanAt) return null
+            // Guard the whole timestamp path: a never-scanned org (no lastScanAt),
+            // a malformed timestamp (no _seconds), or any value that yields an
+            // invalid Date must NOT render "Invalid Date Invalid Date".
+            if (!org?.lastScanAt?._seconds) return null
             const scanDate = new Date(org.lastScanAt._seconds * 1000)
+            if (isNaN(scanDate.getTime())) return null
             return (
               <span className="text-xs text-[var(--text-muted)]">
                 Last scanned: {scanDate.toLocaleDateString()} {scanDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
