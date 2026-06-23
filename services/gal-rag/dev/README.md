@@ -7,7 +7,7 @@ Local Qdrant instance for developing and testing the gal-rag retrieval service.
 ## Quick Start
 
 ```bash
-cd /Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run/backend/gal-rag/dev
+cd path/to/gal-run/backend/gal-rag/dev
 
 # Start Qdrant
 docker compose up -d
