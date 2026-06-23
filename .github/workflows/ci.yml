@@ -57,6 +57,7 @@ jobs:
               - 'model/**'
             gal_code:
               - 'packages/gal-code/**'
+              - '.github/workflows/ci.yml'
 
   # Always-on, fast license-by-location fence.
   fence:
@@ -185,5 +186,11 @@ jobs:
         run: bun install --frozen-lockfile
       - name: typecheck (turbo, all gal-code packages)
         run: bun run typecheck
+      - name: unit tests (gal-code + app, junit)
+        # --concurrency=1: run the two suites serially. Running them concurrently
+        # induces a CPU-contention timing flake in test/session/compaction.test.ts
+        # ("does not allow tool calls while generating the summary"); each suite is
+        # reliably green on its own (2214 + 308 pass). Tracked separately.
+        run: bun turbo test:ci --concurrency=1
       - name: astro build (web app)
         run: bun run --cwd packages/web build
