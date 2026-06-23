@@ -164,6 +164,31 @@ func takeScreenshot(window: String = "screen") -> String {
     }
 }
 
+// Human-like cursor animation: glide along an ease-in-out path from the current
+// position instead of teleporting then clicking (robotic in a recording). Same
+// harness-layer technique OpenAI's CUA/Operator uses — the model emits click(x,y),
+// the harness makes the motion human. GAL_CU_INSTANT=1 disables (fast headless QA).
+func smoothMoveTo(x: Double, y: Double, eventSource: CGEventSource?) {
+    if ProcessInfo.processInfo.environment["GAL_CU_INSTANT"] == "1" {
+        CGEvent(mouseEventSource: eventSource, mouseType: .mouseMoved,
+                mouseCursorPosition: CGPoint(x: x, y: y), mouseButton: .left)?.post(tap: .cghidEventTap)
+        return
+    }
+    let start = CGEvent(source: nil)?.location ?? CGPoint(x: x, y: y)
+    let dx = x - Double(start.x), dy = y - Double(start.y)
+    let dist = (dx * dx + dy * dy).squareRoot()
+    if dist < 1 { return }
+    let steps = max(12, min(64, Int(dist / 12)))
+    for i in 1...steps {
+        let t = Double(i) / Double(steps)
+        let e = t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2  // ease-in-out cubic
+        CGEvent(mouseEventSource: eventSource, mouseType: .mouseMoved,
+                mouseCursorPosition: CGPoint(x: Double(start.x) + dx * e, y: Double(start.y) + dy * e),
+                mouseButton: .left)?.post(tap: .cghidEventTap)
+        usleep(6000)
+    }
+}
+
 func clickAt(x: Double, y: Double, button: String = "left", clickCount: Int = 1) -> String {
     let mouseButton: CGMouseButton
     switch button.lowercased() {
@@ -171,11 +196,10 @@ func clickAt(x: Double, y: Double, button: String = "left", clickCount: Int = 1)
     case "middle": mouseButton = .center
     default: mouseButton = .left
     }
-    
+
     let eventSource = CGEventSource(stateID: .hidSystemState)
-    let moveEvent = CGEvent(mouseEventSource: eventSource, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: x, y: y), mouseButton: mouseButton)
-    moveEvent?.post(tap: .cghidEventTap)
-    usleep(50000)
+    smoothMoveTo(x: x, y: y, eventSource: eventSource)  // human-like glide to target
+    usleep(40000)
     
     let downType: CGEventType = mouseButton == .right ? .rightMouseDown : .leftMouseDown
     let upType: CGEventType = mouseButton == .right ? .rightMouseUp : .leftMouseUp
@@ -242,8 +266,7 @@ func pressKey(key: String, modifiers: [String] = []) -> String {
 
 func moveMouse(x: Double, y: Double) -> String {
     let eventSource = CGEventSource(stateID: .hidSystemState)
-    let event = CGEvent(mouseEventSource: eventSource, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: x, y: y), mouseButton: .left)
-    event?.post(tap: .cghidEventTap)
+    smoothMoveTo(x: x, y: y, eventSource: eventSource)  // human-like glide
     return encodeJSON(StatusResult(status: "success", message: "Moved to (\(x), \(y))"))
 }
 
