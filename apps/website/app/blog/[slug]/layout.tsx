@@ -14,31 +14,71 @@ export async function generateMetadata({
   }
 
   const url = `https://gal.run/blog/${slug}`
+  const title = article.seoTitle ?? article.title
+  const description = article.seoDescription ?? article.subtitle
 
   return {
-    title: article.title,
-    description: article.subtitle,
+    title,
+    description,
+    keywords: article.keywords,
     alternates: { canonical: url },
     openGraph: {
-      title: article.title,
-      description: article.subtitle,
+      title,
+      description,
       url,
+      siteName: 'gal.run',
       type: 'article',
       publishedTime: article.isoDate,
       authors: [article.author],
     },
     twitter: {
       card: 'summary_large_image',
-      title: article.title,
-      description: article.subtitle,
+      title,
+      description,
     },
   }
 }
 
-export default function ArticleLayout({
+export default async function ArticleLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: Promise<{ slug: string }>
 }) {
-  return <>{children}</>
+  const { slug } = await params
+  const article = getArticleBySlug(slug)
+  const schema = article && {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: article.title,
+    description: article.seoDescription ?? article.subtitle,
+    datePublished: article.isoDate,
+    dateModified: article.isoDate,
+    articleSection: article.category,
+    author: {
+      '@type': 'Organization',
+      name: article.author,
+      url: 'https://gal.run',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Scheduler Systems Ltd',
+      url: 'https://gal.run',
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://gal.run/blog/${slug}` },
+    keywords: article.keywords?.join(', '),
+  }
+
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      {children}
+    </>
+  )
 }

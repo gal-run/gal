@@ -17,6 +17,9 @@ export interface Article {
   author: string;
   readingTime: string;
   gradient: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  keywords?: string[];
   sections: ArticleSection[];
 }
 
@@ -29,6 +32,641 @@ export const CATEGORIES = [
 ] as const;
 
 export const articles: Article[] = [
+  {
+    slug: "harness-runtime-sandbox-field-guide",
+    title: "Harness, Runtime, Sandbox: A Field Guide to Agent Infrastructure",
+    subtitle:
+      "Three words the ecosystem uses interchangeably — and the three different questions they actually answer.",
+    date: "June 23, 2026",
+    isoDate: "2026-06-23",
+    category: "Engineering",
+    categorySlug: "engineering",
+    author: "GAL Team",
+    readingTime: "8 min read",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #6366f1 100%)",
+    seoTitle: "Harness vs Runtime vs Sandbox: Agent Infrastructure Explained",
+    seoDescription:
+      "Harness, runtime, and sandbox are three different layers of agent infrastructure — not synonyms. A field guide to what each layer does and how to evaluate them.",
+    keywords: [
+      "agent infrastructure",
+      "agent harness",
+      "agent runtime",
+      "agent sandbox",
+      "harness vs runtime vs sandbox",
+      "AI agent infrastructure layers",
+    ],
+    sections: [
+      {
+        id: "three-questions",
+        heading: "Three words, three questions",
+        content: (
+          <>
+            <p>
+              <strong>Harness</strong>, <strong>runtime</strong>, and{" "}
+              <strong>sandbox</strong> are three different layers of agent
+              infrastructure — not three words for the same thing. But the ecosystem
+              treats them as synonyms: vendors blur them, threads argue past each
+              other, and teams end up comparing a code-execution box to a deployment
+              platform as if they were competitors.
+            </p>
+            <p>They're not. They're three layers that answer three different questions:</p>
+            <ul>
+              <li>
+                <strong>Harness</strong> — <em>How does an agent work a task?</em>
+              </li>
+              <li>
+                <strong>Sandbox</strong> — <em>Where do its actions run safely?</em>
+              </li>
+              <li>
+                <strong>Runtime</strong> —{" "}
+                <em>How do agents live and stay governed in production?</em>
+              </li>
+            </ul>
+            <p>
+              This is our framing, not a standards body's taxonomy — three layers
+              we've found load-bearing while running agents in production, not an
+              official decomposition. With that caveat stated: most teams running
+              agents in production end up needing all three. They compose; they don't
+              compete. Here's a field guide to telling them apart — and why the
+              distinction changes what you should evaluate.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "harness",
+        heading: "Harness — the driver loop",
+        content: (
+          <>
+            <p>
+              Picture the harness as the part most people mean when they say "AI
+              agent." It's the loop that turns a model plus a set of tools into
+              something that <em>does work</em>: read a file, edit it, run a command,
+              look at the result, decide the next step. It owns the prompt, the
+              tool-calling protocol, the plan→act→observe cycle, and the surface a
+              human (or a trigger) uses to start the work. It's also where a lot of the
+              measured quality lives: on SWE-bench Verified, the same underlying model
+              posts very different scores depending on the harness wrapped around it —
+              the scaffold moves the result, not just the model.
+            </p>
+            <p>
+              <strong>Scope:</strong> a session. A harness is alive while a task is
+              being worked.
+            </p>
+            <p>
+              <strong>To spot a harness, look for</strong> a product about{" "}
+              <em>driving a model through a task</em> — the interactive coding surface,
+              the agent loop, the tool schema.
+            </p>
+            <p>
+              <strong>Examples across the ecosystem:</strong> Claude Code, Cursor,
+              Aider, OpenHands, Cline, Continue, opencode, Devin. (GAL's own harness,{" "}
+              <em>gal-code</em>, is built on opencode.) These differ in UX and model
+              strategy, but they're answering the same question:{" "}
+              <em>how does one agent get a task done, right now?</em>
+            </p>
+            <p>
+              <strong>
+                What a harness is <em>not</em>:
+              </strong>{" "}
+              it's not where the <code>rm -rf</code> actually executes, and it's not
+              what keeps a fleet of agents running and accountable next week. A great
+              harness with no sandbox is a security incident waiting to happen; a great
+              harness with no runtime is a laptop process you have to babysit.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "sandbox",
+        heading: "Sandbox — the isolation boundary",
+        content: (
+          <>
+            <p>
+              The sandbox is <em>where the agent's actions actually run</em>, walled
+              off from your host, your network, and your other tenants. When an agent
+              executes generated code, installs a package, or runs a shell command, the
+              sandbox is what makes that safe and reproducible: a fresh, disposable,
+              resource-limited environment with a controlled blast radius.
+            </p>
+            <p>
+              <strong>Scope:</strong> an execution. A sandbox exists to contain{" "}
+              <em>what the agent does</em>, not to drive it.
+            </p>
+            <p>
+              <strong>To spot a sandbox, look for</strong> a product about{" "}
+              <em>isolation and safe execution</em> — container or microVM boundaries,
+              filesystem/network egress controls, snapshot/restore, per-run teardown.
+            </p>
+            <p>
+              <strong>Examples across the ecosystem:</strong> e2b, Modal, and Daytona
+              for managed code-execution sandboxes; Kata Containers, gVisor, and
+              Firecracker microVMs for the isolation primitives underneath. The
+              performance bar here is real and measured: AWS's Firecracker — the microVM
+              monitor behind Lambda — boots a fresh VM in roughly 125 ms and can pack on
+              the order of 150 microVMs per second onto a single host (Agache et al.,{" "}
+              <em>NSDI 2020</em>), fast enough to give every agent run its own
+              disposable kernel rather than a shared container. (GAL builds its own,{" "}
+              <em>gal-sandbox</em>, on that same Kata/microVM lineage.)
+            </p>
+            <p>
+              <strong>
+                What a sandbox is <em>not</em>:
+              </strong>{" "}
+              it doesn't decide <em>what</em> the agent should do (that's the harness),
+              and it doesn't manage agents as long-lived, governed services (that's the
+              runtime). A sandbox is a very good box. It is not an operating model.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "runtime",
+        heading: "Runtime — the operational substrate",
+        content: (
+          <>
+            <p>
+              This is the layer with the least-standardized name, and the one most
+              often conflated with "the framework" or "wherever I deployed it." A
+              runtime is the substrate where agents <strong>live</strong> as
+              long-running, deployed services — not a session you drive by hand, but a
+              place agents are scheduled, triggered, observed, coordinated, and{" "}
+              <strong>governed</strong>.
+            </p>
+            <p>
+              A useful test: hosting a harness on a server does not make a runtime.
+              Interrogate a would-be runtime on six things — and reach for one the
+              moment you need any of them:
+            </p>
+            <ul>
+              <li>
+                <strong>Lifecycle</strong> — agents that are triggered (events,
+                schedules, A2A calls), run to completion, report, and resume; not a
+                process you restart manually.
+              </li>
+              <li>
+                <strong>Durable state</strong> — checkpointing and memory that survive a
+                run, a crash, or a redeploy.
+              </li>
+              <li>
+                <strong>Observability</strong> — traces, metrics, and an audit trail
+                across every run, not just one session's logs.
+              </li>
+              <li>
+                <strong>Coordination</strong> — agents that hand work to other agents
+                (agent-to-agent protocols), with a control plane that knows what's
+                running.
+              </li>
+              <li>
+                <strong>Governance</strong> — enforced policy on{" "}
+                <em>what an agent is allowed to do</em>: read-only vs. draft-for-review
+                vs. pause-for-human-approval, applied as middleware rather than left to
+                the prompt.
+              </li>
+              <li>
+                <strong>Deployment control</strong> — eval-gating and rollout policy, so
+                a regression can't ship silently.
+              </li>
+            </ul>
+            <p>
+              <strong>Scope:</strong> a deployment. A runtime is alive across many
+              sessions, many agents, and long stretches of calendar time.
+            </p>
+            <p>
+              <strong>Examples across the ecosystem:</strong> this is where the map is
+              genuinely sparser and the terms are fuzzier. LangGraph Platform, Temporal
+              and Inngest (durable-execution engines being bent toward agents), AWS
+              Bedrock AgentCore, and the various "agents" runtimes from the big labs all
+              live in this neighborhood — though they emphasize different facets
+              (durability, orchestration, hosting). The <strong>governance</strong>{" "}
+              dimension specifically — every action running under an enforced posture,
+              with the approval decision itself captured as an auditable artifact — is
+              the newest and least common piece. (GAL's runtime, <em>gal-cloud</em>, is
+              built on deepagents/LangGraph and leans hardest on that governance facet;
+              it's one point in a small but growing space, not the only one.)
+            </p>
+            <p>
+              <strong>
+                What a runtime is <em>not</em>:
+              </strong>{" "}
+              it's not the agent's task loop (that's the harness), and it's not the
+              execution jail (that's the sandbox). The runtime is what turns "I have an
+              agent that works" into "I have agents running in production that I can
+              trust, observe, and answer for."
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "compose",
+        heading: "How they compose",
+        content: (
+          <>
+            <p>Follow a single request through all three layers:</p>
+            <pre>
+              <code>{` trigger ─▶ ┌──────────────── RUNTIME ─────────────────┐
+            │  claim task · load state · set posture    │
+            │   ┌──────────── HARNESS ─────────────┐    │
+            │   │       plan → act → observe        │    │
+            │   │   ┌────────── SANDBOX ──────────┐ │    │
+            │   │   │   run code / shell safely    │ │    │
+            │   │   └──────────────────────────────┘ │    │
+            │   └───────────────────────────────────┘    │
+            │  trace · approval gate · checkpoint · report │
+            └───────────────────────────────────────────┘`}</code>
+            </pre>
+            <ol>
+              <li>
+                A trigger hits the <strong>runtime</strong> — an event, a schedule, or
+                another agent's call. The runtime claims the task, loads state, and
+                starts an agent under a governance posture.
+              </li>
+              <li>
+                The agent runs its <strong>harness</strong> loop — plan, call a tool,
+                observe, repeat — driven by the model.
+              </li>
+              <li>
+                When a step executes code or a shell command, that runs inside the{" "}
+                <strong>sandbox</strong> — isolated, disposable, blast-radius-controlled.
+              </li>
+              <li>
+                The runtime records the trace, enforces the approval gate on anything
+                mutating, checkpoints state, and reports the outcome.
+              </li>
+            </ol>
+            <p>
+              Governance is the layer most easily hand-waved, so here is what it looks
+              like concretely rather than in prose. The posture model below is one
+              pattern teams are converging on — others use approval-chain trees or
+              capability matrices — but the shape is the same: a policy declares what an
+              agent may do without a human in the loop, and what it must stop for:
+            </p>
+            <pre>
+              <code>{`agent: migration-bot
+posture: draft-for-review        # read-only | draft-for-review | autonomous
+allow: [read, write_branch]
+require_approval: [merge_main, deploy, delete_data]`}</code>
+            </pre>
+            <p>
+              and every gated action lands in an audit trail as a record you can answer
+              for later:
+            </p>
+            <pre>
+              <code>{`{"ts":"2026-06-23T14:02:11Z","agent":"migration-bot","action":"merge_main","layer":"runtime","decision":"approved","approver":"shay"}`}</code>
+            </pre>
+            <p>
+              Flip <code>posture</code> to <code>read-only</code> and the same agent can
+              no longer open a branch; flip it to <code>autonomous</code> and the{" "}
+              <code>require_approval</code> list empties, so those actions stop surfacing
+              in the approval queue at all. One field, three operating postures — that is
+              what "governance you can enforce" means in practice.
+            </p>
+            <p>
+              Harness, sandbox, runtime — the loop, the box, and the operating model. A
+              tool that's strong in one layer is often marketed as if it covered all
+              three; that conflation is where most "agent platform" confusion comes from.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "why-it-matters",
+        heading: "Why the distinction matters when you buy",
+        content: (
+          <>
+            <p>
+              Because each layer owns a different problem, each is judged on a different
+              axis — which is exactly why you can't compare them head-to-head. The{" "}
+              <strong>harness is the cockpit</strong>, the{" "}
+              <strong>sandbox is the test cell</strong>, and the{" "}
+              <strong>runtime is the airline</strong> — the operations, scheduling, and
+              accountability that let a fleet fly every day. When you evaluate a tool,
+              ask which one it actually is:
+            </p>
+            <ul>
+              <li>
+                A <strong>harness</strong> should win on agent quality: task success
+                rate, tool ergonomics, model flexibility.
+              </li>
+              <li>
+                A <strong>sandbox</strong> should win on isolation: startup latency,
+                escape resistance, resource limits, teardown.
+              </li>
+              <li>
+                A <strong>runtime</strong> should win on operations: durability,
+                observability, multi-agent coordination, and{" "}
+                <strong>governance you can enforce and audit</strong> — not just "we host
+                it."
+              </li>
+            </ul>
+            <p>
+              Each layer earns its strength by owning exactly one problem — task success,
+              isolation, or accountability — <em>completely</em>; a tool that claims all
+              three at once usually does none of them well.{" "}
+              <strong>Three layers, three problems, three axes of evaluation:</strong>{" "}
+              the harness owns agent quality, the sandbox owns blast radius, the runtime
+              owns operations. Plenty of companies sell cockpits and test cells. The
+              airline — the least-standardized of the three — is the harder problem, and
+              the one most teams discover last.
+            </p>
+            <p>
+              Conflate the layers and the failures are predictable — one per layer you
+              skipped. Skip the <strong>sandbox</strong> and the agent's generated code
+              runs <code>rm -rf</code> against the wrong path and takes the host
+              filesystem with it, or — with no egress control — quietly ships the
+              credentials in its environment to a third party. Skip the{" "}
+              <strong>runtime</strong> and the agent crashes mid-task with no durable
+              checkpoint, so a restart loses all progress: ten reruns instead of one
+              resume from step five. Skip <em>governance</em> specifically — wire a
+              harness straight to production — and when an agent loops on a bad tool
+              call, there's no trace to reconstruct what it touched and no gate that
+              could have stopped it. The fixes live in the layers you skipped:
+              escape-audit your sandbox, put SLOs and an audit trail on your runtime, and
+              keep an approval gate in front of anything that mutates state.
+            </p>
+            <p>
+              Two honest boundaries. First, this three-layer split is <em>one</em> useful
+              decomposition, not the only one — a capability / constraint / accountability
+              cut works too, and specialized setups won't always map cleanly. Second, you
+              can sometimes skip a layer: a read-only research agent on a curated dataset
+              may not need the full governance layer if data-access control already draws
+              the boundary — but the moment it takes user requests, you need all three.
+            </p>
+            <p>
+              Separate them deliberately and you stop comparing the cockpit to the
+              airline — they're not competitors, they're sequential — and you know
+              exactly which question each piece answers.
+            </p>
+          </>
+        ),
+      },
+    ],
+  },
+  {
+    slug: "claude-code-goal-eval-driven-development",
+    title: "Defining \"done\" for a coding agent",
+    subtitle:
+      "We run a lot of our engineering through AI agents, and they will report a task finished before it has been verified. This is how we caught that on one migration — by making the goal a check the work had to pass.",
+    date: "June 22, 2026",
+    isoDate: "2026-06-22",
+    category: "Engineering",
+    categorySlug: "engineering",
+    author: "GAL Team",
+    readingTime: "7 min read",
+    gradient: "linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #10b981 100%)",
+    seoTitle: "Eval-driven development with Claude Code's /goal",
+    seoDescription:
+      "We turned Claude Code's /goal into eval-driven development — a goal is its eval suite (metric, threshold, how-to-run, live score). Blind benchmark: goal quality 46%→92%.",
+    keywords: [
+      "Claude Code /goal",
+      "Claude Code goal command",
+      "eval-driven development",
+      "goal-driven development",
+      "Claude Code skills",
+      "eval-driven development Claude Code",
+    ],
+    sections: [
+      {
+        id: "the-problem",
+        heading: "The problem",
+        content: (
+          <>
+            <p>
+              We run a lot of our engineering through AI coding agents. The expensive
+              failure mode is specific: an agent reports a task finished before it has
+              verified it, and nothing catches the gap until later.
+            </p>
+            <p>
+              We hit this on a migration this month, and fixed it with a small change to
+              how we set the goal. What follows is that account, including where it's
+              still unfinished.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "the-migration",
+        heading: "The migration",
+        content: (
+          <>
+            <p>
+              We're consolidating our open-source scheduling app from a Flutter codebase
+              into native iOS and Android. A screen can compile, open, and look right on
+              one platform while silently missing on the other, or while dropping a
+              capability the Flutter version had.
+            </p>
+            <p>
+              A few days in, the session's reports and the actual state had drifted.
+              Password reset is a representative case: the Android unit tests passed and a
+              draft PR was open, but the end-to-end test had never run and the iOS side
+              was untouched — the session counted it as progress; the eval counted one of
+              four required checks, on one platform. My Schedules looked right on Android
+              and returned an empty list on iOS, where the data call lost a render race
+              under load. In each case the agent was reporting what it had written, not
+              what it had run.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "defining-done",
+        heading: "Defining done as a script that returns a verdict",
+        content: (
+          <>
+            <p>
+              We replaced the prose goal with a script that returns a pass/fail verdict.
+            </p>
+            <p>
+              <code>eval/consolidation/run.sh</code> scores the migration. For each of 27
+              in-scope feature areas it requires four things to pass — a unit test and a
+              Maestro end-to-end flow, on both iOS and Android — and counts an area as done
+              only when all four are green. It prints a scorecard and exits non-zero until
+              every area passes:
+            </p>
+            <pre>
+              <code>{`E1 parity (BOTH natives full): 10/27   ← the done bar
+RESULT: ❌ FAIL — 17 areas not yet parity on both platforms`}</code>
+            </pre>
+            <p>
+              Then we set that script as the session's completion condition, with Claude
+              Code's{" "}
+              <a
+                href="https://code.claude.com/docs/en/goal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                /goal
+              </a>
+              :
+            </p>
+            <blockquote className="border-l-2 border-gray-300 pl-4 italic text-black/70">
+              Consolidation is DONE only when <code>bash eval/consolidation/run.sh</code>{" "}
+              prints "RESULT: ✅ PASS" — E1 parity 27/27 on both platforms … Baseline
+              measured 2026-06-21: 1/27. Method: go page-by-page, re-running{" "}
+              <code>run.sh</code> after each. ASK before anything irreversible — merge to
+              main, a production deploy, a security-rules change, anything touching a
+              paying customer. Keep working until <code>run.sh</code> reports PASS or
+              you're stopped.
+            </blockquote>
+            <p>
+              Per Anthropic's docs, <code>/goal</code> hands that condition to a separate,
+              smaller model that checks it from the transcript after each turn; it won't
+              let the session report itself done until the condition holds. Two parts of
+              the condition matter beyond the count. The baseline was a measured number —
+              1 of 27 — so progress had something real to move against. And the method
+              named the gates: the irreversible steps the agent has to hand back to a
+              human. The eval defines what done means; the gates define which steps a
+              human still signs off.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "what-it-caught",
+        heading: "What the scorecard caught",
+        content: (
+          <>
+            <p>
+              Over two days the parity score went from 1 to 11 of 27. It didn't climb in a
+              straight line. One run reported 0 — a clean-machine run before the build was
+              staged. It slid from 11 to 8 to 10 as end-to-end flows flaked under memory
+              pressure on the test host and as areas that had been green stopped passing.
+            </p>
+            <img
+              src="/blog/consolidation-parity-climb.svg"
+              alt="Consolidation parity from a baseline of 1 to a peak of 11 of 27 over two days, with dips along the way"
+              className="w-full rounded-sm border border-gray-100 my-2"
+            />
+            <p>
+              A prose goal gives no signal when an area regresses; a scored one shows the
+              drop, because the number is recomputed from the script on each run. The
+              migration isn't finished. As of this writing it's at 10 of 27. We're
+              publishing the method, not a completed migration.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "generalizes",
+        heading: "Whether the method generalizes",
+        content: (
+          <>
+            <p>
+              Setting a goal as an eval is a procedure, so we wrote it down as a reusable
+              skill and tested it the way we test code. Three goal-setting prompts, each a
+              known way to fail: a "do what's best" request, a North Star that's secretly a
+              one-time launch, and a goal stated as "make it secure and the docs better."
+              Three configurations — no skill, an earlier version, the current one — three
+              runs per cell, graded against eight fixed checks by a separate grader, with
+              project memory emptied so no run could inherit an earlier goal.
+            </p>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-gray-200">
+                  <th className="py-3 pr-4 font-semibold">Configuration</th>
+                  <th className="py-3 pr-4 font-semibold">
+                    Checks passed (mean of 8, n=9)
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-gray-100">
+                  <td className="py-3 pr-4 font-medium">No skill</td>
+                  <td className="py-3 pr-4">46%</td>
+                </tr>
+                <tr className="border-b border-gray-100">
+                  <td className="py-3 pr-4 font-medium">Earlier version</td>
+                  <td className="py-3 pr-4">61%</td>
+                </tr>
+                <tr className="border-b border-gray-100">
+                  <td className="py-3 pr-4 font-medium">Current skill</td>
+                  <td className="py-3 pr-4">92%</td>
+                </tr>
+              </tbody>
+            </table>
+            <img
+              src="/blog/benchmark-by-scenario.svg"
+              alt="Goal quality by scenario, no skill vs current skill: decisive 79 vs 96, altitude 33 vs 92, measurability 25 vs 88 percent"
+              className="w-full rounded-sm border border-gray-100 my-2"
+            />
+            <p>
+              The gain isn't uniform. On a straightforward request an unaided model already
+              does most of the work (79% to 96%). On the prompts we tested where a
+              plausible-looking goal isn't a checkable one, the gap is larger: a North Star
+              stated as the launch that ends it (33% to 92%), or "secure" and "better docs"
+              left as the definition of done (25% to 88%). The spread matters too. Without
+              the skill the same prompt produced anything from a 12% to an 87% goal; with
+              it, every run scored between 88% and 100%. A goal is set once and steered by
+              for weeks, so that consistency is worth as much as the mean.
+            </p>
+            <p>
+              This measures goal quality, not whether the project ships; it's a single
+              model; and an earlier single run reported 100% only because it inherited a
+              good goal from memory — emptying memory brings it to 92%.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "prior-art",
+        heading: "What we didn't invent",
+        content: (
+          <>
+            <p>
+              <code>/goal</code> is Anthropic's. Defining work as evals is an established
+              practice with its own literature. Writing a goal as acceptance criteria is a
+              common idea, and people already point <code>/goal</code> at a test. The piece
+              we haven't seen elsewhere is narrow: forcing the North Star up to an enduring
+              state before writing the checks, and scoring the whole thing as a suite with
+              a live number per check rather than one pass/fail condition. If that exists
+              already, we'll cite it.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "scaling",
+        heading: "From one repo to an organization",
+        content: (
+          <>
+            <p>
+              A <code>/goal</code> string and one <code>run.sh</code> work for one session,
+              one repo, one engineer watching the scorecard. They don't scale past that. We
+              run agents across many repositories; the discipline that fixed the migration
+              — define done as a check the work has to pass, require a human for the
+              irreversible steps — has to apply across every agent and repo, not just the
+              one someone happens to be watching.
+            </p>
+            <p>
+              That is what we're building GAL into. The same two rules — each task has a
+              check it must pass, and a human approves the irreversible steps — apply
+              across every agent and repository, with a record of what each agent actually
+              did. The skill is the single-session form of this, and it's{" "}
+              <a
+                href="https://github.com/gal-run/gal/tree/main/.claude/skills/set-goal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                open source in the GAL repo
+              </a>
+              . The migration above is the same discipline done by hand.
+            </p>
+            <p>
+              We applied the same check to this post. It was scored against a rubric —
+              voice, unverified claims, factual accuracy against the artifacts — and
+              rewritten where it failed, which is why an earlier draft's invented scorecard
+              line and a few borrowed phrases aren't in the version you're reading. For your
+              own goals, write the command that prints the verdict before you write the goal
+              text, and treat the goal as undefined until that command runs.
+            </p>
+          </>
+        ),
+      },
+    ],
+  },
+
   {
     slug: "sync-claude-code-configs-team",
     title: "How to Sync Claude Code Configs Across Your Engineering Team",

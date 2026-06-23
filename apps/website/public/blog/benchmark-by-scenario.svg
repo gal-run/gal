@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Goal quality by scenario: no skill vs current skill</title>
+  <desc id="d">Grouped bars. Decisive: no skill 79%, current 96%. Altitude trap: no skill 33%, current 92%. Measurability trap: no skill 25%, current 88%. n=9 per config.</desc>
+  <text x="55" y="26" font-size="15" fill="#2C2C2A" font-weight="500">Goal quality by scenario — no skill vs current skill</text>
+  <text x="55" y="44" font-size="12" fill="#5F5E5A">mean of 8 objective assertions, 3 runs/cell, isolated memory (n=9)</text>
+
+  <g stroke="#E6E5DF" stroke-width="1">
+    <line x1="55" y1="54" x2="696" y2="54"/>
+    <line x1="55" y1="119.5" x2="696" y2="119.5"/>
+    <line x1="55" y1="185" x2="696" y2="185"/>
+    <line x1="55" y1="250.5" x2="696" y2="250.5"/>
+    <line x1="55" y1="316" x2="696" y2="316"/>
+  </g>
+  <g font-size="11" fill="#888780" text-anchor="end">
+    <text x="48" y="320">0%</text>
+    <text x="48" y="254.5">25%</text>
+    <text x="48" y="189">50%</text>
+    <text x="48" y="123.5">75%</text>
+    <text x="48" y="58">100%</text>
+  </g>
+
+  <g>
+    <rect x="475" y="40" width="12" height="12" rx="2" fill="#888780"/>
+    <text x="492" y="50" font-size="12" fill="#5F5E5A">no skill</text>
+    <rect x="560" y="40" width="12" height="12" rx="2" fill="#1D9E75"/>
+    <text x="577" y="50" font-size="12" fill="#5F5E5A">current skill</text>
+  </g>
+
+  <g>
+    <rect x="102" y="109" width="56" height="207" fill="#888780"/>
+    <rect x="166" y="64.5" width="56" height="251.5" fill="#1D9E75"/>
+    <rect x="315" y="229.5" width="56" height="86.5" fill="#888780"/>
+    <rect x="379" y="75" width="56" height="241" fill="#1D9E75"/>
+    <rect x="529" y="250.5" width="56" height="65.5" fill="#888780"/>
+    <rect x="593" y="85.4" width="56" height="230.6" fill="#1D9E75"/>
+  </g>
+
+  <g font-size="13" fill="#44443F" text-anchor="middle" font-weight="500">
+    <text x="130" y="103">79%</text>
+    <text x="194" y="58">96%</text>
+    <text x="343" y="223">33%</text>
+    <text x="407" y="69">92%</text>
+    <text x="557" y="244">25%</text>
+    <text x="621" y="79">88%</text>
+  </g>
+
+  <g font-size="12.5" fill="#2C2C2A" text-anchor="middle">
+    <text x="162" y="336">decisive (easy)</text>
+    <text x="375" y="336">altitude trap</text>
+    <text x="589" y="336">measurability trap</text>
+  </g>
+  <text x="375" y="362" font-size="11.5" fill="#888780" text-anchor="middle">the skill's lift concentrates on the traps an unaided model walks into</text>
+</svg>
