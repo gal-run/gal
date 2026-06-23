@@ -337,7 +337,7 @@ impl BrowserMcpServer {
                             selector, text
                         );
 
-                        match instance.page.evaluate_function(&js).await {
+                        match instance.page.evaluate(js.as_str()).await {
                             Ok(_) => ToolResult::json(&serde_json::json!({
                                 "success": true,
                                 "selector": selector,
@@ -375,7 +375,7 @@ impl BrowserMcpServer {
             selector
         );
 
-        match instance.page.evaluate_function(&js).await {
+        match instance.page.evaluate(js.as_str()).await {
             Ok(result) => {
                 // The result should be a string
                 let text = result
@@ -406,8 +406,10 @@ impl BrowserMcpServer {
             })()
         "#;
 
-        // Chromiumoxide evaluate_function returns a Value, we need to parse it
-        match instance.page.evaluate_function(js).await {
+        // Use Runtime.evaluate (page.evaluate) — the JS is an expression/IIFE,
+        // not a bare function declaration, so evaluate_function rejects it with
+        // "Given expression does not evaluate to a function".
+        match instance.page.evaluate(js).await {
             Ok(result) => {
                 let text = result
                     .value()
@@ -433,7 +435,7 @@ impl BrowserMcpServer {
 
         let instance = guard.as_ref().unwrap();
 
-        match instance.page.evaluate_function(&script).await {
+        match instance.page.evaluate(script.as_str()).await {
             Ok(result) => {
                 let value = result
                     .value()
