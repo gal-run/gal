@@ -17,6 +17,8 @@
 use crate::mcp::{
     param_bool_or, param_str, param_u64_or, ContentItem, McpServer, Tool, ToolResult,
 };
+use chromiumoxide::cdp::browser_protocol::network::{EnableParams as NetworkEnableParams, EventRequestWillBeSent};
+use chromiumoxide::cdp::js_protocol::runtime::EventConsoleApiCalled;
 use futures::StreamExt;
 use serde_json::Value;
 use std::sync::Arc;
@@ -31,6 +33,10 @@ struct BrowserInstance {
     #[allow(dead_code)]
     browser: chromiumoxide::Browser,
     page: chromiumoxide::Page,
+    /// Captured console messages (console.log/error/warn ...), newest last.
+    console: Arc<Mutex<Vec<String>>>,
+    /// Captured network requests ("METHOD url"), newest last.
+    network: Arc<Mutex<Vec<String>>>,
 }
 
 pub struct BrowserMcpServer {
@@ -107,6 +113,16 @@ fn tools_list() -> Vec<Tool> {
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"script":{"type":"string","description":"JavaScript code to execute"}},"required":["script"]}"#).ok(),
         },
         Tool {
+            name: "browser_read_console".to_string(),
+            description: "Read console messages (log/error/warn) captured since launch. Optional 'pattern' substring filter.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return messages containing this substring"}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_read_network".to_string(),
+            description: "Read network requests (\"METHOD url\") captured since launch. Optional 'pattern' substring filter.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return requests whose URL contains this substring"}},"required":[]}"#).ok(),
+        },
+        Tool {
             name: "browser_close".to_string(),
             description: "Close the browser and release all resources.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
@@ -134,6 +150,8 @@ impl McpServer for BrowserMcpServer {
             "browser_get_text" => Some(self.handle_get_text(args).await),
             "browser_get_page_text" => Some(self.handle_get_page_text().await),
             "browser_execute_script" => Some(self.handle_execute_script(args).await),
+            "browser_read_console" => Some(self.handle_read_console(args).await),
+            "browser_read_network" => Some(self.handle_read_network(args).await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -185,6 +203,48 @@ impl BrowserMcpServer {
                     }
                 };
 
+                // Capture console + network BEFORE navigating, so the start
+                // page's logs/requests are recorded.
+                let console = Arc::new(Mutex::new(Vec::<String>::new()));
+                let network = Arc::new(Mutex::new(Vec::<String>::new()));
+
+                if let Ok(mut events) = page.event_listener::<EventConsoleApiCalled>().await {
+                    let buf = console.clone();
+                    tokio::spawn(async move {
+                        while let Some(ev) = events.next().await {
+                            let line = ev
+                                .args
+                                .iter()
+                                .filter_map(|a| {
+                                    a.value
+                                        .as_ref()
+                                        .map(|v| v.to_string())
+                                        .or_else(|| a.description.clone())
+                                })
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            let mut b = buf.lock().await;
+                            if b.len() < 1000 {
+                                b.push(line);
+                            }
+                        }
+                    });
+                }
+
+                let _ = page.execute(NetworkEnableParams::default()).await;
+                if let Ok(mut events) = page.event_listener::<EventRequestWillBeSent>().await {
+                    let buf = network.clone();
+                    tokio::spawn(async move {
+                        while let Some(ev) = events.next().await {
+                            let line = format!("{} {}", ev.request.method, ev.request.url);
+                            let mut b = buf.lock().await;
+                            if b.len() < 1000 {
+                                b.push(line);
+                            }
+                        }
+                    });
+                }
+
                 // Navigate to start URL if provided
                 if let Some(url) = &start_url {
                     if let Err(e) = page.goto(url).await {
@@ -196,6 +256,8 @@ impl BrowserMcpServer {
                 *guard = Some(BrowserInstance {
                     browser,
                     page,
+                    console,
+                    network,
                 });
 
                 ToolResult::json(&serde_json::json!({
@@ -446,6 +508,44 @@ impl BrowserMcpServer {
             }
             Err(e) => ToolResult::error(format!("Script execution failed: {}", e)),
         }
+    }
+
+    async fn handle_read_console(&self, args: Value) -> ToolResult {
+        let pattern = param_str(&args, "pattern");
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let msgs = instance.console.lock().await;
+        let filtered: Vec<&String> = msgs
+            .iter()
+            .filter(|m| pattern.as_ref().map(|p| m.contains(p)).unwrap_or(true))
+            .collect();
+        ToolResult::json(&serde_json::json!({
+            "success": true,
+            "count": filtered.len(),
+            "messages": filtered,
+        }))
+    }
+
+    async fn handle_read_network(&self, args: Value) -> ToolResult {
+        let pattern = param_str(&args, "pattern");
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let reqs = instance.network.lock().await;
+        let filtered: Vec<&String> = reqs
+            .iter()
+            .filter(|m| pattern.as_ref().map(|p| m.contains(p)).unwrap_or(true))
+            .collect();
+        ToolResult::json(&serde_json::json!({
+            "success": true,
+            "count": filtered.len(),
+            "requests": filtered,
+        }))
     }
 
     async fn handle_close(&self) -> ToolResult {
