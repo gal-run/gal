@@ -123,6 +123,11 @@ fn tools_list() -> Vec<Tool> {
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return requests whose URL contains this substring"}},"required":[]}"#).ok(),
         },
         Tool {
+            name: "browser_read_a11y".to_string(),
+            description: "Read a semantic accessibility snapshot of the page: visible interactive/landmark elements as {role, name, x, y} (click coordinates). Like an accessibility tree — for reliable, non-pixel element targeting.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{},"required":[]}"#).ok(),
+        },
+        Tool {
             name: "browser_close".to_string(),
             description: "Close the browser and release all resources.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
@@ -152,6 +157,7 @@ impl McpServer for BrowserMcpServer {
             "browser_execute_script" => Some(self.handle_execute_script(args).await),
             "browser_read_console" => Some(self.handle_read_console(args).await),
             "browser_read_network" => Some(self.handle_read_network(args).await),
+            "browser_read_a11y" => Some(self.handle_read_a11y().await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -548,6 +554,48 @@ impl BrowserMcpServer {
             "count": filtered.len(),
             "requests": filtered,
         }))
+    }
+
+    async fn handle_read_a11y(&self) -> ToolResult {
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        // Semantic accessibility snapshot via the page: role + accessible name +
+        // click coordinates for visible interactive/landmark elements. Gives the
+        // agent a non-pixel, role-based view of the page (like an a11y tree).
+        let js = r#"
+            (() => {
+                const roleOf = (el) => {
+                    const r = el.getAttribute('role'); if (r) return r;
+                    const t = el.tagName.toLowerCase();
+                    const m = {a:'link',button:'button',input:(el.type||'textbox'),select:'combobox',
+                               textarea:'textbox',h1:'heading',h2:'heading',h3:'heading',
+                               nav:'navigation',main:'main',img:'img',label:'label'};
+                    return m[t] || (el.hasAttribute('onclick') ? 'button' : null);
+                };
+                const nameOf = (el) => (el.getAttribute('aria-label') || el.getAttribute('placeholder')
+                    || el.getAttribute('alt') || (el.innerText||'').trim().slice(0,80) || el.value || '').trim();
+                const out = [];
+                document.querySelectorAll('a,button,input,select,textarea,[role],h1,h2,h3,nav,main,label,[onclick]')
+                  .forEach(el => {
+                    const role = roleOf(el); if (!role) return;
+                    const rc = el.getBoundingClientRect();
+                    if (rc.width === 0 && rc.height === 0) return;
+                    out.push({role, name: nameOf(el),
+                              x: Math.round(rc.left + rc.width/2), y: Math.round(rc.top + rc.height/2)});
+                  });
+                return JSON.stringify(out.slice(0, 200));
+            })()
+        "#;
+        match instance.page.evaluate(js).await {
+            Ok(result) => {
+                let tree = result.value().and_then(|v| v.as_str()).unwrap_or("[]").to_string();
+                ToolResult::json(&serde_json::json!({ "success": true, "elements": tree }))
+            }
+            Err(e) => ToolResult::error(format!("Failed to read a11y tree: {}", e)),
+        }
     }
 
     async fn handle_close(&self) -> ToolResult {
