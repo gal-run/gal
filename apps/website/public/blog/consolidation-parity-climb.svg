@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Consolidation parity over two days</title>
+  <desc id="d">Line chart of E1 parity, areas green on both native platforms, out of 27, re-scored after each feature area: 1, 4, 0, 6, 7, 8, 7, 5, 9, 10, 11, 8, 10, 10. Dashed target line at 27. The line is non-monotonic — dips are regressions the eval caught.</desc>
+  <text x="48" y="26" font-size="15" fill="#2C2C2A" font-weight="500">Consolidation parity — areas green on both natives (/27)</text>
+  <text x="48" y="44" font-size="12" fill="#5F5E5A">re-scored by run.sh after each feature area; the dips are real regressions, caught</text>
+
+  <g stroke="#E6E5DF" stroke-width="1">
+    <line x1="48" y1="48" x2="696" y2="48"/>
+    <line x1="48" y1="135.3" x2="696" y2="135.3"/>
+    <line x1="48" y1="222.7" x2="696" y2="222.7"/>
+    <line x1="48" y1="310" x2="696" y2="310"/>
+  </g>
+  <g font-size="11" fill="#888780" text-anchor="end">
+    <text x="42" y="314">0</text>
+    <text x="42" y="226.7">9</text>
+    <text x="42" y="139.3">18</text>
+    <text x="42" y="52">27</text>
+  </g>
+
+  <line x1="48" y1="48" x2="696" y2="48" stroke="#B4B2A9" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <text x="690" y="42" font-size="11" fill="#888780" text-anchor="end">target = 27 (done)</text>
+
+  <polyline fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linejoin="round"
+    points="48,300.3 97.8,271.2 147.7,310 197.5,251.8 247.4,242.1 297.2,232.4 347.1,242.1 396.9,261.5 446.8,222.7 496.6,213 546.5,203.3 596.3,232.4 646.2,213 696,213"/>
+  <g fill="#1D9E75">
+    <circle cx="48" cy="300.3" r="3.2"/><circle cx="97.8" cy="271.2" r="3.2"/><circle cx="147.7" cy="310" r="3.2"/>
+    <circle cx="197.5" cy="251.8" r="3.2"/><circle cx="247.4" cy="242.1" r="3.2"/><circle cx="297.2" cy="232.4" r="3.2"/>
+    <circle cx="347.1" cy="242.1" r="3.2"/><circle cx="396.9" cy="261.5" r="3.2"/><circle cx="446.8" cy="222.7" r="3.2"/>
+    <circle cx="496.6" cy="213" r="3.2"/><circle cx="546.5" cy="203.3" r="3.2"/><circle cx="596.3" cy="232.4" r="3.2"/>
+    <circle cx="646.2" cy="213" r="3.2"/><circle cx="696" cy="213" r="3.2"/>
+  </g>
+
+  <g font-size="11.5" fill="#44443F" font-weight="500">
+    <text x="48" y="293" text-anchor="start">1 (baseline)</text>
+    <text x="546.5" y="196" text-anchor="middle">peak 11</text>
+    <text x="696" y="206" text-anchor="end">now 10</text>
+  </g>
+  <text x="147.7" y="326" font-size="10.5" fill="#A32D2D" text-anchor="middle">0 — clean-build run</text>
+
+  <g font-size="11.5" fill="#888780" text-anchor="middle">
+    <text x="48" y="352" text-anchor="start">Jun 21 (goal set)</text>
+    <text x="696" y="352" text-anchor="end">Jun 22</text>
+  </g>
+</svg>
