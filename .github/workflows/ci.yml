@@ -68,6 +68,15 @@ jobs:
         with: { node-version: "20" }
       - run: node tools/check-license-fence.mjs
 
+  # Always-on guard: fail if an in-development feature is reachable without the flag.
+  dev-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with: { node-version: "20" }
+      - run: node tools/check-development-gate.mjs
+
   kernel:
     needs: changes
     if: ${{ needs.changes.outputs.kernel == 'true' }}
