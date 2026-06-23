@@ -1,0 +1,25 @@
+{
+  "name": "gal-run-search-demo",
+  "output": "gal-run-search.mp4",
+  "cursor": "live",
+  "screen": { "width": 1920, "height": 1080 },
+  "recording": { "fps": 30, "captureAudio": false },
+  "export": { "resolution": { "width": 1920, "height": 1080 }, "quality": "high" },
+  "steps": [
+    {
+      "action": "move", "x": 960, "y": 120, "duration": 0.8,
+      "caption": "Open the GAL dashboard"
+    },
+    {
+      "action": "click", "x": 960, "y": 120, "duration": 1.0,
+      "caption": "Focus the search box",
+      "zoom": { "scale": 2.0, "easing": "ease-in-out" }
+    },
+    {
+      "action": "type", "text": "governance policy", "duration": 1.2,
+      "caption": "Search for a policy"
+    },
+    { "action": "key", "key": "return", "duration": 1.5, "caption": "Run the search" },
+    { "action": "wait", "duration": 1.0 }
+  ]
+}
