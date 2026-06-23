@@ -165,9 +165,9 @@ func takeScreenshot(window: String = "screen") -> String {
 }
 
 // Human-like cursor animation: glide along an ease-in-out path from the current
-// position instead of teleporting then clicking (robotic in a recording). Same
-// harness-layer technique OpenAI's CUA/Operator uses — the model emits click(x,y),
-// the harness makes the motion human. GAL_CU_INSTANT=1 disables (fast headless QA).
+// position instead of teleporting then clicking (robotic in a recording). Standard
+// computer-use harness technique — the model emits click(x,y); the harness humanizes
+// the motion so recordings don't look robotic. GAL_CU_INSTANT=1 disables (fast headless QA).
 func smoothMoveTo(x: Double, y: Double, eventSource: CGEventSource?) {
     if ProcessInfo.processInfo.environment["GAL_CU_INSTANT"] == "1" {
         CGEvent(mouseEventSource: eventSource, mouseType: .mouseMoved,
