@@ -593,8 +593,12 @@ impl BrowserMcpServer {
         "#;
         match instance.page.evaluate(js).await {
             Ok(result) => {
-                let tree = result.value().and_then(|v| v.as_str()).unwrap_or("[]").to_string();
-                ToolResult::json(&serde_json::json!({ "success": true, "elements": tree }))
+                // The page returns the snapshot as a JSON string; decode it so
+                // `elements` is a real array, not a JSON-encoded string.
+                let tree_str = result.value().and_then(|v| v.as_str()).unwrap_or("[]");
+                let elements: Value =
+                    serde_json::from_str(tree_str).unwrap_or_else(|_| Value::Array(Vec::new()));
+                ToolResult::json(&serde_json::json!({ "success": true, "elements": elements }))
             }
             Err(e) => ToolResult::error(format!("Failed to read a11y tree: {}", e)),
         }
