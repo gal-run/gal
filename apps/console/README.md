@@ -63,12 +63,9 @@ gal auth login
 gal sync --pull
 ```
 
-Update:
+Update with your package manager:
 
 ```bash
-gal update
-
-# or with your package manager
 brew upgrade gal
 npm install -g @gal-run/cli@latest
 pnpm add -g @gal-run/cli@latest

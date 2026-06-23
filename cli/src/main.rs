@@ -137,6 +137,7 @@ enum Commands {
     /// Uninstall GAL CLI
     Uninstall(uninstall::UninstallArgs),
     /// Update GAL CLI
+    #[command(hide = true)] // in-development: gated behind GAL_DEVELOPMENT (see FEATURES.md)
     Update(update::UpdateArgs),
     /// Work item management
     Work(work::WorkArgs),
@@ -147,8 +148,10 @@ enum Commands {
     /// Vision MCP server
     Vision(vision::VisionArgs),
     /// VS Code MCP server
+    #[command(hide = true)] // in-development: gated behind GAL_DEVELOPMENT (see FEATURES.md)
     Vscode(vscode::VscodeArgs),
     /// Chrome Extension MCP server
+    #[command(hide = true)] // in-development: gated behind GAL_DEVELOPMENT (see FEATURES.md)
     ChromeExtension(chrome_extension::ChromeExtensionArgs),
     /// MCP (Model Context Protocol) servers for AI coding agents
     Mcp(McpArgs),
@@ -168,6 +171,24 @@ pub enum McpServer {
     Vision,
     /// Browser MCP server - Headless Chrome browser automation
     Browser,
+}
+
+/// The `development` gate: an in-development feature is only enabled when
+/// `GAL_DEVELOPMENT` is `1` or `true`. Mirrors the mcp-gateway gate so the whole
+/// repo shares one convention — the shipped surface advertises only what works.
+fn development_enabled() -> bool {
+    matches!(
+        std::env::var("GAL_DEVELOPMENT").as_deref(),
+        Ok("1") | Ok("true")
+    )
+}
+
+/// Error for an in-development command invoked without `GAL_DEVELOPMENT`.
+fn development_disabled(cmd: &str) -> anyhow::Error {
+    anyhow::anyhow!(
+        "`gal {cmd}` is an in-development command and isn't available in this build. \
+         Set GAL_DEVELOPMENT=1 to enable it (for contributors/testing). See FEATURES.md."
+    )
 }
 
 #[tokio::main]
@@ -246,13 +267,21 @@ async fn main() -> anyhow::Result<()> {
         Commands::Test(args) => test_cmd::run(client, args).await,
         Commands::Trigger(args) => trigger::run(client, args).await,
         Commands::Uninstall(args) => uninstall::run(client, args).await,
-        Commands::Update(args) => update::run(client, args).await,
+        // In-development commands: gated behind GAL_DEVELOPMENT so the shipped
+        // surface only advertises what works (see FEATURES.md). They are also
+        // hidden from `--help`; without the flag they are rejected as unavailable.
+        Commands::Update(args) if development_enabled() => update::run(client, args).await,
+        Commands::Update(_) => Err(development_disabled("update")),
+        Commands::Vscode(args) if development_enabled() => vscode::run(client, args).await,
+        Commands::Vscode(_) => Err(development_disabled("vscode")),
+        Commands::ChromeExtension(args) if development_enabled() => {
+            chrome_extension::run(client, args).await
+        }
+        Commands::ChromeExtension(_) => Err(development_disabled("chrome-extension")),
         Commands::Work(args) => work::run(client, args).await,
         Commands::Workspace(args) => workspace::run(client, args).await,
         Commands::Terminal(args) => terminal::run(client, args).await,
         Commands::Vision(args) => vision::run(client, args).await,
-        Commands::Vscode(args) => vscode::run(client, args).await,
-        Commands::ChromeExtension(args) => chrome_extension::run(client, args).await,
         Commands::Mcp(_) => unreachable!(), // handled above
     }
 }
