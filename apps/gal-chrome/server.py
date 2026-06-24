@@ -83,6 +83,9 @@ TOOLS = [
     ("chrome_tabs_close", "Close a tab by id.",
      {"type": "object", "properties": {"id": {"type": "number"}}, "required": ["id"]},
      lambda a: ("tabs_close", {"id": a["id"]})),
+    ("chrome_tab_group", "Put a tab into a colored, labeled tab group (color: grey/blue/red/yellow/green/pink/purple/cyan/orange).",
+     {"type": "object", "properties": {"tab_id": {"type": "number"}, "title": {"type": "string"}, "color": {"type": "string"}}, "required": ["tab_id"]},
+     lambda a: ("group_tab", {"tab_id": a["tab_id"], "title": a.get("title", "gal"), "color": a.get("color", "cyan")})),
 ]
 _TMAP = {name: mapper for (name, _d, _s, mapper) in TOOLS}
 

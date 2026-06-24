@@ -62,6 +62,11 @@ async function handle(msg) {
     attachedTab = null;
     return { closed: params.id };
   }
+  if (action === "group_tab") {
+    const gid = await chrome.tabs.group({ tabIds: [params.tab_id] });
+    await chrome.tabGroups.update(gid, { title: params.title || "gal", color: params.color || "cyan" });
+    return { groupId: gid, title: params.title || "gal", color: params.color || "cyan" };
+  }
 
   // --- page driving (CDP via chrome.debugger) ---
   const tabId = await ensureAttached();

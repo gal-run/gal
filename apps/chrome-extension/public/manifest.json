@@ -30,7 +30,8 @@
   ],
   "optional_permissions": [
     "downloads",
-    "cookies"
+    "cookies",
+    "debugger"
   ],
   "host_permissions": [
     "<all_urls>",
