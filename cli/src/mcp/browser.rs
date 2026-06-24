@@ -20,6 +20,7 @@ use crate::mcp::{
 use chromiumoxide::cdp::browser_protocol::network::{
     EnableParams as NetworkEnableParams, EventRequestWillBeSent,
 };
+use chromiumoxide::cdp::browser_protocol::emulation::SetDeviceMetricsOverrideParams;
 use chromiumoxide::cdp::browser_protocol::input::{
     DispatchKeyEventParams, DispatchKeyEventType, DispatchMouseEventParams,
     DispatchMouseEventType, InsertTextParams, MouseButton,
@@ -86,8 +87,8 @@ fn tools_list() -> Vec<Tool> {
         },
         Tool {
             name: "browser_navigate".to_string(),
-            description: "Navigate the browser to a URL.".to_string(),
-            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"url":{"type":"string","description":"URL to navigate to"}},"required":["url"]}"#).ok(),
+            description: "Navigate the browser to a URL, or go through history with \"back\"/\"forward\".".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"url":{"type":"string","description":"URL to navigate to, or \"back\"/\"forward\" for history navigation"}},"required":["url"]}"#).ok(),
         },
         Tool {
             name: "browser_screenshot".to_string(),
@@ -140,6 +141,16 @@ fn tools_list() -> Vec<Tool> {
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"action":{"type":"string","enum":["left_click","right_click","middle_click","double_click","triple_click","move","scroll","left_click_drag","type","key"],"description":"The interaction to perform."},"x":{"type":"number","description":"Target X (CSS px). Required for clicks/move/drag-end; scroll anchor."},"y":{"type":"number","description":"Target Y (CSS px)."},"start_x":{"type":"number","description":"Drag start X (left_click_drag)."},"start_y":{"type":"number","description":"Drag start Y."},"scroll_x":{"type":"number","description":"Horizontal wheel delta (scroll)."},"scroll_y":{"type":"number","description":"Vertical wheel delta (scroll); positive scrolls down."},"text":{"type":"string","description":"For action=type: the text. For action=key: the key name (e.g. Enter, Tab, ArrowDown)."},"modifiers":{"type":"string","description":"Modifier keys held during the action, e.g. \"ctrl+shift\"."}},"required":["action"]}"#).ok(),
         },
         Tool {
+            name: "browser_resize".to_string(),
+            description: "Resize the render viewport (e.g. to test responsive layouts or set an HD capture size).".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"width":{"type":"number","description":"Viewport width in CSS px"},"height":{"type":"number","description":"Viewport height in CSS px"}},"required":["width","height"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_batch".to_string(),
+            description: "Run a sequence of browser tool calls in one round trip. Each item is {name, arguments} — the same shape you'd pass standalone. Actions run sequentially and stop on the first error. Cannot be nested.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"actions":{"type":"array","description":"Ordered tool calls","items":{"type":"object","properties":{"name":{"type":"string"},"arguments":{"type":"object"}},"required":["name"]}}},"required":["actions"]}"#).ok(),
+        },
+        Tool {
             name: "browser_close".to_string(),
             description: "Close the browser and release all resources.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
@@ -171,6 +182,8 @@ impl McpServer for BrowserMcpServer {
             "browser_read_network" => Some(self.handle_read_network(args).await),
             "browser_read_a11y" => Some(self.handle_read_a11y().await),
             "browser_computer" => Some(self.handle_computer(args).await),
+            "browser_resize" => Some(self.handle_resize(args).await),
+            "browser_batch" => Some(self.handle_batch(args).await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -410,6 +423,64 @@ impl BrowserMcpServer {
         }
     }
 
+    async fn handle_resize(&self, args: Value) -> ToolResult {
+        let width = param_u64_or(&args, "width", 0);
+        let height = param_u64_or(&args, "height", 0);
+        if width == 0 || height == 0 {
+            return ToolResult::error("width and height are required");
+        }
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        match SetDeviceMetricsOverrideParams::builder()
+            .width(width as i64)
+            .height(height as i64)
+            .device_scale_factor(1.0)
+            .mobile(false)
+            .build()
+        {
+            Ok(metrics) => match instance.page.execute(metrics).await {
+                Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "width": width, "height": height})),
+                Err(e) => ToolResult::error(format!("Resize failed: {}", e)),
+            },
+            Err(e) => ToolResult::error(format!("Failed to build resize params: {}", e)),
+        }
+    }
+
+    async fn handle_batch(&self, args: Value) -> ToolResult {
+        let actions = match args.get("actions").and_then(|v| v.as_array()) {
+            Some(a) => a.clone(),
+            None => return ToolResult::error("actions (array) is required"),
+        };
+        let mut ran = Vec::new();
+        for (i, item) in actions.iter().enumerate() {
+            let name = match item.get("name").and_then(|v| v.as_str()) {
+                Some(n) => n.to_string(),
+                None => return ToolResult::error(format!("actions[{}] is missing 'name'", i)),
+            };
+            if name == "browser_batch" {
+                return ToolResult::error("browser_batch cannot be nested");
+            }
+            let sub_args = item
+                .get("arguments")
+                .cloned()
+                .unwrap_or_else(|| serde_json::json!({}));
+            // Box::pin breaks the call_tool -> handle_batch async recursion cycle.
+            match Box::pin(self.call_tool(&name, sub_args)).await {
+                Some(r) if r.isError == Some(true) => {
+                    return ToolResult::json(&serde_json::json!({
+                        "success": false, "stopped_at": i, "name": name, "ran": ran,
+                    }));
+                }
+                Some(_) => ran.push(serde_json::json!({"index": i, "name": name})),
+                None => return ToolResult::error(format!("unknown tool in batch: {}", name)),
+            }
+        }
+        ToolResult::json(&serde_json::json!({"success": true, "count": ran.len(), "ran": ran}))
+    }
+
     async fn handle_launch(&self, args: Value) -> ToolResult {
         // Close existing browser if any
         self.close_browser_inner().await;
@@ -529,6 +600,22 @@ impl BrowserMcpServer {
         };
 
         let instance = guard.as_ref().unwrap();
+        // Parity with the reference navigate: "back"/"forward" do history navigation.
+        let lower = url.to_lowercase();
+        if lower == "back" || lower == "forward" {
+            let js = if lower == "back" {
+                "window.history.back()"
+            } else {
+                "window.history.forward()"
+            };
+            return match instance.page.evaluate(js).await {
+                Ok(_) => {
+                    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                    ToolResult::json(&serde_json::json!({"success": true, "navigated": lower}))
+                }
+                Err(e) => ToolResult::error(format!("History navigation failed: {}", e)),
+            };
+        }
         match instance.page.goto(&url).await {
             Ok(_) => {
                 // Wait a moment for the page to render
