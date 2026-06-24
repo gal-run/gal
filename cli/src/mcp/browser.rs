@@ -81,6 +81,52 @@ impl BrowserMcpServer {
 // Tool Definitions
 // =============================================================================
 
+/// Attach console + network capture to a page, pushing into the shared buffers. Used for the
+/// launch page AND for tabs opened via browser_tab_new (so read_console/read_network see every
+/// tab, not just the first).
+async fn attach_capture(
+    page: &chromiumoxide::Page,
+    console: Arc<Mutex<Vec<String>>>,
+    network: Arc<Mutex<Vec<String>>>,
+) {
+    if let Ok(mut events) = page.event_listener::<EventConsoleApiCalled>().await {
+        let buf = console;
+        tokio::spawn(async move {
+            while let Some(ev) = events.next().await {
+                let body = ev
+                    .args
+                    .iter()
+                    .filter_map(|a| {
+                        a.value
+                            .as_ref()
+                            .map(|v| v.to_string())
+                            .or_else(|| a.description.clone())
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                let line = format!("[{}] {}", ev.r#type.as_ref(), body);
+                let mut b = buf.lock().await;
+                if b.len() < 1000 {
+                    b.push(line);
+                }
+            }
+        });
+    }
+    let _ = page.execute(NetworkEnableParams::default()).await;
+    if let Ok(mut events) = page.event_listener::<EventRequestWillBeSent>().await {
+        let buf = network;
+        tokio::spawn(async move {
+            while let Some(ev) = events.next().await {
+                let line = format!("{} {}", ev.request.method, ev.request.url);
+                let mut b = buf.lock().await;
+                if b.len() < 1000 {
+                    b.push(line);
+                }
+            }
+        });
+    }
+}
+
 fn tools_list() -> Vec<Tool> {
     vec![
         Tool {
@@ -685,6 +731,9 @@ impl BrowserMcpServer {
         };
         match instance.browser.new_page(CreateTargetParams::new(url.clone())).await {
             Ok(page) => {
+                // Capture this tab's console/network into the shared buffers too, so
+                // read_console/read_network see tabs opened via tab_new (not just the launch tab).
+                attach_capture(&page, instance.console.clone(), instance.network.clone()).await;
                 instance.page = page;
                 ToolResult::json(&serde_json::json!({"success": true, "url": url}))
             }
@@ -805,46 +854,7 @@ impl BrowserMcpServer {
                 // page's logs/requests are recorded.
                 let console = Arc::new(Mutex::new(Vec::<String>::new()));
                 let network = Arc::new(Mutex::new(Vec::<String>::new()));
-
-                if let Ok(mut events) = page.event_listener::<EventConsoleApiCalled>().await {
-                    let buf = console.clone();
-                    tokio::spawn(async move {
-                        while let Some(ev) = events.next().await {
-                            let body = ev
-                                .args
-                                .iter()
-                                .filter_map(|a| {
-                                    a.value
-                                        .as_ref()
-                                        .map(|v| v.to_string())
-                                        .or_else(|| a.description.clone())
-                                })
-                                .collect::<Vec<_>>()
-                                .join(" ");
-                            // Prefix the console level ([log]/[error]/[warning]/…) so
-                            // read_console can filter by it (onlyErrors).
-                            let line = format!("[{}] {}", ev.r#type.as_ref(), body);
-                            let mut b = buf.lock().await;
-                            if b.len() < 1000 {
-                                b.push(line);
-                            }
-                        }
-                    });
-                }
-
-                let _ = page.execute(NetworkEnableParams::default()).await;
-                if let Ok(mut events) = page.event_listener::<EventRequestWillBeSent>().await {
-                    let buf = network.clone();
-                    tokio::spawn(async move {
-                        while let Some(ev) = events.next().await {
-                            let line = format!("{} {}", ev.request.method, ev.request.url);
-                            let mut b = buf.lock().await;
-                            if b.len() < 1000 {
-                                b.push(line);
-                            }
-                        }
-                    });
-                }
+                attach_capture(&page, console.clone(), network.clone()).await;
 
                 // Navigate to start URL if provided
                 if let Some(url) = &start_url {
