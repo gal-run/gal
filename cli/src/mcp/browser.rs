@@ -20,7 +20,12 @@ use crate::mcp::{
 use chromiumoxide::cdp::browser_protocol::network::{
     EnableParams as NetworkEnableParams, EventRequestWillBeSent,
 };
+use chromiumoxide::cdp::browser_protocol::input::{
+    DispatchKeyEventParams, DispatchKeyEventType, DispatchMouseEventParams,
+    DispatchMouseEventType, InsertTextParams, MouseButton,
+};
 use chromiumoxide::cdp::js_protocol::runtime::EventConsoleApiCalled;
+use chromiumoxide::layout::Point;
 use futures::StreamExt;
 use serde_json::Value;
 use std::sync::Arc;
@@ -130,6 +135,11 @@ fn tools_list() -> Vec<Tool> {
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{},"required":[]}"#).ok(),
         },
         Tool {
+            name: "browser_computer".to_string(),
+            description: "Coordinate-based computer-use on the page (like the reference computer tool): click/move/drag/scroll/type/key at pixel coordinates. Coordinates are CSS pixels in the page viewport — pair with browser_read_a11y (which returns element {x,y}) or browser_screenshot. Use this for a coordinate-driven agent; use browser_click/browser_type_text for selector-driven flows.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"action":{"type":"string","enum":["left_click","right_click","middle_click","double_click","triple_click","move","scroll","left_click_drag","type","key"],"description":"The interaction to perform."},"x":{"type":"number","description":"Target X (CSS px). Required for clicks/move/drag-end; scroll anchor."},"y":{"type":"number","description":"Target Y (CSS px)."},"start_x":{"type":"number","description":"Drag start X (left_click_drag)."},"start_y":{"type":"number","description":"Drag start Y."},"scroll_x":{"type":"number","description":"Horizontal wheel delta (scroll)."},"scroll_y":{"type":"number","description":"Vertical wheel delta (scroll); positive scrolls down."},"text":{"type":"string","description":"For action=type: the text. For action=key: the key name (e.g. Enter, Tab, ArrowDown)."},"modifiers":{"type":"string","description":"Modifier keys held during the action, e.g. \"ctrl+shift\"."}},"required":["action"]}"#).ok(),
+        },
+        Tool {
             name: "browser_close".to_string(),
             description: "Close the browser and release all resources.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
@@ -160,6 +170,7 @@ impl McpServer for BrowserMcpServer {
             "browser_read_console" => Some(self.handle_read_console(args).await),
             "browser_read_network" => Some(self.handle_read_network(args).await),
             "browser_read_a11y" => Some(self.handle_read_a11y().await),
+            "browser_computer" => Some(self.handle_computer(args).await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -170,7 +181,235 @@ impl McpServer for BrowserMcpServer {
 // Tool Handlers
 // =============================================================================
 
+/// Map common key names to a Windows virtual-key code so CDP delivers a real key event
+/// (printable text goes through the `type` action / Input.insertText instead).
+fn vk_code(key: &str) -> Option<i64> {
+    Some(match key {
+        "Enter" | "Return" => 13,
+        "Tab" => 9,
+        "Escape" | "Esc" => 27,
+        "Backspace" => 8,
+        "Delete" | "Del" => 46,
+        "ArrowUp" | "Up" => 38,
+        "ArrowDown" | "Down" => 40,
+        "ArrowLeft" | "Left" => 37,
+        "ArrowRight" | "Right" => 39,
+        "Home" => 36,
+        "End" => 35,
+        "PageUp" => 33,
+        "PageDown" => 34,
+        " " | "Space" => 32,
+        _ => return None,
+    })
+}
+
 impl BrowserMcpServer {
+    /// Coordinate-based computer-use on the page — parity with the reference `computer` tool.
+    /// Synthesizes real CDP input events (mouse + keyboard) at pixel coordinates so a
+    /// coordinate model can drive the page directly, no per-element selector required.
+    async fn handle_computer(&self, args: Value) -> ToolResult {
+        async fn send(page: &chromiumoxide::Page, params: DispatchMouseEventParams) -> Result<(), String> {
+            page.execute(params)
+                .await
+                .map(|_| ())
+                .map_err(|e| format!("mouse event failed: {}", e))
+        }
+
+        let action = match param_str(&args, "action") {
+            Some(a) => a,
+            None => return ToolResult::error("action is required"),
+        };
+        let getf = |k: &str| args.get(k).and_then(|v| v.as_f64());
+        let mods: i64 = {
+            let mut m = 0;
+            if let Some(s) = param_str(&args, "modifiers") {
+                for part in s.to_lowercase().split('+') {
+                    m |= match part.trim() {
+                        "alt" | "option" => 1,
+                        "ctrl" | "control" => 2,
+                        "meta" | "cmd" | "command" => 4,
+                        "shift" => 8,
+                        _ => 0,
+                    };
+                }
+            }
+            m
+        };
+
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let page = &instance.page;
+
+        match action.as_str() {
+            "left_click" | "right_click" | "middle_click" | "double_click" | "triple_click" => {
+                let (x, y) = match (getf("x"), getf("y")) {
+                    (Some(x), Some(y)) => (x, y),
+                    _ => return ToolResult::error("x and y are required for clicks"),
+                };
+                let counts: i64 = match action.as_str() {
+                    "double_click" => 2,
+                    "triple_click" => 3,
+                    _ => 1,
+                };
+                let button = || match action.as_str() {
+                    "right_click" => MouseButton::Right,
+                    "middle_click" => MouseButton::Middle,
+                    _ => MouseButton::Left,
+                };
+                let _ = page.move_mouse(Point::new(x, y)).await;
+                for c in 1..=counts {
+                    let down = match DispatchMouseEventParams::builder()
+                        .r#type(DispatchMouseEventType::MousePressed)
+                        .x(x)
+                        .y(y)
+                        .button(button())
+                        .click_count(c)
+                        .buttons(1)
+                        .modifiers(mods)
+                        .build()
+                    {
+                        Ok(p) => p,
+                        Err(e) => return ToolResult::error(e),
+                    };
+                    if let Err(e) = send(page, down).await {
+                        return ToolResult::error(e);
+                    }
+                    let up = match DispatchMouseEventParams::builder()
+                        .r#type(DispatchMouseEventType::MouseReleased)
+                        .x(x)
+                        .y(y)
+                        .button(button())
+                        .click_count(c)
+                        .buttons(0)
+                        .modifiers(mods)
+                        .build()
+                    {
+                        Ok(p) => p,
+                        Err(e) => return ToolResult::error(e),
+                    };
+                    if let Err(e) = send(page, up).await {
+                        return ToolResult::error(e);
+                    }
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                ToolResult::json(&serde_json::json!({"success": true, "action": action, "x": x, "y": y}))
+            }
+            "move" => {
+                let (x, y) = match (getf("x"), getf("y")) {
+                    (Some(x), Some(y)) => (x, y),
+                    _ => return ToolResult::error("x and y are required for move"),
+                };
+                match page.move_mouse(Point::new(x, y)).await {
+                    Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "action": "move", "x": x, "y": y})),
+                    Err(e) => ToolResult::error(format!("move failed: {}", e)),
+                }
+            }
+            "scroll" => {
+                let x = getf("x").unwrap_or(0.0);
+                let y = getf("y").unwrap_or(0.0);
+                let dx = getf("scroll_x").unwrap_or(0.0);
+                let dy = getf("scroll_y").unwrap_or(0.0);
+                let wheel = match DispatchMouseEventParams::builder()
+                    .r#type(DispatchMouseEventType::MouseWheel)
+                    .x(x)
+                    .y(y)
+                    .delta_x(dx)
+                    .delta_y(dy)
+                    .modifiers(mods)
+                    .build()
+                {
+                    Ok(p) => p,
+                    Err(e) => return ToolResult::error(e),
+                };
+                match send(page, wheel).await {
+                    Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "action": "scroll", "scroll_x": dx, "scroll_y": dy})),
+                    Err(e) => ToolResult::error(e),
+                }
+            }
+            "left_click_drag" => {
+                let (sx, sy) = match (getf("start_x"), getf("start_y")) {
+                    (Some(a), Some(b)) => (a, b),
+                    _ => return ToolResult::error("start_x and start_y are required for left_click_drag"),
+                };
+                let (x, y) = match (getf("x"), getf("y")) {
+                    (Some(a), Some(b)) => (a, b),
+                    _ => return ToolResult::error("x and y (drag end) are required for left_click_drag"),
+                };
+                let _ = page.move_mouse(Point::new(sx, sy)).await;
+                let steps = [
+                    (DispatchMouseEventType::MousePressed, sx, sy, 1i64, 1i64),
+                    (DispatchMouseEventType::MouseMoved, x, y, 0, 1),
+                    (DispatchMouseEventType::MouseReleased, x, y, 1, 0),
+                ];
+                for (ty, ex, ey, cc, btns) in steps {
+                    let p = match DispatchMouseEventParams::builder()
+                        .r#type(ty)
+                        .x(ex)
+                        .y(ey)
+                        .button(MouseButton::Left)
+                        .click_count(cc)
+                        .buttons(btns)
+                        .modifiers(mods)
+                        .build()
+                    {
+                        Ok(p) => p,
+                        Err(e) => return ToolResult::error(e),
+                    };
+                    if let Err(e) = send(page, p).await {
+                        return ToolResult::error(e);
+                    }
+                }
+                ToolResult::json(&serde_json::json!({"success": true, "action": "left_click_drag", "from": [sx, sy], "to": [x, y]}))
+            }
+            "type" => {
+                let text = match param_str(&args, "text") {
+                    Some(t) => t,
+                    None => return ToolResult::error("text is required for type"),
+                };
+                let p = match InsertTextParams::builder().text(text).build() {
+                    Ok(p) => p,
+                    Err(e) => return ToolResult::error(e),
+                };
+                match page.execute(p).await {
+                    Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "action": "type"})),
+                    Err(e) => ToolResult::error(format!("type failed: {}", e)),
+                }
+            }
+            "key" => {
+                let key = match param_str(&args, "text") {
+                    Some(k) => k,
+                    None => return ToolResult::error("text (the key name) is required for key"),
+                };
+                let vk = vk_code(&key);
+                for ty in [DispatchKeyEventType::KeyDown, DispatchKeyEventType::KeyUp] {
+                    let mut b = DispatchKeyEventParams::builder()
+                        .r#type(ty)
+                        .key(key.clone())
+                        .modifiers(mods);
+                    if let Some(code) = vk {
+                        b = b.windows_virtual_key_code(code);
+                    }
+                    let p = match b.build() {
+                        Ok(p) => p,
+                        Err(e) => return ToolResult::error(e),
+                    };
+                    if let Err(e) = page
+                        .execute(p)
+                        .await
+                        .map_err(|e| format!("key failed: {}", e))
+                    {
+                        return ToolResult::error(e);
+                    }
+                }
+                ToolResult::json(&serde_json::json!({"success": true, "action": "key", "key": key}))
+            }
+            other => ToolResult::error(format!("unknown computer action: {}", other)),
+        }
+    }
+
     async fn handle_launch(&self, args: Value) -> ToolResult {
         // Close existing browser if any
         self.close_browser_inner().await;
