@@ -47,15 +47,15 @@ Legend: ✅ have · 🟡 partial · ❌ gap · ⬚ N/A (security/host model diff
 | `screenshot` | `screenshot` | ✅ |
 | `left_click` / `right_click` / `middle_click` | `click` (button) | ✅ |
 | `double_click` / `triple_click` | `click` (click_count) | ✅ |
-| click **modifiers** (e.g. shift+click) | click has no modifiers | ❌ (P1) |
+| click **modifiers** (e.g. shift+click) | `click` modifiers | ✅ (Swift+X11) |
 | `mouse_move` | `move` | ✅ |
-| `left_click_drag` | — | ❌ (P1) |
-| `left_mouse_down` / `left_mouse_up` | — | ❌ (P1) |
+| `left_click_drag` | `left_click_drag`/`drag` | ✅ (Swift+X11) |
+| `left_mouse_down` / `left_mouse_up` | `left_mouse_down`/`left_mouse_up` | ✅ (Swift+X11) |
 | `scroll` | `scroll` | ✅ |
-| `key` (chord + repeat) | `key` (+modifiers) | 🟡 (add repeat) |
-| `hold_key` (press+hold duration) | — | ❌ (P1) |
+| `key` (chord + repeat) | `key` (+modifiers +repeat) | ✅ (Swift+X11) |
+| `hold_key` (press+hold duration) | `hold_key` | ✅ (Swift+X11) |
 | `type` | `type` | ✅ |
-| `cursor_position` | — | ❌ (P1) |
+| `cursor_position` | `cursor_position` | ✅ (Swift+X11) |
 | `zoom` (hi-res region) | — | ❌ (P2) |
 | `read_clipboard` / `write_clipboard` | — | ❌ (P2) |
 | `wait` | (client-side) | ⬚ |
@@ -70,9 +70,9 @@ Legend: ✅ have · 🟡 partial · ❌ gap · ⬚ N/A (security/host model diff
 - **P0 — `browser_computer`** (this branch): native coordinate click/move/drag/scroll/type/key
   in gal-browser. Unblocks a coordinate model (MiniMax) driving gal-browser natively and
   retires the `execute_script` event-synthesis bridge in the QA driver.
-- **P1 — symmetric input gaps**: drag, mouse_down/up, hold_key, click-modifiers, cursor_position,
-  key-repeat on the CU harness (Swift + X11); navigate back/forward, resize_window, batch on
-  gal-browser.
+- **P1 — symmetric input gaps**: ✅ CU harness (Swift + X11) — drag, mouse_down/up, hold_key,
+  click-modifiers, cursor_position, key-repeat all added. Remaining: gal-browser navigate
+  back/forward, resize_window, batch.
 - **P2 — richer surface**: zoom, clipboard, multi-monitor, tabs, find/form_input/file_upload.
 
 Done = every ❌ that isn't ⬚ becomes ✅/🟡, verified by build + a live drive on each harness.

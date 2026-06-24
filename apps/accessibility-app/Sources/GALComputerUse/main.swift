@@ -189,26 +189,71 @@ func smoothMoveTo(x: Double, y: Double, eventSource: CGEventSource?) {
     }
 }
 
-func clickAt(x: Double, y: Double, button: String = "left", clickCount: Int = 1) -> String {
-    let mouseButton: CGMouseButton
-    switch button.lowercased() {
-    case "right": mouseButton = .right
-    case "middle": mouseButton = .center
-    default: mouseButton = .left
+// Result for cursor_position.
+struct CursorResult: Codable {
+    let status: String
+    let x: Double
+    let y: Double
+}
+
+// Shared virtual-key map (used by key + hold_key). Keys are lowercase; look up with
+// key.lowercased() so "ArrowUp"/"arrowUp"/"arrowup" all resolve.
+let keyCodeMap: [String: CGKeyCode] = [
+    "enter": 0x24, "return": 0x24, "tab": 0x30, "escape": 0x35, "esc": 0x35,
+    "space": 0x31, "backspace": 0x33, "delete": 0x75, "forwarddelete": 0x75,
+    "arrowup": 0x7E, "arrowdown": 0x7D, "arrowleft": 0x7B, "arrowright": 0x7C,
+    "up": 0x7E, "down": 0x7D, "left": 0x7B, "right": 0x7C,
+    "home": 0x73, "end": 0x77, "pageup": 0x74, "pagedown": 0x79,
+    "f1": 0x7A, "f2": 0x78, "f3": 0x63, "f4": 0x76, "f5": 0x60, "f6": 0x61,
+    "f7": 0x62, "f8": 0x64, "f9": 0x65, "f10": 0x6D, "f11": 0x67, "f12": 0x6F,
+]
+
+// Parse modifier names into CGEventFlags (shared by clicks, key, hold_key).
+func eventFlags(_ modifiers: [String]) -> CGEventFlags {
+    var flags: CGEventFlags = []
+    for mod in modifiers {
+        switch mod.lowercased() {
+        case "command", "cmd", "meta": flags.insert(.maskCommand)
+        case "shift": flags.insert(.maskShift)
+        case "option", "alt": flags.insert(.maskAlternate)
+        case "control", "ctrl": flags.insert(.maskControl)
+        default: break
+        }
     }
+    return flags
+}
+
+// Current mouse cursor location in global screen coordinates.
+func currentCursor() -> CGPoint {
+    return CGEvent(source: nil)?.location ?? .zero
+}
+
+func cgMouseButton(_ button: String) -> CGMouseButton {
+    switch button.lowercased() {
+    case "right": return .right
+    case "middle": return .center
+    default: return .left
+    }
+}
+
+func clickAt(x: Double, y: Double, button: String = "left", clickCount: Int = 1, modifiers: [String] = []) -> String {
+    let mouseButton = cgMouseButton(button)
+    let flags = eventFlags(modifiers)
 
     let eventSource = CGEventSource(stateID: .hidSystemState)
     smoothMoveTo(x: x, y: y, eventSource: eventSource)  // human-like glide to target
     usleep(40000)
-    
+
     let downType: CGEventType = mouseButton == .right ? .rightMouseDown : .leftMouseDown
     let upType: CGEventType = mouseButton == .right ? .rightMouseUp : .leftMouseUp
-    
+
     for _ in 0..<clickCount {
         let downEvent = CGEvent(mouseEventSource: eventSource, mouseType: downType, mouseCursorPosition: CGPoint(x: x, y: y), mouseButton: mouseButton)
+        downEvent?.flags = flags
         downEvent?.post(tap: .cghidEventTap)
         usleep(50000)
         let upEvent = CGEvent(mouseEventSource: eventSource, mouseType: upType, mouseCursorPosition: CGPoint(x: x, y: y), mouseButton: mouseButton)
+        upEvent?.flags = flags
         upEvent?.post(tap: .cghidEventTap)
         if clickCount > 1 { usleep(100000) }
     }
@@ -230,38 +275,42 @@ func typeText(_ text: String) -> String {
     return encodeJSON(StatusResult(status: "success", message: "Typed \(text.count) characters"))
 }
 
-func pressKey(key: String, modifiers: [String] = []) -> String {
-    let keyMap: [String: CGKeyCode] = [
-        "enter": 0x24, "tab": 0x30, "escape": 0x35, "space": 0x31, "backspace": 0x33, "delete": 0x75,
-        "arrowUp": 0x7E, "arrowDown": 0x7D, "arrowLeft": 0x7B, "arrowRight": 0x7C,
-        "f1": 0x7A, "f2": 0x78, "f3": 0x63, "f4": 0x76, "f5": 0x60, "f6": 0x61,
-        "f7": 0x62, "f8": 0x64, "f9": 0x65, "f10": 0x6D, "f11": 0x67, "f12": 0x6F,
-    ]
-    
-    guard let keyCode = keyMap[key.lowercased()] ?? keyMap[key] else {
+func pressKey(key: String, modifiers: [String] = [], repeatCount: Int = 1) -> String {
+    guard let keyCode = keyCodeMap[key.lowercased()] else {
         return encodeJSON(ErrorResult(error: "Unknown key: \(key)"))
     }
-    
     let eventSource = CGEventSource(stateID: .hidSystemState)
-    var flags: CGEventFlags = []
-    for mod in modifiers {
-        switch mod.lowercased() {
-        case "command", "cmd": flags.insert(.maskCommand)
-        case "shift": flags.insert(.maskShift)
-        case "option", "alt": flags.insert(.maskAlternate)
-        case "control", "ctrl": flags.insert(.maskControl)
-        default: break
-        }
+    let flags = eventFlags(modifiers)
+    let times = max(1, min(repeatCount, 100))
+    for _ in 0..<times {
+        let downEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: true)
+        downEvent?.flags = flags
+        downEvent?.post(tap: .cghidEventTap)
+        usleep(50000)
+        let upEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: false)
+        upEvent?.flags = flags
+        upEvent?.post(tap: .cghidEventTap)
+        if times > 1 { usleep(30000) }
     }
-    
+    return encodeJSON(StatusResult(status: "success", message: "Pressed key: \(key)"))
+}
+
+// hold a key (or chord) down for `duration` seconds, then release — parity with hold_key.
+func holdKey(key: String, modifiers: [String] = [], duration: Double) -> String {
+    guard let keyCode = keyCodeMap[key.lowercased()] else {
+        return encodeJSON(ErrorResult(error: "Unknown key: \(key)"))
+    }
+    let eventSource = CGEventSource(stateID: .hidSystemState)
+    let flags = eventFlags(modifiers)
     let downEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: true)
     downEvent?.flags = flags
     downEvent?.post(tap: .cghidEventTap)
-    usleep(50000)
+    let secs = max(0.0, min(duration, 100.0))
+    usleep(useconds_t(secs * 1_000_000))
     let upEvent = CGEvent(keyboardEventSource: eventSource, virtualKey: keyCode, keyDown: false)
     upEvent?.flags = flags
     upEvent?.post(tap: .cghidEventTap)
-    return encodeJSON(StatusResult(status: "success", message: "Pressed key: \(key)"))
+    return encodeJSON(StatusResult(status: "success", message: "Held key \(key) for \(secs)s"))
 }
 
 func moveMouse(x: Double, y: Double) -> String {
@@ -280,6 +329,58 @@ func scroll(scrollX: Double = 0, scrollY: Double = 0, atX: Double? = nil, atY: D
     let event = CGEvent(scrollWheelEvent2Source: eventSource, units: .pixel, wheelCount: 2, wheel1: Int32(scrollY), wheel2: Int32(scrollX), wheel3: 0)
     event?.post(tap: CGEventTapLocation.cghidEventTap)
     return encodeJSON(StatusResult(status: "success", message: "Scrolled by (\(scrollX), \(scrollY))"))
+}
+
+// Press, glide to the target with the button held, then release — parity with left_click_drag.
+func dragTo(startX: Double, startY: Double, endX: Double, endY: Double, button: String = "left") -> String {
+    let mb = cgMouseButton(button)
+    let downType: CGEventType = mb == .right ? .rightMouseDown : .leftMouseDown
+    let upType: CGEventType = mb == .right ? .rightMouseUp : .leftMouseUp
+    let dragType: CGEventType = mb == .right ? .rightMouseDragged : .leftMouseDragged
+    let src = CGEventSource(stateID: .hidSystemState)
+    smoothMoveTo(x: startX, y: startY, eventSource: src)
+    usleep(40000)
+    CGEvent(mouseEventSource: src, mouseType: downType, mouseCursorPosition: CGPoint(x: startX, y: startY), mouseButton: mb)?.post(tap: .cghidEventTap)
+    usleep(40000)
+    let steps = 24
+    for i in 1...steps {
+        let t = Double(i) / Double(steps)
+        let e = t < 0.5 ? 4 * t * t * t : 1 - pow(-2 * t + 2, 3) / 2  // ease-in-out cubic
+        let cx = startX + (endX - startX) * e
+        let cy = startY + (endY - startY) * e
+        CGEvent(mouseEventSource: src, mouseType: dragType, mouseCursorPosition: CGPoint(x: cx, y: cy), mouseButton: mb)?.post(tap: .cghidEventTap)
+        usleep(8000)
+    }
+    CGEvent(mouseEventSource: src, mouseType: upType, mouseCursorPosition: CGPoint(x: endX, y: endY), mouseButton: mb)?.post(tap: .cghidEventTap)
+    return encodeJSON(StatusResult(status: "success", message: "Dragged (\(startX), \(startY)) -> (\(endX), \(endY))"))
+}
+
+// Press OR release a mouse button and leave it in that state — parity with
+// left_mouse_down / left_mouse_up (granular hold for click-drag-select etc.).
+func mouseButtonEvent(down: Bool, x: Double?, y: Double?, button: String = "left") -> String {
+    let mb = cgMouseButton(button)
+    let src = CGEventSource(stateID: .hidSystemState)
+    let loc: CGPoint
+    if let x = x, let y = y {
+        smoothMoveTo(x: x, y: y, eventSource: src)
+        usleep(20000)
+        loc = CGPoint(x: x, y: y)
+    } else {
+        loc = currentCursor()
+    }
+    let type: CGEventType
+    if down {
+        type = mb == .right ? .rightMouseDown : .leftMouseDown
+    } else {
+        type = mb == .right ? .rightMouseUp : .leftMouseUp
+    }
+    CGEvent(mouseEventSource: src, mouseType: type, mouseCursorPosition: loc, mouseButton: mb)?.post(tap: .cghidEventTap)
+    return encodeJSON(StatusResult(status: "success", message: down ? "Mouse down at (\(loc.x), \(loc.y))" : "Mouse up at (\(loc.x), \(loc.y))"))
+}
+
+func cursorPosition() -> String {
+    let p = currentCursor()
+    return encodeJSON(CursorResult(status: "success", x: Double(p.x), y: Double(p.y)))
 }
 
 // MARK: - IPC Server
@@ -353,20 +454,35 @@ func handleClient(_ client: FileHandle) {
         result = takeScreenshot(window: input["window"] as? String ?? "screen")
     case "click":
         if let x = input["x"] as? Double, let y = input["y"] as? Double {
-            result = clickAt(x: x, y: y, button: input["button"] as? String ?? "left", clickCount: input["click_count"] as? Int ?? 1)
+            result = clickAt(x: x, y: y, button: input["button"] as? String ?? "left", clickCount: input["click_count"] as? Int ?? 1, modifiers: input["modifiers"] as? [String] ?? [])
         } else {
             result = encodeJSON(ErrorResult(error: "click requires x and y coordinates"))
         }
     case "type":
         result = typeText(input["text"] as? String ?? "")
     case "key":
-        result = pressKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [])
+        result = pressKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], repeatCount: input["repeat"] as? Int ?? 1)
+    case "hold_key":
+        result = holdKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], duration: input["duration"] as? Double ?? 0)
     case "move":
         if let x = input["x"] as? Double, let y = input["y"] as? Double {
             result = moveMouse(x: x, y: y)
         } else {
             result = encodeJSON(ErrorResult(error: "move requires x and y coordinates"))
         }
+    case "left_click_drag", "drag":
+        if let sx = input["start_x"] as? Double, let sy = input["start_y"] as? Double,
+           let x = input["x"] as? Double, let y = input["y"] as? Double {
+            result = dragTo(startX: sx, startY: sy, endX: x, endY: y, button: input["button"] as? String ?? "left")
+        } else {
+            result = encodeJSON(ErrorResult(error: "left_click_drag requires start_x, start_y, x, y"))
+        }
+    case "left_mouse_down":
+        result = mouseButtonEvent(down: true, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
+    case "left_mouse_up":
+        result = mouseButtonEvent(down: false, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
+    case "cursor_position":
+        result = cursorPosition()
     case "scroll":
         result = scroll(scrollX: input["scroll_x"] as? Double ?? 0, scrollY: input["scroll_y"] as? Double ?? 0, atX: input["at_x"] as? Double, atY: input["at_y"] as? Double)
     case "ping":
