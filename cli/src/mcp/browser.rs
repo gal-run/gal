@@ -20,7 +20,10 @@ use crate::mcp::{
 use chromiumoxide::cdp::browser_protocol::network::{
     EnableParams as NetworkEnableParams, EventRequestWillBeSent,
 };
+use chromiumoxide::cdp::browser_protocol::dom::SetFileInputFilesParams;
 use chromiumoxide::cdp::browser_protocol::emulation::SetDeviceMetricsOverrideParams;
+use chromiumoxide::cdp::browser_protocol::page::Viewport;
+use chromiumoxide::cdp::browser_protocol::target::CreateTargetParams;
 use chromiumoxide::cdp::browser_protocol::input::{
     DispatchKeyEventParams, DispatchKeyEventType, DispatchMouseEventParams,
     DispatchMouseEventType, InsertTextParams, MouseButton,
@@ -122,8 +125,8 @@ fn tools_list() -> Vec<Tool> {
         },
         Tool {
             name: "browser_read_console".to_string(),
-            description: "Read console messages (log/error/warn) captured since launch. Optional 'pattern' substring filter.".to_string(),
-            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return messages containing this substring"}},"required":[]}"#).ok(),
+            description: "Read console messages (each prefixed with its level, e.g. [error]) captured since launch. Optional 'pattern' substring filter and 'onlyErrors' to return just errors/exceptions.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return messages containing this substring"},"onlyErrors":{"type":"boolean","description":"Return only error/exception messages (default false)"}},"required":[]}"#).ok(),
         },
         Tool {
             name: "browser_read_network".to_string(),
@@ -149,6 +152,46 @@ fn tools_list() -> Vec<Tool> {
             name: "browser_batch".to_string(),
             description: "Run a sequence of browser tool calls in one round trip. Each item is {name, arguments} — the same shape you'd pass standalone. Actions run sequentially and stop on the first error. Cannot be nested.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"actions":{"type":"array","description":"Ordered tool calls","items":{"type":"object","properties":{"name":{"type":"string"},"arguments":{"type":"object"}},"required":["name"]}}},"required":["actions"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_zoom".to_string(),
+            description: "Capture a hi-res screenshot of a page region (CSS px). Parity with the reference zoom — for inspecting small UI detail.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"x":{"type":"number"},"y":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"},"output_path":{"type":"string","description":"Optional path to save PNG; otherwise base64"}},"required":["x","y","width","height"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_form_input".to_string(),
+            description: "Set a form element's value by CSS selector (text/number inputs, textarea, select, checkbox/radio). Dispatches input+change.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"selector":{"type":"string"},"value":{"description":"String/number for inputs & selects; boolean for checkbox/radio"}},"required":["selector","value"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_file_upload".to_string(),
+            description: "Upload local file(s) to a file <input> identified by CSS selector (CDP setFileInputFiles — no native dialog).".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"selector":{"type":"string","description":"CSS selector for the file input"},"paths":{"type":"array","items":{"type":"string"},"description":"Absolute file paths"}},"required":["selector","paths"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_find".to_string(),
+            description: "Find visible interactive elements whose accessible name/text/placeholder/aria-label/id matches a query. Returns up to 20 {role, name, x, y} for coordinate targeting (pairs with browser_computer).".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"query":{"type":"string","description":"Text to match (case-insensitive); empty returns all interactive elements"}},"required":["query"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_tab_new".to_string(),
+            description: "Open a new tab (and make it active). Optional start URL.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"url":{"type":"string","description":"Optional URL to open (default about:blank)"}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_tab_list".to_string(),
+            description: "List open tabs as {index, url, active}.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
+        },
+        Tool {
+            name: "browser_tab_select".to_string(),
+            description: "Switch the active tab by index (from browser_tab_list).".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"index":{"type":"number"}},"required":["index"]}"#).ok(),
+        },
+        Tool {
+            name: "browser_tab_close".to_string(),
+            description: "Close a tab by index; if it was active, the first remaining tab becomes active.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"index":{"type":"number"}},"required":["index"]}"#).ok(),
         },
         Tool {
             name: "browser_close".to_string(),
@@ -184,6 +227,14 @@ impl McpServer for BrowserMcpServer {
             "browser_computer" => Some(self.handle_computer(args).await),
             "browser_resize" => Some(self.handle_resize(args).await),
             "browser_batch" => Some(self.handle_batch(args).await),
+            "browser_zoom" => Some(self.handle_zoom(args).await),
+            "browser_form_input" => Some(self.handle_form_input(args).await),
+            "browser_file_upload" => Some(self.handle_file_upload(args).await),
+            "browser_find" => Some(self.handle_find(args).await),
+            "browser_tab_new" => Some(self.handle_tab_new(args).await),
+            "browser_tab_list" => Some(self.handle_tab_list().await),
+            "browser_tab_select" => Some(self.handle_tab_select(args).await),
+            "browser_tab_close" => Some(self.handle_tab_close(args).await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -481,6 +532,235 @@ impl BrowserMcpServer {
         ToolResult::json(&serde_json::json!({"success": true, "count": ran.len(), "ran": ran}))
     }
 
+    async fn handle_zoom(&self, args: Value) -> ToolResult {
+        let getf = |k: &str| args.get(k).and_then(|v| v.as_f64());
+        let (x, y, w, h) = match (getf("x"), getf("y"), getf("width"), getf("height")) {
+            (Some(x), Some(y), Some(w), Some(h)) => (x, y, w, h),
+            _ => return ToolResult::error("zoom requires x, y, width, height"),
+        };
+        let output_path = param_str(&args, "output_path");
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let clip = match Viewport::builder().x(x).y(y).width(w).height(h).scale(1.0).build() {
+            Ok(v) => v,
+            Err(e) => return ToolResult::error(format!("bad clip region: {}", e)),
+        };
+        let params = chromiumoxide::page::ScreenshotParams::builder().clip(clip).build();
+        match instance.page.screenshot(params).await {
+            Ok(data) => {
+                if let Some(path) = &output_path {
+                    match std::fs::write(path, &data) {
+                        Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "path": path})),
+                        Err(e) => ToolResult::error(format!("Failed to save zoom: {}", e)),
+                    }
+                } else {
+                    let encoded = base64::Engine::encode(
+                        &base64::engine::general_purpose::STANDARD,
+                        &data,
+                    );
+                    ToolResult::with_content(vec![ContentItem::image(encoded, "image/png")])
+                }
+            }
+            Err(e) => ToolResult::error(format!("Zoom failed: {}", e)),
+        }
+    }
+
+    async fn handle_form_input(&self, args: Value) -> ToolResult {
+        let selector = match param_str(&args, "selector") {
+            Some(s) => s,
+            None => return ToolResult::error("selector is required"),
+        };
+        let value = args.get("value").cloned().unwrap_or(Value::Null);
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let js = format!(
+            r#"(() => {{
+                const el = document.querySelector({sel});
+                if (!el) return 'not-found';
+                const v = {val};
+                if (el.type === 'checkbox' || el.type === 'radio') {{ el.checked = !!v; }}
+                else {{ el.value = v; }}
+                el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                return 'ok';
+            }})()"#,
+            sel = serde_json::to_string(&selector).unwrap_or_else(|_| "\"\"".into()),
+            val = serde_json::to_string(&value).unwrap_or_else(|_| "null".into()),
+        );
+        match instance.page.evaluate(js.as_str()).await {
+            Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "selector": selector})),
+            Err(e) => ToolResult::error(format!("form_input failed: {}", e)),
+        }
+    }
+
+    async fn handle_file_upload(&self, args: Value) -> ToolResult {
+        let selector = match param_str(&args, "selector") {
+            Some(s) => s,
+            None => return ToolResult::error("selector is required"),
+        };
+        let paths: Vec<String> = match args.get("paths").and_then(|v| v.as_array()) {
+            Some(a) => a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect(),
+            None => return ToolResult::error("paths (array) is required"),
+        };
+        if paths.is_empty() {
+            return ToolResult::error("paths must be a non-empty array");
+        }
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let element = match instance.page.find_element(&selector).await {
+            Ok(e) => e,
+            Err(e) => return ToolResult::error(format!("file input not found '{}': {}", selector, e)),
+        };
+        let mut builder = SetFileInputFilesParams::builder().node_id(element.node_id.clone());
+        for p in &paths {
+            builder = builder.file(p.clone());
+        }
+        let params = match builder.build() {
+            Ok(p) => p,
+            Err(e) => return ToolResult::error(format!("setFileInputFiles build: {}", e)),
+        };
+        match instance.page.execute(params).await {
+            Ok(_) => ToolResult::json(&serde_json::json!({"success": true, "selector": selector, "count": paths.len()})),
+            Err(e) => ToolResult::error(format!("file_upload failed: {}", e)),
+        }
+    }
+
+    async fn handle_find(&self, args: Value) -> ToolResult {
+        let query = match param_str(&args, "query") {
+            Some(q) => q.to_lowercase(),
+            None => return ToolResult::error("query is required"),
+        };
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let js = format!(
+            r#"(() => {{
+                const q = {q};
+                const out = [];
+                const els = document.querySelectorAll('a,button,input,select,textarea,[role],[onclick],[tabindex]');
+                for (const el of els) {{
+                    const r = el.getBoundingClientRect();
+                    if (r.width === 0 || r.height === 0) continue;
+                    const name = (el.getAttribute('aria-label') || el.textContent || el.value || el.placeholder || el.getAttribute('title') || '').trim();
+                    const hay = (name + ' ' + (el.getAttribute('name') || '') + ' ' + (el.id || '')).toLowerCase();
+                    if (q && !hay.includes(q)) continue;
+                    out.push({{ role: el.getAttribute('role') || el.tagName.toLowerCase(), name: name.slice(0, 80), x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }});
+                    if (out.length >= 20) break;
+                }}
+                return JSON.stringify(out);
+            }})()"#,
+            q = serde_json::to_string(&query).unwrap_or_else(|_| "\"\"".into()),
+        );
+        match instance.page.evaluate(js.as_str()).await {
+            Ok(result) => {
+                let raw = result
+                    .value()
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "[]".to_string());
+                let parsed: Value = serde_json::from_str(&raw).unwrap_or_else(|_| Value::Array(vec![]));
+                ToolResult::json(&serde_json::json!({"success": true, "matches": parsed}))
+            }
+            Err(e) => ToolResult::error(format!("find failed: {}", e)),
+        }
+    }
+
+    async fn handle_tab_new(&self, args: Value) -> ToolResult {
+        let url = param_str(&args, "url").unwrap_or_else(|| "about:blank".to_string());
+        let mut guard = self.browser.lock().await;
+        let instance = match guard.as_mut() {
+            Some(i) => i,
+            None => return ToolResult::error("No active browser. Call launch_browser first."),
+        };
+        match instance.browser.new_page(CreateTargetParams::new(url.clone())).await {
+            Ok(page) => {
+                instance.page = page;
+                ToolResult::json(&serde_json::json!({"success": true, "url": url}))
+            }
+            Err(e) => ToolResult::error(format!("tab_new failed: {}", e)),
+        }
+    }
+
+    async fn handle_tab_list(&self) -> ToolResult {
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let active = instance.page.target_id().clone();
+        match instance.browser.pages().await {
+            Ok(pages) => {
+                let mut tabs = Vec::new();
+                for (i, p) in pages.iter().enumerate() {
+                    let url = p.url().await.ok().flatten().unwrap_or_default();
+                    tabs.push(serde_json::json!({"index": i, "url": url, "active": p.target_id() == &active}));
+                }
+                ToolResult::json(&serde_json::json!({"success": true, "tabs": tabs}))
+            }
+            Err(e) => ToolResult::error(format!("tab_list failed: {}", e)),
+        }
+    }
+
+    async fn handle_tab_select(&self, args: Value) -> ToolResult {
+        let index = args.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+        let mut guard = self.browser.lock().await;
+        let instance = match guard.as_mut() {
+            Some(i) => i,
+            None => return ToolResult::error("No active browser."),
+        };
+        let pages = match instance.browser.pages().await {
+            Ok(p) => p,
+            Err(e) => return ToolResult::error(format!("tab_select failed: {}", e)),
+        };
+        match pages.get(index) {
+            Some(p) => {
+                instance.page = p.clone();
+                ToolResult::json(&serde_json::json!({"success": true, "index": index}))
+            }
+            None => ToolResult::error(format!("no tab at index {}", index)),
+        }
+    }
+
+    async fn handle_tab_close(&self, args: Value) -> ToolResult {
+        let index = args.get("index").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+        let mut guard = self.browser.lock().await;
+        let instance = match guard.as_mut() {
+            Some(i) => i,
+            None => return ToolResult::error("No active browser."),
+        };
+        let pages = match instance.browser.pages().await {
+            Ok(p) => p,
+            Err(e) => return ToolResult::error(format!("tab_close failed: {}", e)),
+        };
+        let target = match pages.get(index) {
+            Some(p) => p.clone(),
+            None => return ToolResult::error(format!("no tab at index {}", index)),
+        };
+        let was_active = target.target_id() == instance.page.target_id();
+        if let Err(e) = target.close().await {
+            return ToolResult::error(format!("tab_close failed: {}", e));
+        }
+        if was_active {
+            if let Ok(remaining) = instance.browser.pages().await {
+                if let Some(p) = remaining.first() {
+                    instance.page = p.clone();
+                }
+            }
+        }
+        ToolResult::json(&serde_json::json!({"success": true, "closed": index}))
+    }
+
     async fn handle_launch(&self, args: Value) -> ToolResult {
         // Close existing browser if any
         self.close_browser_inner().await;
@@ -530,7 +810,7 @@ impl BrowserMcpServer {
                     let buf = console.clone();
                     tokio::spawn(async move {
                         while let Some(ev) = events.next().await {
-                            let line = ev
+                            let body = ev
                                 .args
                                 .iter()
                                 .filter_map(|a| {
@@ -541,6 +821,9 @@ impl BrowserMcpServer {
                                 })
                                 .collect::<Vec<_>>()
                                 .join(" ");
+                            // Prefix the console level ([log]/[error]/[warning]/…) so
+                            // read_console can filter by it (onlyErrors).
+                            let line = format!("[{}] {}", ev.r#type.as_ref(), body);
                             let mut b = buf.lock().await;
                             if b.len() < 1000 {
                                 b.push(line);
@@ -848,6 +1131,7 @@ impl BrowserMcpServer {
 
     async fn handle_read_console(&self, args: Value) -> ToolResult {
         let pattern = param_str(&args, "pattern");
+        let only_errors = param_bool_or(&args, "onlyErrors", false);
         let guard = match self.get_browser().await {
             Ok(g) => g,
             Err(e) => return ToolResult::error(e),
@@ -856,6 +1140,7 @@ impl BrowserMcpServer {
         let msgs = instance.console.lock().await;
         let filtered: Vec<&String> = msgs
             .iter()
+            .filter(|m| !only_errors || m.starts_with("[error") || m.starts_with("[assert") || m.to_lowercase().contains("exception"))
             .filter(|m| pattern.as_ref().map(|p| m.contains(p)).unwrap_or(true))
             .collect();
         ToolResult::json(&serde_json::json!({

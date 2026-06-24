@@ -135,10 +135,14 @@ func getAppState(appName: String?) -> String {
 // caller-supplied output_path: honoring an arbitrary path would let any client
 // turn this helper into an arbitrary-file-write primitive (path traversal /
 // symlink attacks). Callers receive the bytes and decide where to store them.
+// Which display subsequent screenshots capture (nil = main/auto). Set via switch_display.
+var activeDisplay: Int?
+
 func takeScreenshot(window: String = "screen") -> String {
     let task = Process()
     task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
     var args: [String] = ["-x"]
+    if let d = activeDisplay { args.append("-D\(d)") }
 
     switch window {
     case "window": args.append("-w")
@@ -419,6 +423,30 @@ func zoomRegion(x: Double, y: Double, width: Double, height: Double) -> String {
     }
 }
 
+// Choose which display subsequent screenshots capture (1 = main; nil/"auto" resets).
+func switchDisplay(_ display: Int?) -> String {
+    activeDisplay = display
+    return encodeJSON(StatusResult(status: "success", message: display.map { "display \($0)" } ?? "auto"))
+}
+
+// Launch / bring an application to the front — parity with open_application.
+func openApplication(_ app: String) -> String {
+    if app.isEmpty { return encodeJSON(ErrorResult(error: "app is required")) }
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    task.arguments = ["-a", app]
+    do {
+        try task.run()
+        task.waitUntilExit()
+        if task.terminationStatus == 0 {
+            return encodeJSON(StatusResult(status: "success", message: "Opened \(app)"))
+        }
+        return encodeJSON(ErrorResult(error: "open exited \(task.terminationStatus) for \(app)"))
+    } catch {
+        return encodeJSON(ErrorResult(error: "Failed to open \(app): \(error.localizedDescription)"))
+    }
+}
+
 // MARK: - IPC Server
 
 // Maximum bytes we are willing to read from a single client request. Requests
@@ -468,6 +496,79 @@ func readRequest(_ client: FileHandle) -> Data? {
     return buffer
 }
 
+func dispatchAction(_ action: String, _ input: [String: Any]) -> String {
+    switch action {
+    case "get_app_state":
+        return getAppState(appName: input["app"] as? String)
+    case "screenshot":
+        return takeScreenshot(window: input["window"] as? String ?? "screen")
+    case "click":
+        if let x = input["x"] as? Double, let y = input["y"] as? Double {
+            return clickAt(x: x, y: y, button: input["button"] as? String ?? "left", clickCount: input["click_count"] as? Int ?? 1, modifiers: input["modifiers"] as? [String] ?? [])
+        }
+        return encodeJSON(ErrorResult(error: "click requires x and y coordinates"))
+    case "type":
+        return typeText(input["text"] as? String ?? "")
+    case "key":
+        return pressKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], repeatCount: input["repeat"] as? Int ?? 1)
+    case "hold_key":
+        return holdKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], duration: input["duration"] as? Double ?? 0)
+    case "move":
+        if let x = input["x"] as? Double, let y = input["y"] as? Double {
+            return moveMouse(x: x, y: y)
+        }
+        return encodeJSON(ErrorResult(error: "move requires x and y coordinates"))
+    case "left_click_drag", "drag":
+        if let sx = input["start_x"] as? Double, let sy = input["start_y"] as? Double,
+           let x = input["x"] as? Double, let y = input["y"] as? Double {
+            return dragTo(startX: sx, startY: sy, endX: x, endY: y, button: input["button"] as? String ?? "left")
+        }
+        return encodeJSON(ErrorResult(error: "left_click_drag requires start_x, start_y, x, y"))
+    case "left_mouse_down":
+        return mouseButtonEvent(down: true, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
+    case "left_mouse_up":
+        return mouseButtonEvent(down: false, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
+    case "cursor_position":
+        return cursorPosition()
+    case "read_clipboard":
+        return readClipboard()
+    case "write_clipboard":
+        return writeClipboard(input["text"] as? String ?? "")
+    case "zoom":
+        if let x = input["x"] as? Double, let y = input["y"] as? Double,
+           let w = input["width"] as? Double, let h = input["height"] as? Double {
+            return zoomRegion(x: x, y: y, width: w, height: h)
+        }
+        return encodeJSON(ErrorResult(error: "zoom requires x, y, width, height"))
+    case "switch_display":
+        return switchDisplay(input["display"] as? Int)
+    case "open_application":
+        return openApplication(input["app"] as? String ?? "")
+    case "scroll":
+        return scroll(scrollX: input["scroll_x"] as? Double ?? 0, scrollY: input["scroll_y"] as? Double ?? 0, atX: input["at_x"] as? Double, atY: input["at_y"] as? Double)
+    case "batch":
+        // Run a predictable sequence in one request (parity with computer_batch); stops on
+        // the first error. Sub-results are JSON objects joined into a "results" array.
+        var results: [String] = []
+        if let actions = input["actions"] as? [[String: Any]] {
+            for sub in actions {
+                guard let subAction = sub["action"] as? String, subAction != "batch" else {
+                    results.append(encodeJSON(ErrorResult(error: "invalid or nested batch sub-action")))
+                    break
+                }
+                let r = dispatchAction(subAction, sub)
+                results.append(r)
+                if r.contains("\"error\"") { break }
+            }
+        }
+        return "{\"status\":\"success\",\"count\":\(results.count),\"results\":[\(results.joined(separator: ","))]}"
+    case "ping":
+        return encodeJSON(StatusResult(status: "ok", message: "GAL Computer Use helper is running"))
+    default:
+        return encodeJSON(ErrorResult(error: "Unknown action: \(action)"))
+    }
+}
+
 func handleClient(_ client: FileHandle) {
     defer { client.closeFile() }
     guard let data = readRequest(client) else {
@@ -481,63 +582,8 @@ func handleClient(_ client: FileHandle) {
         try? client.write(contentsOf: encodeJSON(error).data(using: .utf8)!)
         return
     }
-    
-    let result: String
-    switch action {
-    case "get_app_state":
-        result = getAppState(appName: input["app"] as? String)
-    case "screenshot":
-        result = takeScreenshot(window: input["window"] as? String ?? "screen")
-    case "click":
-        if let x = input["x"] as? Double, let y = input["y"] as? Double {
-            result = clickAt(x: x, y: y, button: input["button"] as? String ?? "left", clickCount: input["click_count"] as? Int ?? 1, modifiers: input["modifiers"] as? [String] ?? [])
-        } else {
-            result = encodeJSON(ErrorResult(error: "click requires x and y coordinates"))
-        }
-    case "type":
-        result = typeText(input["text"] as? String ?? "")
-    case "key":
-        result = pressKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], repeatCount: input["repeat"] as? Int ?? 1)
-    case "hold_key":
-        result = holdKey(key: input["key"] as? String ?? "", modifiers: input["modifiers"] as? [String] ?? [], duration: input["duration"] as? Double ?? 0)
-    case "move":
-        if let x = input["x"] as? Double, let y = input["y"] as? Double {
-            result = moveMouse(x: x, y: y)
-        } else {
-            result = encodeJSON(ErrorResult(error: "move requires x and y coordinates"))
-        }
-    case "left_click_drag", "drag":
-        if let sx = input["start_x"] as? Double, let sy = input["start_y"] as? Double,
-           let x = input["x"] as? Double, let y = input["y"] as? Double {
-            result = dragTo(startX: sx, startY: sy, endX: x, endY: y, button: input["button"] as? String ?? "left")
-        } else {
-            result = encodeJSON(ErrorResult(error: "left_click_drag requires start_x, start_y, x, y"))
-        }
-    case "left_mouse_down":
-        result = mouseButtonEvent(down: true, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
-    case "left_mouse_up":
-        result = mouseButtonEvent(down: false, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
-    case "cursor_position":
-        result = cursorPosition()
-    case "read_clipboard":
-        result = readClipboard()
-    case "write_clipboard":
-        result = writeClipboard(input["text"] as? String ?? "")
-    case "zoom":
-        if let x = input["x"] as? Double, let y = input["y"] as? Double,
-           let w = input["width"] as? Double, let h = input["height"] as? Double {
-            result = zoomRegion(x: x, y: y, width: w, height: h)
-        } else {
-            result = encodeJSON(ErrorResult(error: "zoom requires x, y, width, height"))
-        }
-    case "scroll":
-        result = scroll(scrollX: input["scroll_x"] as? Double ?? 0, scrollY: input["scroll_y"] as? Double ?? 0, atX: input["at_x"] as? Double, atY: input["at_y"] as? Double)
-    case "ping":
-        result = encodeJSON(StatusResult(status: "ok", message: "GAL Computer Use helper is running"))
-    default:
-        result = encodeJSON(ErrorResult(error: "Unknown action: \(action)"))
-    }
-    
+
+    let result = dispatchAction(action, input)
     try? client.write(contentsOf: result.data(using: .utf8)!)
 }
 
