@@ -50,9 +50,12 @@ want automated QA/demo/agent runs happening inside a human's real logged-in Chro
    component** — a Chrome extension named **`gal-chrome`** — kept **alongside** gal-browser,
    not replacing it. The names then correctly encode the two architectures
    (`gal-browser` = CDP/any-Chromium; `gal-chrome` = extension/real-Chrome).
-3. **Do not build `gal-chrome` now.** GAL's current goals (QA, demos, background agents) are
-   fully served by gal-browser. Build `gal-chrome` only if/when a consumer "operate my real
-   browser" product becomes a goal.
+3. **Build `gal-chrome` now (amended 2026-06-24).** The founder elected to build the
+   real-Chrome path immediately, as the *separate additive component* described above (a Chrome
+   extension that drives the real browser via `chrome.debugger`/CDP, controlled over a local
+   bridge — reusing gal-browser's CDP tool surface). Tracked on `feat/gal-chrome`. The earlier
+   deferral is lifted; the architecture decision (gal-browser stays CDP; gal-chrome is a
+   distinct extension, **not** a rename) is unchanged.
 
 ## Alternatives considered
 
