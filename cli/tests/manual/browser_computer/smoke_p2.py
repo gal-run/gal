@@ -89,9 +89,10 @@ def main():
     active = next((t for t in tl if t["active"]), {})
     check("tab_new opens & activates page 2", len(tl) >= 2 and active.get("url", "").endswith("page2.html"),
           f"tabs={len(tl)} active={active.get('url','')[-12:]}")
-    c.call("browser_tab_select", {"index": 0}); time.sleep(0.3)
+    p1 = next((t["index"] for t in tl if t["url"].endswith("page.html")), 0)  # chromium tab order isn't fixed
+    c.call("browser_tab_select", {"index": p1}); time.sleep(0.3)
     href = str(c.evald("location.href"))
-    check("tab_select(0) makes page 1 active", href.endswith("page.html"), href[-14:])
+    check("tab_select makes page 1 active", href.endswith("page.html"), href[-14:])
     before = len(json.loads(c.text(c.call("browser_tab_list", {})))["tabs"])
     c.call("browser_tab_close", {"index": 1}); time.sleep(0.4)
     after = len(json.loads(c.text(c.call("browser_tab_list", {})))["tabs"])
