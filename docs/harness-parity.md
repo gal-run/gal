@@ -56,8 +56,8 @@ Legend: ✅ have · 🟡 partial · ❌ gap · ⬚ N/A (security/host model diff
 | `hold_key` (press+hold duration) | `hold_key` | ✅ (Swift+X11) |
 | `type` | `type` | ✅ |
 | `cursor_position` | `cursor_position` | ✅ (Swift+X11) |
-| `zoom` (hi-res region) | — | ❌ (P2) |
-| `read_clipboard` / `write_clipboard` | — | ❌ (P2) |
+| `zoom` (hi-res region) | `zoom` | ✅ (Swift+X11) |
+| `read_clipboard` / `write_clipboard` | `read_clipboard`/`write_clipboard` | ✅ (Swift+X11) |
 | `wait` | (client-side) | ⬚ |
 | `switch_display` (multi-monitor) | — | ❌ (P2) |
 | `open_application` | — | 🟡 (macOS can; X11 n/a) |
@@ -73,6 +73,7 @@ Legend: ✅ have · 🟡 partial · ❌ gap · ⬚ N/A (security/host model diff
 - **P1 — symmetric input gaps**: ✅ DONE. CU harness (Swift + X11) — drag, mouse_down/up,
   hold_key, click-modifiers, cursor_position, key-repeat. gal-browser — navigate back/forward,
   resize_window (browser_resize), batch (browser_batch). All build- and (browser) runtime-verified.
-- **P2 — richer surface**: zoom, clipboard, multi-monitor, tabs, find/form_input/file_upload.
+- **P2 — richer surface**: ✅ desktop zoom + clipboard (Swift+X11) done. Remaining:
+  gal-browser zoom/form_input/file_upload/tabs/find; CU multi-monitor + open_application.
 
 Done = every ❌ that isn't ⬚ becomes ✅/🟡, verified by build + a live drive on each harness.

@@ -383,6 +383,42 @@ func cursorPosition() -> String {
     return encodeJSON(CursorResult(status: "success", x: Double(p.x), y: Double(p.y)))
 }
 
+struct ClipboardResult: Codable {
+    let status: String
+    let text: String
+}
+
+func readClipboard() -> String {
+    let text = NSPasteboard.general.string(forType: .string) ?? ""
+    return encodeJSON(ClipboardResult(status: "success", text: text))
+}
+
+func writeClipboard(_ text: String) -> String {
+    let pb = NSPasteboard.general
+    pb.clearContents()
+    pb.setString(text, forType: .string)
+    return encodeJSON(StatusResult(status: "success", message: "Wrote \(text.count) chars to clipboard"))
+}
+
+// Higher-resolution capture of a screen region — parity with the reference zoom.
+func zoomRegion(x: Double, y: Double, width: Double, height: Double) -> String {
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    let scratchDir = sessionScratchDir()
+    let tempURL = scratchDir.appendingPathComponent("gal-zoom-\(UUID().uuidString).png")
+    task.arguments = ["-x", "-R\(Int(x)),\(Int(y)),\(Int(width)),\(Int(height))", tempURL.path]
+    do {
+        try task.run()
+        task.waitUntilExit()
+        let data = try Data(contentsOf: tempURL)
+        try? FileManager.default.removeItem(at: tempURL)
+        return encodeJSON(ScreenshotResult(image: data.base64EncodedString(), width: Int(width), height: Int(height)))
+    } catch {
+        try? FileManager.default.removeItem(at: tempURL)
+        return encodeJSON(ErrorResult(error: "Failed to zoom region: \(error.localizedDescription)"))
+    }
+}
+
 // MARK: - IPC Server
 
 // Maximum bytes we are willing to read from a single client request. Requests
@@ -483,6 +519,17 @@ func handleClient(_ client: FileHandle) {
         result = mouseButtonEvent(down: false, x: input["x"] as? Double, y: input["y"] as? Double, button: input["button"] as? String ?? "left")
     case "cursor_position":
         result = cursorPosition()
+    case "read_clipboard":
+        result = readClipboard()
+    case "write_clipboard":
+        result = writeClipboard(input["text"] as? String ?? "")
+    case "zoom":
+        if let x = input["x"] as? Double, let y = input["y"] as? Double,
+           let w = input["width"] as? Double, let h = input["height"] as? Double {
+            result = zoomRegion(x: x, y: y, width: w, height: h)
+        } else {
+            result = encodeJSON(ErrorResult(error: "zoom requires x, y, width, height"))
+        }
     case "scroll":
         result = scroll(scrollX: input["scroll_x"] as? Double ?? 0, scrollY: input["scroll_y"] as? Double ?? 0, atX: input["at_x"] as? Double, atY: input["at_y"] as? Double)
     case "ping":
