@@ -20,6 +20,7 @@ use crate::mcp::{
 use chromiumoxide::cdp::browser_protocol::network::{
     EnableParams as NetworkEnableParams, EventRequestWillBeSent,
 };
+use chromiumoxide::cdp::browser_protocol::emulation::SetDeviceMetricsOverrideParams;
 use chromiumoxide::cdp::js_protocol::runtime::EventConsoleApiCalled;
 use futures::StreamExt;
 use serde_json::Value;
@@ -210,6 +211,19 @@ impl BrowserMcpServer {
                         return ToolResult::error(format!("Failed to create page: {}", e));
                     }
                 };
+
+                // Match the render viewport to the requested size. Headless Chrome's
+                // viewport otherwise defaults to 800x600 regardless of window_size, so
+                // screenshots came out small — too low-res for HD captures/demos.
+                if let Ok(metrics) = SetDeviceMetricsOverrideParams::builder()
+                    .width(width as i64)
+                    .height(height as i64)
+                    .device_scale_factor(1.0)
+                    .mobile(false)
+                    .build()
+                {
+                    let _ = page.execute(metrics).await;
+                }
 
                 // Capture console + network BEFORE navigating, so the start
                 // page's logs/requests are recorded.
