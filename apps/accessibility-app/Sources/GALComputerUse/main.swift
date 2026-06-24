@@ -55,7 +55,9 @@ func getAXValueAsString(_ element: AXUIElement, _ attribute: String) -> String? 
 func getAXValueAsPoint(_ element: AXUIElement, _ attribute: String) -> CGPoint? {
     var value: CFTypeRef?
     let result = AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
-    guard result == .success, let v = value else { return nil }
+    // Type-check before the cast: `as! AXValue` would crash the helper if the attribute
+    // ever returns something that isn't an AXValue.
+    guard result == .success, let v = value, CFGetTypeID(v) == AXValueGetTypeID() else { return nil }
     let pointValue = v as! AXValue
     var point = CGPoint()
     guard AXValueGetValue(pointValue, .cgPoint, &point) else { return nil }
@@ -65,7 +67,7 @@ func getAXValueAsPoint(_ element: AXUIElement, _ attribute: String) -> CGPoint? 
 func getAXValueAsSize(_ element: AXUIElement, _ attribute: String) -> CGSize? {
     var value: CFTypeRef?
     let result = AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
-    guard result == .success, let v = value else { return nil }
+    guard result == .success, let v = value, CFGetTypeID(v) == AXValueGetTypeID() else { return nil }
     let sizeValue = v as! AXValue
     var size = CGSize()
     guard AXValueGetValue(sizeValue, .cgSize, &size) else { return nil }
@@ -81,21 +83,27 @@ func getAXChildren(_ element: AXUIElement) -> [AXUIElement]? {
 
 // MARK: - Build Accessibility Tree
 
-func buildAccessibilityTree(_ element: AXUIElement, index: inout Int) -> AccessibilityNode {
+// AX trees can be deep or contain parent<->child cycles; unbounded recursion blew the helper's
+// stack on some apps (Calculator: SIGSEGV "excessive recursion"). Bound by depth + total nodes.
+let axMaxDepth = 25
+let axMaxNodes = 2000
+
+func buildAccessibilityTree(_ element: AXUIElement, index: inout Int, depth: Int = 0) -> AccessibilityNode {
     let currentIndex = index
     index += 1
-    
+
     let role = getAXValueAsString(element, kAXRoleAttribute as String) ?? "unknown"
     let title = getAXValueAsString(element, kAXTitleAttribute as String)
     let value = getAXValueAsString(element, kAXValueAttribute as String)
     let position = getAXValueAsPoint(element, kAXPositionAttribute as String).map { [Double($0.x), Double($0.y)] }
     let size = getAXValueAsSize(element, kAXSizeAttribute as String).map { [Double($0.width), Double($0.height)] }
-    
+
     var childNodes: [AccessibilityNode]? = nil
-    if let children = getAXChildren(element), !children.isEmpty {
-        childNodes = children.map { buildAccessibilityTree($0, index: &index) }
+    if depth < axMaxDepth, index < axMaxNodes,
+       let children = getAXChildren(element), !children.isEmpty {
+        childNodes = children.map { buildAccessibilityTree($0, index: &index, depth: depth + 1) }
     }
-    
+
     return AccessibilityNode(
         index: currentIndex,
         role: role,
