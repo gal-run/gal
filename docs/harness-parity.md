@@ -13,6 +13,11 @@ Two GAL harnesses:
 
 Legend: ✅ have · 🟡 partial · ❌ gap · ⬚ N/A (security/host model differs).
 
+> **Architecture note:** gal-browser drives its **own** headless Chromium over CDP (Playwright-style),
+> not the user's real Chrome — so its `tab_*` tools manage tabs in *that* instance, and the extension
+> being connected is irrelevant to it. Why we keep CDP (and don't rename to gal-chrome):
+> [ADR 0001](adr/0001-browser-harness-cdp-not-chrome-extension.md).
+
 ## Browser: `claude-in-chrome` → gal-browser
 
 | Reference capability | gal-browser today | Status |
