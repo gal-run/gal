@@ -30,12 +30,17 @@ import {
  scrollPage,
  removeLabels,
 } from "../content/browser-use-agent";
+import { initCdpBridge, handleCdpMessage } from "./cdp-bridge";
 
 // Initialize error tracking
 initSentry();
 
 // Initialize telemetry (async, never blocks)
 initTelemetry();
+
+// Initialize the opt-in CDP page-driving bridge. No-op unless the user enabled it
+// (feature flag + runtime `debugger` permission); default users are unaffected.
+void initCdpBridge();
 
 // Allow popup and content scripts to access chrome.storage.session.
 // By default, session storage is only accessible from the service worker.
@@ -1314,6 +1319,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  sendResponse({ error: String(e) });
  }
  })();
+ return true;
+ }
+
+ // opt-in CDP page-driving bridge (gal-chrome fold) — see ./cdp-bridge.ts
+ if (typeof message.type === "string" && message.type.startsWith("CDP_")) {
+ handleCdpMessage(message as { type?: string }, sendResponse);
  return true;
  }
 

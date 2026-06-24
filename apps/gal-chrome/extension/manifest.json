@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "gal-chrome-spike",
+  "name": "gal",
   "version": "0.0.1",
-  "description": "gal-chrome architecture spike: drive the REAL Chrome via chrome.debugger (CDP), controlled over a local WebSocket bridge. Proves the path the browser-use-service ChromeBridge was stubbed for.",
-  "permissions": ["debugger", "tabs", "alarms"],
+  "description": "gal — gal-chrome: drives the REAL Chrome via chrome.debugger (CDP) + chrome.tabs/tabGroups, controlled over a local WebSocket by the gal-chrome MCP server. The chrome.debugger banner reads 'gal started debugging this browser'.",
+  "permissions": ["debugger", "tabs", "tabGroups", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" }
 }
