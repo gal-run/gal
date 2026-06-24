@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>bc</title>
+<style>body{margin:0;font:16px monospace}
+#btn{position:absolute;left:100px;top:100px;width:200px;height:60px}
+#inp{position:absolute;left:100px;top:220px;width:320px;height:34px;font-size:18px}
+#pad{height:3000px}</style></head><body>
+<button id="btn">Click me</button>
+<input id="inp" placeholder="type here">
+<div id="pad"></div>
+<script>window.__clicks=0;window.__enter=false;
+document.getElementById('btn').addEventListener('click',()=>window.__clicks++);
+document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')window.__enter=true});
+</script></body></html>
