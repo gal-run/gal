@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 
 	"github.com/gal-run/gal/services/governance-svc/internal/domain"
+	"github.com/gal-run/gal/services/governance-svc/internal/enforce"
 	"github.com/gal-run/gal/services/governance-svc/internal/store"
 	"github.com/gal-run/gal/services/lib/auth"
 	"github.com/gal-run/gal/services/lib/handler"
@@ -1202,37 +1203,7 @@ func (s *governanceSvc) enforcementCheck(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Evaluate request action against policy rules.
-	// A real implementation would parse the JSON rules and evaluate conditions.
-	// For now, we check enforcement mode.
-	var result domain.EnforcementCheckResult
-	switch activePolicy.Enforcement {
-	case "strict":
-		result = domain.EnforcementCheckResult{
-			Allowed:    false,
-			Action:     "denied",
-			PolicyID:   activePolicy.ID,
-			PolicyName: activePolicy.Name,
-			Reason:     "strict enforcement: action requires explicit approval",
-		}
-	case "disabled":
-		result = domain.EnforcementCheckResult{
-			Allowed:    true,
-			Action:     "allowed",
-			PolicyID:   activePolicy.ID,
-			PolicyName: activePolicy.Name,
-			Reason:     "policy enforcement disabled",
-		}
-	default:
-		// advisory
-		result = domain.EnforcementCheckResult{
-			Allowed:    true,
-			Action:     "audit",
-			PolicyID:   activePolicy.ID,
-			PolicyName: activePolicy.Name,
-			Reason:     "advisory mode: action allowed but will be audited",
-		}
-	}
+	result := enforce.EvaluatePolicyDecision(*activePolicy, req)
 
 	handler.RespondJSON(w, http.StatusOK, result)
 }

@@ -146,6 +146,39 @@ type DomainAuditEntry struct {
 	CreatedAt time.Time `json:"createdAt" firestore:"createdAt"`
 }
 
+// RuleMatch defines the match conditions for a single governance rule.
+// A rule matches a request when ALL non-empty/absent match fields match the
+// corresponding request field. An empty/absent match field is a wildcard
+// that matches everything.
+//
+// Matching semantics (applied after lowercasing both the pattern and the
+// request field):
+//   - "*" matches anything (universal wildcard).
+//   - A pattern ending with "*" is a prefix match (e.g. "delete*" matches "delete-branch").
+//   - A pattern starting with "*" is a suffix match (e.g. "*release" matches "cut-release").
+//   - Otherwise the pattern must be an exact, case-insensitive match.
+//
+// All three fields (Action, Repo, Context) are independent; if a field is
+// empty it matches anything.
+type RuleMatch struct {
+	Action  string `json:"action,omitempty"`
+	Repo    string `json:"repo,omitempty"`
+	Context string `json:"context,omitempty"`
+}
+
+// Rule is a single governance rule: when the match fires, the effect applies.
+type Rule struct {
+	Match  RuleMatch `json:"match"`
+	Effect string    `json:"effect"`   // allow, deny, audit
+	Reason string    `json:"reason,omitempty"`
+}
+
+// RuleSet is the JSON schema for Policy.Rules.
+type RuleSet struct {
+	Rules   []Rule `json:"rules"`
+	Default string `json:"default,omitempty"` // allow or deny; "allow" if unset
+}
+
 // EnforcementCheckRequest is the payload for checking enforcement decisions.
 type EnforcementCheckRequest struct {
 	Action  string `json:"action"`
