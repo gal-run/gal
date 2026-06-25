@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { SendHorizontal, Trash2, AlertCircle, ChevronDown, ChevronUp, Settings2, Sparkles } from 'lucide-react'
+import { FeatureGate } from '@/components/FeatureGate'
 import { useAuth } from '@/contexts/AuthContext'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
 import { useSelectedWorkspace } from '@/hooks/useSelectedWorkspace'
 import { api } from '@/lib/api'
 
@@ -129,8 +131,10 @@ function TypingDots() {
 
 export default function GovernancePlaygroundPage() {
   const { user } = useAuth()
+  const { isPageVisibleForUser } = useFeatureFlags()
   const selectedWorkspace = useSelectedWorkspace()
   const orgName = selectedWorkspace ?? user?.organizations?.[0] ?? null
+  const userOrgs = user?.organizations ?? []
 
   const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [input, setInput] = useState('')
@@ -229,6 +233,16 @@ export default function GovernancePlaygroundPage() {
   }
 
   const modelUi = MODEL_OPTIONS[selectedModel]
+
+  // ---------------------------------------------------------------------------
+  // Route guard (#5113): the governance playground is internal-only — it POSTs
+  // to the model/gal-code lanes. Block non-internal/non-EE (customer-tier)
+  // users with the same audience-aware FeatureGate the agents/enforcement pages
+  // use, instead of leaving the page ungated.
+  // ---------------------------------------------------------------------------
+  if (!isPageVisibleForUser('governance-playground', userOrgs, selectedWorkspace)) {
+    return <FeatureGate pageId="governance-playground" />
+  }
 
   // ---------------------------------------------------------------------------
   // Render
