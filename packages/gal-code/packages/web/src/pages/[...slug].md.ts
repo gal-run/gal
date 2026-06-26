@@ -1,6 +1,9 @@
 import type { APIRoute } from "astro"
 import { getCollection } from "astro:content"
 
+// On-demand: raw-markdown lookup for any doc slug (no static path list to maintain).
+export const prerender = false
+
 function notFoundText(locals: unknown) {
   if (typeof locals !== "object" || locals === null || !("t" in locals)) {
     return "share.not_found"

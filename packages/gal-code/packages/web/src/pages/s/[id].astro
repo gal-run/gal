@@ -5,6 +5,9 @@ import type { Session } from "opencode/session/index"
 import config from "../../../config.mjs"
 import Share from "../../components/Share.tsx"
 
+// Stays server-rendered: per-request share-data fetch + dynamic OG image.
+export const prerender = false
+
 const apiUrl = import.meta.env.VITE_API_URL || ""
 const ta = Astro.locals.t as ((key: string) => string) & {
   all?: () => Record<string, string>
