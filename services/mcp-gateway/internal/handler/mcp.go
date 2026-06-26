@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +23,31 @@ const (
 	mcpServerName    = "gal-mcp-gateway"
 	mcpServerVersion = "0.1.0"
 )
+
+// developmentEnabled reports whether development-tier (work-in-progress) features
+// are exposed. Off by default: the gateway must not advertise or run features that
+// aren't real yet. Set GAL_DEVELOPMENT=1 (or true) to surface them.
+func developmentEnabled() bool {
+	v := os.Getenv("GAL_DEVELOPMENT")
+	return v == "1" || v == "true"
+}
+
+// developmentTools are advertised and callable ONLY when developmentEnabled().
+// Their implementations are stubs (see "Tool implementations (stubs)" below) that
+// return hardcoded success, so by default they are hidden from tools/list and
+// rejected by tools/call as if they did not exist.
+var developmentTools = map[string]bool{
+	"compliance": true,
+	"config":     true,
+	"discovery":  true,
+	"governance": true,
+	"memory":     true,
+	"org":        true,
+	"policy":     true,
+	"session":    true,
+	"swarm":      true,
+	"team":       true,
+}
 
 // mcpToolDefinitions are the GAL MCP tools exposed via Streamable HTTP.
 var mcpToolDefinitions = []domain.MCPToolDefinition{
@@ -279,8 +305,8 @@ func (g *GatewayService) handleMcpGet(w http.ResponseWriter, claims *domain.Toke
 // handleMcpDelete acknowledges session termination.
 func (g *GatewayService) handleMcpDelete(w http.ResponseWriter, claims *domain.TokenClaims) {
 	handler.RespondJSON(w, http.StatusOK, map[string]string{
-		"status":  "session_terminated",
-		"user":    claims.UserID,
+		"status": "session_terminated",
+		"user":   claims.UserID,
 	})
 }
 
@@ -311,8 +337,14 @@ func (g *GatewayService) processMCPRequest(ctx context.Context, req *domain.MCPR
 // --- tool/list handler ---
 
 func (g *GatewayService) handleToolsList(req *domain.MCPRequest) domain.MCPResponse {
-	tools := make([]domain.MCPToolDefinition, len(mcpToolDefinitions))
-	copy(tools, mcpToolDefinitions)
+	dev := developmentEnabled()
+	tools := make([]domain.MCPToolDefinition, 0, len(mcpToolDefinitions))
+	for _, t := range mcpToolDefinitions {
+		if developmentTools[t.Name] && !dev {
+			continue // hide work-in-progress tools unless GAL_DEVELOPMENT is set
+		}
+		tools = append(tools, t)
+	}
 	return domain.MCPResponse{
 		JSONRPC: "2.0",
 		ID:      req.ID,
@@ -461,6 +493,11 @@ func (g *GatewayService) handlePromptsGet(req *domain.MCPRequest) domain.MCPResp
 // --- Tool dispatch ---
 
 func (g *GatewayService) executeTool(name string, args map[string]any, claims *domain.TokenClaims) ([]map[string]any, map[string]any) {
+	// Development-tier tools are unavailable unless GAL_DEVELOPMENT is set; treat them
+	// as non-existent so tools/call returns "Unknown tool" rather than fake success.
+	if developmentTools[name] && !developmentEnabled() {
+		return nil, nil
+	}
 	switch name {
 	case "compliance":
 		return g.toolCompliance(args, claims)
