@@ -65,6 +65,11 @@ COPY main.py chrome_bridge.py ./
 # Placeholder for the GAL Chrome extension (mounted or copied at build time)
 RUN mkdir -p /app/gal-extension
 
+# Create the dir for BROWSER_USE_DB (set to /data/... above) so the SQLite cache is
+# writable; declare it a volume for persistence across container restarts.
+RUN mkdir -p /data
+VOLUME ["/data"]
+
 EXPOSE 8123
 
 # Bind to localhost by default; override HOST/PORT (e.g. HOST=0.0.0.0) to expose.
