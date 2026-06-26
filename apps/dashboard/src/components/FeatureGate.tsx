@@ -68,6 +68,11 @@ const PAGE_META: Partial<Record<PageId, { icon: LucideIcon; title: string; messa
     title: 'Policies Unavailable',
     message: 'Policy management is only available to internal users.',
   },
+  'policies': {
+    icon: Shield,
+    title: 'Policies Unavailable',
+    message: 'Governance policy management is only available to internal users.',
+  },
   'enforcement-audit': {
     icon: ScrollText,
     title: 'Audit Log Unavailable',

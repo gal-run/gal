@@ -15,6 +15,9 @@ import {
   XCircle,
 } from "lucide-react";
 import { useSelectedWorkspace } from "@/hooks/useSelectedWorkspace";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
+import { FeatureGate } from "@/components/FeatureGate";
 import { getEvalReport, runEval } from "@/lib/eval-api";
 import type { EvalReport } from "@/lib/eval-api";
 import { isDemoMode } from "@/lib/demo-guard";
@@ -35,6 +38,9 @@ export default function EvalDetailPage() {
   const suiteId = typeof params.suiteId === "string" ? params.suiteId : (params.suiteId as string[])?.[0] ?? "";
   const workspaceName = useSelectedWorkspace();
   const orgName = isDemoMode() ? workspaceName ?? DEMO_ORG : workspaceName;
+  const { user } = useAuth();
+  const { isPageVisibleForUser } = useFeatureFlags();
+  const userOrgs = user?.organizations ?? [];
 
   const [report, setReport] = useState<EvalReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,6 +77,14 @@ export default function EvalDetailPage() {
       setRunning(false);
     }
   };
+
+  // Route guard (#6513): the eval suite detail page is part of the internal
+  // background-agents surface. Block non-internal/non-EE (customer-tier) users
+  // who hand-type /evals/<suiteId> with the same audience-aware FeatureGate the
+  // agents/sessions pages use.
+  if (!isPageVisibleForUser("background-agents", userOrgs, workspaceName)) {
+    return <FeatureGate pageId="background-agents" />;
+  }
 
   if (loading) {
     return (

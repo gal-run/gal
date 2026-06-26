@@ -13,6 +13,8 @@ import {
   GitPullRequest,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
+import { FeatureGate } from '@/components/FeatureGate'
 import { useSelectedWorkspace } from '@/hooks/useSelectedWorkspace'
 import { api } from '@/lib/api'
 import type { SdlcComplianceStatus, SdlcDriftReport } from '@/lib/api'
@@ -49,6 +51,7 @@ function getScoreLabel(score: number): string {
 
 export default function SdlcCompliancePage() {
   const { user } = useAuth()
+  const { isPageVisibleForUser } = useFeatureFlags()
   const selectedWorkspace = useSelectedWorkspace()
   const userOrgs = user?.organizations ?? []
   const orgName = selectedWorkspace ?? userOrgs[0] ?? null
@@ -85,6 +88,15 @@ export default function SdlcCompliancePage() {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Route guard (#4029): SDLC compliance is internal-only (mirrors the
+  // /compliance/developers sibling and the layout nav, which both map this
+  // surface to the internal 'enforcement-overrides' page). Block
+  // non-internal/non-EE (customer-tier) users who hand-type /compliance/sdlc
+  // with the same audience-aware FeatureGate the enforcement pages use.
+  if (!isPageVisibleForUser('enforcement-overrides', userOrgs, selectedWorkspace)) {
+    return <FeatureGate pageId="enforcement-overrides" />
+  }
 
   if (!orgName) {
     return (
