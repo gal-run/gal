@@ -32,7 +32,6 @@
     "remeda": "catalog:",
     "shiki": "catalog:",
     "solid-js": "catalog:",
-    "toolbeam-docs-theme": "0.4.8",
     "vscode-languageserver-types": "3.17.5"
   },
   "devDependencies": {

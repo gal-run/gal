@@ -1,0 +1,32 @@
+---
+import type { Props } from "@astrojs/starlight/props";
+
+const {
+	entry: {
+		data: { title, description },
+	},
+} = Astro.locals.starlightRoute;
+---
+
+<Fragment>
+  <h1 id="_top">{title}</h1>
+  { description && <p class="page-description">{description}</p> }
+</Fragment>
+
+<style>
+h1 {
+  font-weight: 600;
+  color: var(--sl-color-text);
+  line-height: var(--sl-line-height-headings);
+  font-size: var(--sl-text-h1);
+  font-family: var(--__sl-font-headings);
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+}
+p.page-description {
+  margin-top: 0.25rem;
+  line-height: 1.5;
+  color: var(--sl-color-text-secondary);
+}
+</style>
+
