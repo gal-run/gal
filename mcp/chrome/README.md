@@ -23,6 +23,24 @@ npm run build
 - `chrome_extension_clear_highlight` — Remove the automation overlay from the active tab
 - `chrome_extension_close` — Close the browser context and release the session
 
+### Browser-use build-out tools
+
+These drive the extension's `chrome.*` background APIs (with Playwright
+fallbacks where noted), plus two tools that delegate to the companion
+browser-use Python service (`mcp/gal-browser-use-service`, default
+`http://127.0.0.1:8123`, overridable via `GAL_BROWSER_USE_SERVICE_URL`).
+
+- `chrome_extension_tabGroups_create` — Create a tab group from tab IDs
+- `chrome_extension_tabGroups_list` — List tab groups in the current window
+- `chrome_extension_tabs_query` — Query tabs matching criteria
+- `chrome_extension_tabs_create` — Create a new tab (Playwright fallback)
+- `chrome_extension_tabs_remove` — Close one or more tabs by ID
+- `chrome_extension_bookmarks_search` — Search bookmarks by query
+- `chrome_extension_history_search` — Search browser history by text
+- `chrome_extension_windows_create` — Create a new browser window (Playwright fallback)
+- `chrome_extension_agent_run` — Run a browser-use agent task via the Python service
+- `chrome_extension_enhanced_parse` — Get enhanced DOM + AX tree via the Python service
+
 ## Security
 
 This server drives a real browser on behalf of a caller, so navigation
