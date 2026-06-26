@@ -1,8 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RefreshCw, AlertCircle, Lock } from 'lucide-react'
+import { RefreshCw, AlertCircle } from 'lucide-react'
+import { FeatureGate } from '@/components/FeatureGate'
+import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/contexts/FeatureFlagsContext'
+import { useSelectedWorkspace } from '@/hooks/useSelectedWorkspace'
 import { BudgetEditor } from '@/components/token-spend/BudgetEditor'
 
 type Window = '1h' | '24h' | '7d' | '30d'
@@ -56,8 +59,15 @@ const WINDOW_OPTIONS: { value: Window; label: string }[] = [
 ]
 
 export default function TokenSpendPage() {
-  const { isPageEnabled, loading: flagsLoading } = useFeatureFlags()
-  const enabled = flagsLoading || isPageEnabled('token-spend')
+  const { user } = useAuth()
+  const { isPageVisibleForUser, loading: flagsLoading } = useFeatureFlags()
+  const selectedWorkspace = useSelectedWorkspace()
+  const userOrgs = user?.organizations ?? []
+  // #6285: gate on the audience-aware resolver (evaluates audienceTier + applies
+  // the EE collapse), NOT the global isPageEnabled flag — otherwise a customer-tier
+  // workspace could reach the full Token Spend dashboard + BudgetEditor.
+  const enabled =
+    flagsLoading || isPageVisibleForUser('token-spend', userOrgs, selectedWorkspace)
 
   const [window, setWindow] = useState<Window>('24h')
   const [data, setData] = useState<TokenSpendData | null>(null)
@@ -117,19 +127,7 @@ export default function TokenSpendPage() {
   )
 
   if (!enabled) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="glass-card p-8 flex flex-col items-center text-center gap-3 max-w-xl mx-auto">
-          <div className="icon-container">
-            <Lock className="w-6 h-6 text-[var(--text-secondary)]" />
-          </div>
-          <h1 className="text-xl font-semibold">Token Spend is not available on your plan</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Per-tenant GAL Code token usage visibility is currently internal-only. Contact your account manager to discuss access.
-          </p>
-        </div>
-      </div>
-    )
+    return <FeatureGate pageId="token-spend" />
   }
 
   return (

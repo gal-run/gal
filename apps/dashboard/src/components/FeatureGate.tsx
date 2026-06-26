@@ -48,6 +48,11 @@ const PAGE_META: Partial<Record<PageId, { icon: LucideIcon; title: string; messa
     title: 'Internal Feature',
     message: 'Token spend analytics is only available to internal users.',
   },
+  'governance-playground': {
+    icon: FlaskConical,
+    title: 'Internal Feature',
+    message: 'The governance model playground is only available to internal users.',
+  },
   'proposals': {
     icon: FileText,
     title: 'Proposals Unavailable',
