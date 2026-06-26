@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Shield, Loader2, AlertCircle } from "lucide-react";
 import { useSelectedWorkspace } from "@/hooks/useSelectedWorkspace";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
+import { FeatureGate } from "@/components/FeatureGate";
 import { createPolicy } from "@/lib/policy-api";
 
 export default function NewPolicyPage() {
   const router = useRouter();
   const orgName = useSelectedWorkspace();
+  const { user } = useAuth();
+  const { isPageVisibleForUser } = useFeatureFlags();
+  const userOrgs = user?.organizations ?? [];
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -39,6 +45,13 @@ export default function NewPolicyPage() {
       setLoading(false);
     }
   };
+
+  // Route guard (#6878): governance policies are internal-only. Block
+  // non-internal/non-EE (customer-tier) users who hand-type /policies/new with
+  // the same audience-aware FeatureGate the agents/enforcement pages use.
+  if (!isPageVisibleForUser("policies", userOrgs, orgName)) {
+    return <FeatureGate pageId="policies" />;
+  }
 
   if (!orgName) {
     return (

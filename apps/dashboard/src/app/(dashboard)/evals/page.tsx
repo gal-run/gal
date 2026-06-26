@@ -15,6 +15,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useSelectedWorkspace } from "@/hooks/useSelectedWorkspace";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
+import { FeatureGate } from "@/components/FeatureGate";
 import { listEvalSuites, runEval } from "@/lib/eval-api";
 import type { EvalSuiteSummary } from "@/lib/eval-api";
 import { isDemoMode } from "@/lib/demo-guard";
@@ -52,6 +55,9 @@ function ScoreBadge({ score, passed }: { score: number; passed: boolean }) {
 export default function EvalsPage() {
   const workspaceName = useSelectedWorkspace();
   const orgName = isDemoMode() ? workspaceName ?? DEMO_ORG : workspaceName;
+  const { user } = useAuth();
+  const { isPageVisibleForUser } = useFeatureFlags();
+  const userOrgs = user?.organizations ?? [];
 
   const [suites, setSuites] = useState<EvalSuiteSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +107,14 @@ export default function EvalsPage() {
         : suites.reduce((sum, s) => sum + (s.latestReport?.score ?? 0), 0) / total;
     return { total, passing, avgScore };
   }, [suites]);
+
+  // Route guard (#6513): the evals dashboard is part of the internal
+  // background-agents surface (agents must pass eval gates before deployment).
+  // Block non-internal/non-EE (customer-tier) users who hand-type /evals with
+  // the same audience-aware FeatureGate the agents/sessions pages use.
+  if (!isPageVisibleForUser("background-agents", userOrgs, workspaceName)) {
+    return <FeatureGate pageId="background-agents" />;
+  }
 
   if (loading) {
     return (
