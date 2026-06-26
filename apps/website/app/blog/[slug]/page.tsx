@@ -14,9 +14,14 @@ import { DASHBOARD_URL } from "@/src/config";
 export default function ArticlePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }> | { slug: string };
 }) {
-  const { slug } = use(params);
+  // Cross-version params: Next 15 passes a Promise (resolve with use()); Next 14
+  // passes a plain object. React's use() is allowed to be called conditionally.
+  const { slug } =
+    typeof (params as { then?: unknown }).then === "function"
+      ? use(params as Promise<{ slug: string }>)
+      : (params as { slug: string });
   const article = getArticleBySlug(slug);
   const [currentSection, setCurrentSection] = useState("");
 
