@@ -1,7 +1,7 @@
 {
   "name": "@gal-run/gal-computer-use-mcp",
   "version": "0.1.0",
-  "description": "GAL Computer Use MCP — screenshot, mouse, keyboard, and application control for macOS automation, with an optional UI-TARS vision-agent path",
+  "description": "GAL Computer Use MCP — screenshot, mouse, keyboard, and application control for macOS, Linux, and Windows, with an optional UI-TARS vision-agent path",
   "license": "Apache-2.0",
   "private": false,
   "type": "module",
