@@ -21,7 +21,7 @@ import { FeatureGate } from "@/components/FeatureGate";
 import { listEvalSuites, runEval } from "@/lib/eval-api";
 import type { EvalSuiteSummary } from "@/lib/eval-api";
 import { isDemoMode } from "@/lib/demo-guard";
-import { DEMO_ORG } from "@/lib/demo-data";
+import { DEMO_ORG, DEMO_EVAL_SUITES } from "@/lib/demo-data";
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(0)}%`;
@@ -68,6 +68,12 @@ export default function EvalsPage() {
     setLoading(true);
     setError(null);
     try {
+      // Demo mode: serve pre-seeded suites without hitting the real API, which
+      // is unavailable on the public live demo (#507).
+      if (isDemoMode()) {
+        setSuites(DEMO_EVAL_SUITES);
+        return;
+      }
       if (!orgName) {
         setSuites([]);
         return;

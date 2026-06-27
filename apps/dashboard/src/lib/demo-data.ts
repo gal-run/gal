@@ -40,9 +40,11 @@ import type {
   SecurityStandardItem,
   ToolPolicyItem,
   DeveloperStatusSummary,
+  ConfigPolicyItem,
 } from '@/lib/api'
 import type { Session } from '@gal/types'
 import type { ConfigProposal } from '@gal/types'
+import type { EvalSuiteSummary } from '@/lib/eval-api'
 
 export const DEMO_ORG = 'acme-corp'
 
@@ -1659,5 +1661,99 @@ export const DEMO_TOOL_POLICIES: ToolPolicyItem[] = [
     createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     enabled: true,
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Demo eval suites (matches EvalSuiteSummary from @/lib/eval-api)
+// Served on /evals in demo mode so the page renders real-looking suites
+// instead of a "Failed to fetch eval suites" error.
+// ---------------------------------------------------------------------------
+export const DEMO_EVAL_SUITES: EvalSuiteSummary[] = [
+  {
+    id: 'suite-pr-review',
+    name: 'PR Review Agent',
+    description: 'Validates that the PR-review agent flags security issues and suggests fixes',
+    subject: { kind: 'agent', agentId: 'pr-review-agent' },
+    evaluatorId: 'llm-judge-v2',
+    caseCount: 24,
+    latestReport: {
+      suiteId: 'suite-pr-review',
+      score: 0.92,
+      passed: true,
+      generatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+      metrics: [
+        { metric: 'precision', score: 0.94, correct: 23, total: 24, passed: true },
+        { metric: 'recall', score: 0.88, correct: 21, total: 24, passed: true },
+        { metric: 'fix-quality', score: 0.95, correct: 23, total: 24, passed: true },
+      ],
+    },
+  },
+  {
+    id: 'suite-triage',
+    name: 'Issue Triage Agent',
+    description: 'Checks label accuracy and priority assignment on incoming issues',
+    subject: { kind: 'taskType', taskType: 'issue-triage' },
+    evaluatorId: 'llm-judge-v2',
+    caseCount: 40,
+    latestReport: {
+      suiteId: 'suite-triage',
+      score: 0.78,
+      passed: true,
+      generatedAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
+      metrics: [
+        { metric: 'label-accuracy', score: 0.82, correct: 33, total: 40, passed: true },
+        { metric: 'priority-match', score: 0.74, correct: 30, total: 40, passed: true },
+      ],
+    },
+  },
+  {
+    id: 'suite-codegen',
+    name: 'Code Generation Agent',
+    description: 'Compile + test pass rate for generated patches against held-out tasks',
+    subject: { kind: 'agent', agentId: 'codegen-agent' },
+    evaluatorId: 'exec-harness-v1',
+    caseCount: 18,
+    latestReport: {
+      suiteId: 'suite-codegen',
+      score: 0.61,
+      passed: false,
+      generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      metrics: [
+        { metric: 'compiles', score: 0.83, correct: 15, total: 18, passed: true },
+        { metric: 'tests-pass', score: 0.5, correct: 9, total: 18, passed: false },
+        { metric: 'no-regressions', score: 0.5, correct: 9, total: 18, passed: false },
+      ],
+    },
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Demo config policies (matches ConfigPolicyItem from @/lib/api)
+// Served on /approved-config in demo mode so the policy selector resolves
+// instead of spinning on "Loading policies..." forever (#507).
+// ---------------------------------------------------------------------------
+export const DEMO_CONFIG_POLICIES: ConfigPolicyItem[] = [
+  {
+    id: 'policy-security-baseline',
+    name: 'security-baseline',
+    description: 'Org-wide approved AI agent configuration for acme-corp',
+    isBuiltin: false,
+    isActive: true,
+    createdAt: '2026-02-01T10:00:00Z',
+    updatedAt: '2026-03-08T11:00:00Z',
+    createdBy: 'sarah.chen',
+    config: DEMO_APPROVED_CONFIG_RESPONSE as unknown as Record<string, unknown>,
+  },
+  {
+    id: 'policy-strict-prod',
+    name: 'strict-prod',
+    description: 'Tighter policy for production repositories — block mode, no external network',
+    isBuiltin: false,
+    isActive: false,
+    createdAt: '2026-02-20T09:00:00Z',
+    updatedAt: '2026-02-20T09:00:00Z',
+    createdBy: 'alex.kim',
+    config: {},
   },
 ]

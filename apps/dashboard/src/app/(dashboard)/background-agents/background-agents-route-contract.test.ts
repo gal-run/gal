@@ -14,7 +14,11 @@ const backgroundAgentSessionPageSource = readFileSync(
 
 describe('background-agents legacy route contract', () => {
   it('redirects the legacy background-agents list route to the unified sessions page (#6107)', () => {
-    expect(backgroundAgentsPageSource).toContain("redirect('/sessions')")
+    // Client-side redirect (#507): a server `redirect()` thrown inside the
+    // force-dynamic client `(dashboard)` layout surfaces as a blank client-side
+    // exception on the public demo, so the list route navigates via the router.
+    expect(backgroundAgentsPageSource).toContain("'use client'")
+    expect(backgroundAgentsPageSource).toContain("router.replace('/sessions')")
   })
 
   it('redirects legacy background-agents session detail routes to the unified session detail page (#6107)', () => {
