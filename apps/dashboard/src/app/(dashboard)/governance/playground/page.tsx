@@ -252,14 +252,14 @@ export default function GovernancePlaygroundPage() {
     <div className="flex flex-col h-full max-h-[calc(100vh-4rem)]">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <GalAvatar size="lg" />
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-[var(--text-primary)]">Ask GAL</h1>
+              <h1 className="text-xl font-semibold text-[var(--text-primary)] truncate">Ask GAL</h1>
               <span
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium"
                 style={{
@@ -277,7 +277,7 @@ export default function GovernancePlaygroundPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <div
             className="flex items-center gap-1 p-1 rounded-xl"
             style={{
