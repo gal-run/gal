@@ -1,13 +1,23 @@
-import { execSync } from "child_process";
+import { execSync, execFileSync } from "child_process";
 import { existsSync } from "fs";
-import { resolve } from "path";
+import { resolve, join } from "path";
 import os from "os";
+import * as win32 from "./win32.js";
 
 const log = (msg: string) =>
   process.stderr.write(`[gal-computer-use] ${msg}\n`);
 
+/** Synchronous, cross-platform millisecond sleep (no `sleep` binary needed). */
+function sleepMs(ms: number): void {
+  if (ms <= 0) return;
+  const buf = new Int32Array(new SharedArrayBuffer(4));
+  Atomics.wait(buf, 0, 0, Math.ceil(ms));
+}
+
 export function screenshot(path?: string): string {
-  const out = resolve(path || `/tmp/gal-screenshot-${Date.now()}.png`);
+  // Default into the per-user OS temp dir (ACL'd) — `/tmp` does not exist on
+  // Windows (it would resolve to C:\tmp and the capture would fail).
+  const out = resolve(path || join(os.tmpdir(), `gal-screenshot-${Date.now()}.png`));
   const platform = os.platform();
 
   if (platform === "darwin") {
@@ -23,6 +33,11 @@ export function screenshot(path?: string): string {
       execSync(`scrot ${out}`);
     }
     return out;
+  }
+
+  if (platform === "win32") {
+    log(`Screenshot saved: ${out}`);
+    return win32.screenshot(out);
   }
 
   throw new Error(`Screenshot not supported on ${platform}`);
@@ -62,6 +77,10 @@ export function click(x: number, y: number): string {
     return `Clicked at (${x}, ${y})`;
   }
 
+  if (platform === "win32") {
+    return win32.click(x, y);
+  }
+
   throw new Error(`Click not supported on ${platform}`);
 }
 
@@ -80,6 +99,10 @@ export function typeText(text: string): string {
     return `Typed: ${text}`;
   }
 
+  if (platform === "win32") {
+    return win32.typeText(text);
+  }
+
   throw new Error(`Type not supported on ${platform}`);
 }
 
@@ -96,6 +119,10 @@ export function keyPress(key: string): string {
   if (platform === "linux") {
     execSync(`xdotool key ${key}`);
     return `Pressed: ${key}`;
+  }
+
+  if (platform === "win32") {
+    return win32.keyPress(key);
   }
 
   throw new Error(`Key press not supported on ${platform}`);
@@ -120,6 +147,10 @@ export function rightClick(x: number, y: number): string {
     return `Right-clicked at (${x}, ${y})`;
   }
 
+  if (platform === "win32") {
+    return win32.rightClick(x, y);
+  }
+
   throw new Error(`Right click not supported on ${platform}`);
 }
 
@@ -140,6 +171,10 @@ export function doubleClick(x: number, y: number): string {
   if (platform === "linux") {
     execSync(`xdotool mousemove ${x} ${y} click --repeat 2 1`);
     return `Double-clicked at (${x}, ${y})`;
+  }
+
+  if (platform === "win32") {
+    return win32.doubleClick(x, y);
   }
 
   throw new Error(`Double click not supported on ${platform}`);
@@ -195,17 +230,62 @@ export function getAppState(name?: string): {
   }
 
   if (platform === "linux") {
-    const activeWin = execSync(
-      `xdotool getactivewindow getwindowname getwindowgeometry`,
-    )
-      .toString()
-      .trim();
-    const lines = activeWin.split("\n");
-    const title = lines[0] || "";
-    const geo = lines[1] || "";
-    const match = geo.match(/Position: (\d+),(\d+) .* Geometry: (\d+)x(\d+)/);
+    // Resolve a window id first: a named app's first window, else the active
+    // one. Use execFileSync (no shell) + input validation so the caller-supplied
+    // app name can never be interpreted as a shell command.
+    let wid = "";
+    if (name) {
+      if (!/^[\w .:+/@-]{1,128}$/.test(name)) {
+        throw new Error(`Invalid app name: ${name}`);
+      }
+      const found = execFileSync("xdotool", ["search", "--name", name], {
+        encoding: "utf8",
+      }).trim();
+      wid = found.split("\n")[0]?.trim() || "";
+      // Don't silently fall back to the active window for an explicit-but-
+      // unmatched name — throw, matching the macOS branch's "not found".
+      if (!wid) {
+        throw new Error(`App not found: ${name}`);
+      }
+    } else {
+      wid = execFileSync("xdotool", ["getactivewindow"], {
+        encoding: "utf8",
+      }).trim();
+    }
+    if (!/^\d+$/.test(wid)) {
+      throw new Error("Could not resolve a window id");
+    }
+    let title = "";
+    try {
+      title = execFileSync("xdotool", ["getwindowname", wid], {
+        encoding: "utf8",
+      }).trim();
+    } catch {
+      // window has no name — leave title empty
+    }
+    const geo = execFileSync("xdotool", ["getwindowgeometry", wid], {
+      encoding: "utf8",
+    }).replace(/\s+/g, " ");
+    // Window x/y can be negative on multi-monitor layouts (monitor left/above
+    // the primary), so allow a sign; width/height stay non-negative.
+    const match = geo.match(/Position: (-?\d+),(-?\d+).*Geometry: (\d+)x(\d+)/);
+    let pid = 0;
+    let app = "";
+    try {
+      const pidStr = execFileSync("xdotool", ["getwindowpid", wid], {
+        encoding: "utf8",
+      }).trim();
+      if (/^\d+$/.test(pidStr)) {
+        pid = Number(pidStr);
+        app = execFileSync("ps", ["-p", String(pid), "-o", "comm="], {
+          encoding: "utf8",
+        }).trim();
+      }
+    } catch {
+      // window has no owning pid (override-redirect / remote) — leave app/pid empty
+    }
     return {
-      app: "",
+      app,
       title,
       visible: true,
       position: match
@@ -216,8 +296,12 @@ export function getAppState(name?: string): {
             h: Number(match[4]),
           }
         : { x: 0, y: 0, w: 0, h: 0 },
-      pid: 0,
+      pid,
     };
+  }
+
+  if (platform === "win32") {
+    return win32.getAppState(name);
   }
 
   throw new Error(`App state not supported on ${platform}`);
@@ -248,8 +332,18 @@ export function setValue(value: string, app?: string): string {
   }
 
   if (platform === "linux") {
+    // Prefer the real accessibility path (AT-SPI EditableText on the focused
+    // element) — the Linux analog of macOS AXValue. Fall back to typing if
+    // AT-SPI is unavailable or the focused element is not editable text.
+    if (linuxSetValueViaAtspi(value)) {
+      return `Set value: ${value}`;
+    }
     keyboardType(value);
     return `Set value (typed): ${value}`;
+  }
+
+  if (platform === "win32") {
+    return win32.setValue(value, app);
   }
 
   throw new Error(`Set value not supported on ${platform}`);
@@ -257,6 +351,71 @@ export function setValue(value: string, app?: string): string {
 
 function keyboardType(text: string): void {
   execSync(`xdotool type "${text}"`);
+}
+
+const ATSPI_SETVALUE_PY = `
+import os, gi
+gi.require_version("Atspi", "2.0")
+from gi.repository import Atspi
+val = os.environ.get("GAL_AX_VALUE", "")
+Atspi.init()
+desk = Atspi.get_desktop(0)
+def find_focused(n):
+    try:
+        if n.get_state_set().contains(Atspi.StateType.FOCUSED):
+            return n
+    except Exception:
+        pass
+    try:
+        cnt = n.get_child_count()
+    except Exception:
+        return None
+    for i in range(cnt):
+        try:
+            ch = n.get_child_at_index(i)
+        except Exception:
+            continue
+        if ch is None:
+            continue
+        r = find_focused(ch)
+        if r is not None:
+            return r
+    return None
+focused = None
+for i in range(desk.get_child_count()):
+    try:
+        app = desk.get_child_at_index(i)
+    except Exception:
+        continue
+    if app is None:
+        continue
+    focused = find_focused(app)
+    if focused is not None:
+        break
+ok = False
+if focused is not None:
+    try:
+        et = focused.get_editable_text()
+        if et is not None:
+            et.set_text_contents(val)
+            ok = True
+    except Exception:
+        ok = False
+print("ok" if ok else "no")
+`;
+
+/** Set the focused element's value via AT-SPI EditableText. Returns true on success. */
+function linuxSetValueViaAtspi(value: string): boolean {
+  try {
+    const out = execSync(`python3 -c "$GAL_ATSPI_PY"`, {
+      env: { ...process.env, GAL_ATSPI_PY: ATSPI_SETVALUE_PY, GAL_AX_VALUE: value },
+    })
+      .toString()
+      .trim();
+    return out.endsWith("ok");
+  } catch {
+    return false;
+  }
 }
 
 export function animateMouseMove(
@@ -285,8 +444,10 @@ export function animateMouseMove(
       }
     } else if (platform === "linux") {
       execSync(`xdotool mousemove ${cx} ${cy}`);
+    } else if (platform === "win32") {
+      win32.setCursor(cx, cy);
     }
-    execSync(`sleep ${(delay / 1000).toFixed(3)}`);
+    sleepMs(delay);
   }
 
   return `Mouse moved smoothly to (${x}, ${y}) in ${duration}ms`;
@@ -309,6 +470,10 @@ export function mouseMove(x: number, y: number): string {
   if (platform === "linux") {
     execSync(`xdotool mousemove ${x} ${y}`);
     return `Mouse moved to (${x}, ${y})`;
+  }
+
+  if (platform === "win32") {
+    return win32.mouseMove(x, y);
   }
 
   throw new Error(`Mouse move not supported on ${platform}`);
@@ -343,6 +508,10 @@ export function scroll(
     return `Scrolled ${direction} ${amount}`;
   }
 
+  if (platform === "win32") {
+    return win32.scroll(amount, direction);
+  }
+
   throw new Error(`Scroll not supported on ${platform}`);
 }
 
@@ -371,6 +540,10 @@ export function drag(x1: number, y1: number, x2: number, y2: number): string {
     return `Dragged from (${x1},${y1}) to (${x2},${y2})`;
   }
 
+  if (platform === "win32") {
+    return win32.drag(x1, y1, x2, y2);
+  }
+
   throw new Error(`Drag not supported on ${platform}`);
 }
 
@@ -387,8 +560,23 @@ export function listApps(): string {
   }
 
   if (platform === "linux") {
-    const result = execSync(`wmctrl -l`).toString().trim();
-    return result;
+    // wmctrl is the nicest source but is often not installed (e.g. headless
+    // Xvfb boxes) — fall back to enumerating visible windows via xdotool.
+    try {
+      return execSync(`wmctrl -l`).toString().trim();
+    } catch {
+      // `|| true` so a windowless display degrades to "" (like the wmctrl path)
+      // instead of xdotool's non-zero exit propagating as a throw.
+      return execSync(
+        `xdotool search --onlyvisible --name '.+' getwindowname %@ 2>/dev/null || true`,
+      )
+        .toString()
+        .trim();
+    }
+  }
+
+  if (platform === "win32") {
+    return win32.listApps();
   }
 
   throw new Error(`List apps not supported on ${platform}`);
@@ -405,6 +593,10 @@ export function activateApp(name: string): string {
   if (platform === "linux") {
     execSync(`xdotool search --name "${name}" windowactivate`);
     return `Activated: ${name}`;
+  }
+
+  if (platform === "win32") {
+    return win32.activateApp(name);
   }
 
   throw new Error(`Activate app not supported on ${platform}`);
@@ -428,6 +620,10 @@ export function getScreenSize(): { width: number; height: number } {
     const result = execSync(`xdotool getdisplaygeometry`).toString().trim();
     const [width, height] = result.split(" ").map(Number);
     return { width, height };
+  }
+
+  if (platform === "win32") {
+    return win32.getScreenSize();
   }
 
   return { width: 1920, height: 1080 };
@@ -463,6 +659,10 @@ export function getMousePosition(): { x: number; y: number } {
     const x = parseInt(result.match(/x:(\d+)/)?.[1] || "0");
     const y = parseInt(result.match(/y:(\d+)/)?.[1] || "0");
     return { x, y };
+  }
+
+  if (platform === "win32") {
+    return win32.getMousePosition();
   }
 
   return { x: 0, y: 0 };
@@ -558,6 +758,11 @@ export function chromeActiveTab(): ChromeTab | null {
 }
 
 export function chromeExecuteJS(js: string): string {
+  // The computer_chrome_* tools are a macOS AppleScript convenience. Cross-
+  // platform browser automation is the separate gal-chrome MCP (Playwright).
+  if (os.platform() !== "darwin") {
+    return "Chrome control via computer-use is macOS-only; use the gal-chrome MCP (Playwright) for cross-platform browser automation.";
+  }
   try {
     const result = execSync(
       `osascript -e 'tell application "Google Chrome" to execute active tab of front window javascript "${js.replace(/"/g, '\\"')}"' 2>&1`,
