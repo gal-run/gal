@@ -17,7 +17,7 @@ import { useSelectedWorkspace } from '@/hooks/useSelectedWorkspace'
 import { getUserFriendlyError } from '@/lib/errors'
 import { loadApprovalHandoff, clearApprovalHandoff, isStageableSelection } from '@/lib/approvalHandoff'
 import { isDemoMode } from '@/lib/demo-guard'
-import { DEMO_ORGANIZATION, DEMO_GITHUB_STATUS, DEMO_APPROVED_CONFIG_RESPONSE } from '@/lib/demo-data'
+import { DEMO_ORGANIZATION, DEMO_GITHUB_STATUS, DEMO_APPROVED_CONFIG_RESPONSE, DEMO_CONFIG_POLICIES } from '@/lib/demo-data'
 import { appendConfigToBundleTyped } from './approved-config-bundle'
 import { OrphanBanner } from '@/components/approved-config/OrphanBanner'
 // PlatformSelector removed - GAL uses unified configs (#1339)
@@ -337,6 +337,16 @@ function ApprovedConfig() {
   useEffect(() => {
     if (!orgName) return
     setPoliciesLoading(true)
+    // Demo mode: serve pre-seeded policies so the selector resolves instead of
+    // spinning on "Loading policies..." forever — the API is unavailable on the
+    // public live demo (#507).
+    if (isDemoMode()) {
+      setPolicies(DEMO_CONFIG_POLICIES)
+      const active = DEMO_CONFIG_POLICIES.find(pol => pol.isActive)
+      if (active) setSelectedPolicyId(active.id)
+      setPoliciesLoading(false)
+      return
+    }
     api.listPolicies(orgName).then(({ policies: p }) => {
       setPolicies(p)
       const active = p.find(pol => pol.isActive)
