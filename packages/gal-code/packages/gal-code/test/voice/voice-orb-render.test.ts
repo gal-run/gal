@@ -6,9 +6,7 @@ import os from "os"
 
 const STATE_FILE = path.join(os.tmpdir(), "gal-voice-state")
 const LEVEL_FILE = path.join(os.tmpdir(), "gal-voice-level")
-const BINARY =
-  process.env.GAL_CODE_BINARY ||
-  "/Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run/gal-code/packages/gal-code/dist/gal-code-darwin-arm64/bin/gal-code"
+const BINARY = process.env.GAL_CODE_BINARY || "gal-code"
 const hasBinary = existsSync(BINARY)
 const desc = hasBinary ? describe : (describe.skip as (name: string, fn: () => void) => void)
 

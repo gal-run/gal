@@ -8,9 +8,9 @@ const id = "internal:prompt-voice"
 const STATE_FILE = "/tmp/gal-voice-state"
 const LEVEL_FILE = "/tmp/gal-voice-level"
 const INPUT_FILE = "/tmp/gal-voice.txt"
-const DAEMON_SCRIPT =
-  process.env.GAL_VOICE_DAEMON ||
-  "/Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run/gal-android/scripts/gal-voice-daemon"
+// Set GAL_VOICE_DAEMON to the absolute path of the gal-voice daemon; the
+// bare default resolves via PATH (the daemon ships separately).
+const DAEMON_SCRIPT = process.env.GAL_VOICE_DAEMON || "gal-voice-daemon"
 
 const exitRegex = /^(?:exit|stop|end)\s*voice$/i
 

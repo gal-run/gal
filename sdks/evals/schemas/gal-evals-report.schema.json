@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.gal.run/gal-evals-report.schema.json",
+  "title": "GAL Evaluation Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "suiteId",
+    "suiteName",
+    "evaluatorId",
+    "adapterId",
+    "subject",
+    "generatedAt",
+    "score",
+    "passed",
+    "metrics",
+    "cases",
+    "suggestions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "gal.evals.report.v1" },
+    "suiteId": { "type": "string", "minLength": 1 },
+    "suiteName": { "type": "string", "minLength": 1 },
+    "evaluatorId": { "type": "string", "minLength": 1 },
+    "adapterId": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "generatedAt": { "type": "string" },
+    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "passed": { "type": "boolean" },
+    "metrics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/metric" }
+    },
+    "cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/caseResult" }
+    },
+    "suggestions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["metric", "score", "correct", "total", "passed"],
+      "properties": {
+        "metric": { "type": "string" },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "correct": { "type": "number" },
+        "total": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "gate": { "type": "object" }
+      }
+    },
+    "caseResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["caseId", "score", "passed", "output", "fields"],
+      "properties": {
+        "caseId": { "type": "string" },
+        "title": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "passed": { "type": "boolean" },
+        "output": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fieldResult" }
+        }
+      }
+    },
+    "fieldResult": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path", "metric", "score", "weight", "passed"],
+      "properties": {
+        "path": { "type": "string" },
+        "metric": { "type": "string" },
+        "expected": true,
+        "actual": true,
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "weight": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "suggestion": { "type": "string" }
+      }
+    }
+  }
+}

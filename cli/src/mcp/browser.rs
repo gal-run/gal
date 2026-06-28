@@ -17,6 +17,11 @@
 use crate::mcp::{
     param_bool_or, param_str, param_u64_or, ContentItem, McpServer, Tool, ToolResult,
 };
+use chromiumoxide::cdp::browser_protocol::network::{
+    EnableParams as NetworkEnableParams, EventRequestWillBeSent,
+};
+use chromiumoxide::cdp::browser_protocol::emulation::SetDeviceMetricsOverrideParams;
+use chromiumoxide::cdp::js_protocol::runtime::EventConsoleApiCalled;
 use futures::StreamExt;
 use serde_json::Value;
 use std::sync::Arc;
@@ -31,6 +36,10 @@ struct BrowserInstance {
     #[allow(dead_code)]
     browser: chromiumoxide::Browser,
     page: chromiumoxide::Page,
+    /// Captured console messages (console.log/error/warn ...), newest last.
+    console: Arc<Mutex<Vec<String>>>,
+    /// Captured network requests ("METHOD url"), newest last.
+    network: Arc<Mutex<Vec<String>>>,
 }
 
 pub struct BrowserMcpServer {
@@ -107,6 +116,21 @@ fn tools_list() -> Vec<Tool> {
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"script":{"type":"string","description":"JavaScript code to execute"}},"required":["script"]}"#).ok(),
         },
         Tool {
+            name: "browser_read_console".to_string(),
+            description: "Read console messages (log/error/warn) captured since launch. Optional 'pattern' substring filter.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return messages containing this substring"}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_read_network".to_string(),
+            description: "Read network requests (\"METHOD url\") captured since launch. Optional 'pattern' substring filter.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{"pattern":{"type":"string","description":"Only return requests whose URL contains this substring"}},"required":[]}"#).ok(),
+        },
+        Tool {
+            name: "browser_read_a11y".to_string(),
+            description: "Read a semantic accessibility snapshot of the page: visible interactive/landmark elements as {role, name, x, y} (click coordinates). Like an accessibility tree — for reliable, non-pixel element targeting.".to_string(),
+            inputSchema: serde_json::from_str(r#"{"type":"object","properties":{},"required":[]}"#).ok(),
+        },
+        Tool {
             name: "browser_close".to_string(),
             description: "Close the browser and release all resources.".to_string(),
             inputSchema: serde_json::from_str(r#"{"type":"object","properties":{}}"#).ok(),
@@ -134,6 +158,9 @@ impl McpServer for BrowserMcpServer {
             "browser_get_text" => Some(self.handle_get_text(args).await),
             "browser_get_page_text" => Some(self.handle_get_page_text().await),
             "browser_execute_script" => Some(self.handle_execute_script(args).await),
+            "browser_read_console" => Some(self.handle_read_console(args).await),
+            "browser_read_network" => Some(self.handle_read_network(args).await),
+            "browser_read_a11y" => Some(self.handle_read_a11y().await),
             "browser_close" => Some(self.handle_close().await),
             _ => None,
         }
@@ -185,6 +212,61 @@ impl BrowserMcpServer {
                     }
                 };
 
+                // Match the render viewport to the requested size. Headless Chrome's
+                // viewport otherwise defaults to 800x600 regardless of window_size, so
+                // screenshots came out small — too low-res for HD captures/demos.
+                if let Ok(metrics) = SetDeviceMetricsOverrideParams::builder()
+                    .width(width as i64)
+                    .height(height as i64)
+                    .device_scale_factor(1.0)
+                    .mobile(false)
+                    .build()
+                {
+                    let _ = page.execute(metrics).await;
+                }
+
+                // Capture console + network BEFORE navigating, so the start
+                // page's logs/requests are recorded.
+                let console = Arc::new(Mutex::new(Vec::<String>::new()));
+                let network = Arc::new(Mutex::new(Vec::<String>::new()));
+
+                if let Ok(mut events) = page.event_listener::<EventConsoleApiCalled>().await {
+                    let buf = console.clone();
+                    tokio::spawn(async move {
+                        while let Some(ev) = events.next().await {
+                            let line = ev
+                                .args
+                                .iter()
+                                .filter_map(|a| {
+                                    a.value
+                                        .as_ref()
+                                        .map(|v| v.to_string())
+                                        .or_else(|| a.description.clone())
+                                })
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            let mut b = buf.lock().await;
+                            if b.len() < 1000 {
+                                b.push(line);
+                            }
+                        }
+                    });
+                }
+
+                let _ = page.execute(NetworkEnableParams::default()).await;
+                if let Ok(mut events) = page.event_listener::<EventRequestWillBeSent>().await {
+                    let buf = network.clone();
+                    tokio::spawn(async move {
+                        while let Some(ev) = events.next().await {
+                            let line = format!("{} {}", ev.request.method, ev.request.url);
+                            let mut b = buf.lock().await;
+                            if b.len() < 1000 {
+                                b.push(line);
+                            }
+                        }
+                    });
+                }
+
                 // Navigate to start URL if provided
                 if let Some(url) = &start_url {
                     if let Err(e) = page.goto(url).await {
@@ -196,6 +278,8 @@ impl BrowserMcpServer {
                 *guard = Some(BrowserInstance {
                     browser,
                     page,
+                    console,
+                    network,
                 });
 
                 ToolResult::json(&serde_json::json!({
@@ -337,7 +421,7 @@ impl BrowserMcpServer {
                             selector, text
                         );
 
-                        match instance.page.evaluate_function(&js).await {
+                        match instance.page.evaluate(js.as_str()).await {
                             Ok(_) => ToolResult::json(&serde_json::json!({
                                 "success": true,
                                 "selector": selector,
@@ -375,7 +459,7 @@ impl BrowserMcpServer {
             selector
         );
 
-        match instance.page.evaluate_function(&js).await {
+        match instance.page.evaluate(js.as_str()).await {
             Ok(result) => {
                 // The result should be a string
                 let text = result
@@ -406,8 +490,10 @@ impl BrowserMcpServer {
             })()
         "#;
 
-        // Chromiumoxide evaluate_function returns a Value, we need to parse it
-        match instance.page.evaluate_function(js).await {
+        // Use Runtime.evaluate (page.evaluate) — the JS is an expression/IIFE,
+        // not a bare function declaration, so evaluate_function rejects it with
+        // "Given expression does not evaluate to a function".
+        match instance.page.evaluate(js).await {
             Ok(result) => {
                 let text = result
                     .value()
@@ -433,7 +519,7 @@ impl BrowserMcpServer {
 
         let instance = guard.as_ref().unwrap();
 
-        match instance.page.evaluate_function(&script).await {
+        match instance.page.evaluate(script.as_str()).await {
             Ok(result) => {
                 let value = result
                     .value()
@@ -445,6 +531,90 @@ impl BrowserMcpServer {
                 }))
             }
             Err(e) => ToolResult::error(format!("Script execution failed: {}", e)),
+        }
+    }
+
+    async fn handle_read_console(&self, args: Value) -> ToolResult {
+        let pattern = param_str(&args, "pattern");
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let msgs = instance.console.lock().await;
+        let filtered: Vec<&String> = msgs
+            .iter()
+            .filter(|m| pattern.as_ref().map(|p| m.contains(p)).unwrap_or(true))
+            .collect();
+        ToolResult::json(&serde_json::json!({
+            "success": true,
+            "count": filtered.len(),
+            "messages": filtered,
+        }))
+    }
+
+    async fn handle_read_network(&self, args: Value) -> ToolResult {
+        let pattern = param_str(&args, "pattern");
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        let reqs = instance.network.lock().await;
+        let filtered: Vec<&String> = reqs
+            .iter()
+            .filter(|m| pattern.as_ref().map(|p| m.contains(p)).unwrap_or(true))
+            .collect();
+        ToolResult::json(&serde_json::json!({
+            "success": true,
+            "count": filtered.len(),
+            "requests": filtered,
+        }))
+    }
+
+    async fn handle_read_a11y(&self) -> ToolResult {
+        let guard = match self.get_browser().await {
+            Ok(g) => g,
+            Err(e) => return ToolResult::error(e),
+        };
+        let instance = guard.as_ref().unwrap();
+        // Semantic accessibility snapshot via the page: role + accessible name +
+        // click coordinates for visible interactive/landmark elements. Gives the
+        // agent a non-pixel, role-based view of the page (like an a11y tree).
+        let js = r#"
+            (() => {
+                const roleOf = (el) => {
+                    const r = el.getAttribute('role'); if (r) return r;
+                    const t = el.tagName.toLowerCase();
+                    const m = {a:'link',button:'button',input:(el.type||'textbox'),select:'combobox',
+                               textarea:'textbox',h1:'heading',h2:'heading',h3:'heading',
+                               nav:'navigation',main:'main',img:'img',label:'label'};
+                    return m[t] || (el.hasAttribute('onclick') ? 'button' : null);
+                };
+                const nameOf = (el) => (el.getAttribute('aria-label') || el.getAttribute('placeholder')
+                    || el.getAttribute('alt') || (el.innerText||'').trim().slice(0,80) || el.value || '').trim();
+                const out = [];
+                document.querySelectorAll('a,button,input,select,textarea,[role],h1,h2,h3,nav,main,label,[onclick]')
+                  .forEach(el => {
+                    const role = roleOf(el); if (!role) return;
+                    const rc = el.getBoundingClientRect();
+                    if (rc.width === 0 && rc.height === 0) return;
+                    out.push({role, name: nameOf(el),
+                              x: Math.round(rc.left + rc.width/2), y: Math.round(rc.top + rc.height/2)});
+                  });
+                return JSON.stringify(out.slice(0, 200));
+            })()
+        "#;
+        match instance.page.evaluate(js).await {
+            Ok(result) => {
+                // The page returns the snapshot as a JSON string; decode it so
+                // `elements` is a real array, not a JSON-encoded string.
+                let tree_str = result.value().and_then(|v| v.as_str()).unwrap_or("[]");
+                let elements: Value =
+                    serde_json::from_str(tree_str).unwrap_or_else(|_| Value::Array(Vec::new()));
+                ToolResult::json(&serde_json::json!({ "success": true, "elements": elements }))
+            }
+            Err(e) => ToolResult::error(format!("Failed to read a11y tree: {}", e)),
         }
     }
 

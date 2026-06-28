@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Scheduler-Systems/gal-run/schemas/project-config.schema.json",
+  "$id": "https://schemas.gal.run/gal/v1/project-config.schema.json",
   "title": "GAL Project Config",
   "type": "object",
   "additionalProperties": false,

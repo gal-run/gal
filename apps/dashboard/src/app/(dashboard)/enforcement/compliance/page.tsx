@@ -309,7 +309,7 @@ export default function CompliancePage() {
                     No machines enrolled yet
                   </p>
                   <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                    Developers appear here after running `gal fleet register` or `gal enforce status`.
+                    Developers will appear here once they enroll a machine. Fleet enrollment (`gal fleet register` / `gal enforce status`) is coming in v1.0.
                   </p>
                 </div>
               ) : (
@@ -438,7 +438,7 @@ export default function CompliancePage() {
                   Next Actions
                 </h2>
                 <ul className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                  <li>Use `gal enforce install` on each developer laptop.</li>
+                  <li>Per-machine install (`gal enforce install`) is coming in v1.0.</li>
                   <li>Run `gal sync --pull` after every policy change.</li>
                   <li>Switch org settings from warn to block once SRT is active on the fleet.</li>
                 </ul>

@@ -69,8 +69,7 @@ cli-test:
 
 # ---- tools (mixed native) ------------------------------------------------
 # agent-git-graph is a standalone Go module (dev tool, NOT part of the
-# services module) — build it with its own go toolchain. demo-studio is a TS
-# workspace member and builds via turbo (`just apps`/`sdks`/root build).
+# services module) — build it with its own go toolchain.
 tools-go:
     cd tools/agent-git-graph && go build ./...
 

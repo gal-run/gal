@@ -6,9 +6,7 @@ import os from "os"
 
 const STATE_FILE = path.join(os.tmpdir(), "gal-voice-state")
 const PID_FILE = path.join(os.tmpdir(), "gal-voice-daemon.pid")
-const DAEMON_SCRIPT =
-  process.env.GAL_VOICE_DAEMON ||
-  "/Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run/gal-android/scripts/gal-voice-daemon"
+const DAEMON_SCRIPT = process.env.GAL_VOICE_DAEMON || "gal-voice-daemon"
 const hasDaemon = existsSync(DAEMON_SCRIPT)
 const desc = hasDaemon ? describe : (describe.skip as (name: string, fn: () => void) => void)
 

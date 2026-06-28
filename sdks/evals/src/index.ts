@@ -1,4 +1,7 @@
 export * from './core/types.js'
 export * from './core/runner.js'
+export * from './core/prediction-file-adapter.js'
+export * from './core/report-submitter.js'
+export * from './core/managed-agent-runner.js'
 export * from './email/email-rules-adapter.js'
 export * from './email/email-reply-adapter.js'

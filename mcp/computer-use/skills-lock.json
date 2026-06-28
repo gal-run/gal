@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "companion-clis": {
+      "source": "runpod/skills",
+      "sourceType": "github",
+      "skillPath": "companion-clis/SKILL.md",
+      "computedHash": "854afe9ccc1f62685a3240896b7cc6efcdedd0a954d6cbbf9d516f593e73183e"
+    },
+    "flash": {
+      "source": "runpod/skills",
+      "sourceType": "github",
+      "skillPath": "flash/SKILL.md",
+      "computedHash": "145041db131cd494852520f86237baf726205a4df439808c1c088cdcd9c0c4e8"
+    },
+    "runpodctl": {
+      "source": "runpod/skills",
+      "sourceType": "github",
+      "skillPath": "runpodctl/SKILL.md",
+      "computedHash": "7029208518ff084532fc060c0af72740cbe973f637ded4cc16f71fdeb55c6745"
+    }
+  }
+}

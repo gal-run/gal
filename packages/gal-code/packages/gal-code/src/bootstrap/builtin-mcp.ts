@@ -1,5 +1,4 @@
 import path from "path"
-import { homedir } from "os"
 import { existsSync } from "fs"
 
 type McpEntry = {
@@ -41,14 +40,14 @@ function resolveStandaloneMcp(localPath: string, pkg: string, altPath?: string):
 export function buildBuiltinMcp(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): McpConfig {
   const hasVision = env.GEMINI_API_KEY || env.GOOGLE_CLOUD_PROJECT || env.GCP_PROJECT
   const hasVoice = env.OPENAI_API_KEY
-  const stratus =
-    env.STRATUS_MCP_PATH || path.join(homedir(), "Documents/scheduler-systems/stratus/stratus-shell/mcp/dist/index.js")
+  // Optional internal Stratus MCP — set STRATUS_MCP_PATH to its dist entry to enable it.
+  const stratus = env.STRATUS_MCP_PATH
   const gal = resolveGalCli(env)
   const cmd = gal ?? ["gal"]
   const root =
     env.GAL_CODE_WORKSPACE_ROOT ||
     env.GAL_DEV_WORKSPACE_ROOT ||
-    path.join(homedir(), "Documents/scheduler-systems-ltd/gal-run")
+    cwd
   // Normalize: if root is a sub-repo (e.g. gal-cli), go up to monorepo root
   const monoRoot = existsSync(path.join(root, "packages", "gal-code")) ? root : path.resolve(root, "..")
   const terminalUseMcp = resolveStandaloneMcp(

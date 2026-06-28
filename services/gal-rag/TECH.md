@@ -760,7 +760,7 @@ chain that the gateway already supports.
 ### 10.2 First-run
 
 ```bash
-cd /Users/scheduler-systems/Documents/scheduler-systems-ltd/gal-run/backend/gal-rag
+cd path/to/gal-run/backend/gal-rag
 
 # 1. Start Qdrant
 cd dev && docker compose up -d && cd ..

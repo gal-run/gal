@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'GitHub Copilot Governance & Instructions Sync | GAL',
-  description: 'Sync Copilot instructions across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Copilot instructions across your team. Standardize policies, maintain audit trails, stay aligned.',
   alternates: {
     canonical: 'https://gal.run/integrations/copilot',
   },
   openGraph: {
     title: 'GitHub Copilot Governance & Instructions Sync | GAL',
-    description: 'Sync Copilot instructions across your team. Enforce policies, maintain audit trails, stay aligned.',
+    description: 'Sync Copilot instructions across your team. Standardize policies, maintain audit trails, stay aligned.',
     url: 'https://gal.run/integrations/copilot',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/integrations/copilot',
-  description: 'Sync Copilot instructions across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Copilot instructions across your team. Standardize policies, maintain audit trails, stay aligned.',
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '89',
   },
 }
 
@@ -121,7 +116,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Sync .github/copilot-instructions.md across your team with one command. Enforce governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
+            Sync .github/copilot-instructions.md across your team with one command. Standardize governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
             <a href="https://github.com/features/copilot" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 underline">
               GitHub Copilot
             </a>.
@@ -206,7 +201,7 @@ function FeaturesSection() {
     {
       icon: Shield,
       title: 'Governance Policies',
-      description: 'Define org-wide rules for what Copilot can and cannot do. Block sensitive file indexing, restrict context boundaries, enforce security standards.',
+      description: 'Define org-wide rules for what Copilot can and cannot do — sensitive file indexing, context boundaries, and security standards. Active blocking enforcement is on the roadmap.',
     },
     {
       icon: Terminal,
@@ -308,7 +303,7 @@ function TerminalDemoSection() {
         <div className="bg-gray-900 rounded-lg p-6 overflow-x-auto">
           <pre className="text-sm text-gray-300 font-mono">
 {`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @gal-run/cli
 
 # Authenticate with your GitHub account
 gal auth login
@@ -332,7 +327,7 @@ function UseCasesSection() {
   const useCases = [
     {
       title: 'Security Teams',
-      description: 'Define rules for what files Copilot can index. Prevent sensitive data exposure. Ensure every Copilot session follows security policy.',
+      description: 'Define rules for what files Copilot can index. Surface sensitive-data exposure risks (active prevention coming in v1.0). Aim for every Copilot session follows security policy.',
     },
     {
       title: 'Engineering Leads',
@@ -340,7 +335,7 @@ function UseCasesSection() {
     },
     {
       title: 'Compliance Officers',
-      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance during SOC 2 or ISO 27001 audits.',
+      description: 'Maintain audit trails of what configurations were deployed. Demonstrate governance when you are audited for SOC 2 or ISO 27001.',
     },
   ]
   

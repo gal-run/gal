@@ -64,7 +64,7 @@ Important rules:
 
 ## Command Model
 
-For local-only users:
+Target local-only model (in active development — `approve --local` is not yet implemented, and `scan`/`sync` currently require an account via `gal auth login`):
 
 ```bash
 gal scan

@@ -5,13 +5,13 @@ import { DASHBOARD_URL } from '@/src/config'
 
 export const metadata: Metadata = {
   title: 'Codex Governance & Config Sync | GAL',
-  description: 'Sync Codex config across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Codex config across your team. Standardize policies, maintain audit trails, stay aligned.',
   alternates: {
     canonical: 'https://gal.run/integrations/codex',
   },
   openGraph: {
     title: 'Codex Governance & Config Sync | GAL',
-    description: 'Sync Codex config across your team. Enforce policies, maintain audit trails, stay aligned.',
+    description: 'Sync Codex config across your team. Standardize policies, maintain audit trails, stay aligned.',
     url: 'https://gal.run/integrations/codex',
     type: 'website',
   },
@@ -24,16 +24,11 @@ const jsonLd = {
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Any',
   url: 'https://gal.run/integrations/codex',
-  description: 'Sync Codex config across your team. Enforce policies, maintain audit trails, stay aligned.',
+  description: 'Sync Codex config across your team. Standardize policies, maintain audit trails, stay aligned.',
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '89',
   },
 }
 
@@ -121,7 +116,7 @@ function HeroSection() {
           </h1>
           
           <p className="text-xl text-black/60 mb-8 leading-relaxed">
-            Sync .codex/config.toml and Codex rules across your team with one command. Enforce governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
+            Sync .codex/config.toml and Codex rules across your team with one command. Standardize governance policies, maintain audit trails, and keep every developer aligned with organizational standards. Built for{' '}
             <a href="https://openai.com/codex" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 underline">
               Codex
             </a>.
@@ -206,7 +201,7 @@ function FeaturesSection() {
     {
       icon: Shield,
       title: 'Governance Policies',
-      description: 'Define org-wide rules for what Codex can and cannot do. Restrict context boundaries, enforce security standards, block risky operations.',
+      description: 'Define org-wide rules for what Codex can and cannot do — context boundaries, security standards, and risky operations. Active blocking enforcement is on the roadmap.',
     },
     {
       icon: Terminal,
@@ -308,7 +303,7 @@ function TerminalDemoSection() {
         <div className="bg-gray-900 rounded-lg p-6 overflow-x-auto">
           <pre className="text-sm text-gray-300 font-mono">
 {`# Install the GAL CLI
-npm install -g @scheduler-systems/gal
+npm install -g @gal-run/cli
 
 # Authenticate with your GitHub account
 gal auth login
@@ -333,7 +328,7 @@ function UseCasesSection() {
   const useCases = [
     {
       title: 'Security Teams',
-      description: 'Define rules for what context Codex can process. Prevent sensitive data exposure. Ensure every Codex session follows security policy.',
+      description: 'Define rules for what context Codex can process. Surface sensitive-data exposure risks (active prevention coming in v1.0). Aim for every Codex session follows security policy.',
     },
     {
       title: 'Engineering Leads',
@@ -341,7 +336,7 @@ function UseCasesSection() {
     },
     {
       title: 'Compliance Officers',
-      description: 'Maintain audit trails of what Codex configurations were deployed. Demonstrate governance during SOC 2 or ISO 27001 audits.',
+      description: 'Maintain audit trails of what Codex configurations were deployed. Demonstrate governance when you are audited for SOC 2 or ISO 27001.',
     },
   ]
   

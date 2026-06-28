@@ -1,0 +1,76 @@
+# syntax=docker/dockerfile:1
+# Multi-stage build for the GAL Browser Use Service.
+# Pre-installs Playwright browsers so the container is ready to run headfully or headlessly.
+
+# ---------------------------------------------------------------------------
+# Builder — compile Python dependencies
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# ---------------------------------------------------------------------------
+# Runtime — Playwright + extension + app
+# ---------------------------------------------------------------------------
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    BROWSER_USE_DB=/data/browser_use_cache.db \
+    CHROME_EXTENSION_PATH=/app/gal-extension \
+    HOST=127.0.0.1 \
+    PORT=8123 \
+    PATH="/root/.local/bin:${PATH}"
+
+# System deps for Chromium + Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libatspi2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy pre-built wheels from builder (includes playwright from requirements.txt)
+COPY --from=builder /root/.local /root/.local
+
+# Install Playwright browser binaries (Chromium only to keep image size down)
+RUN playwright install chromium && \
+    playwright install-deps chromium
+
+WORKDIR /app
+
+# Application code
+COPY main.py chrome_bridge.py ./
+
+# Placeholder for the GAL Chrome extension (mounted or copied at build time)
+RUN mkdir -p /app/gal-extension
+
+# Create the dir for BROWSER_USE_DB (set to /data/... above) so the SQLite cache is
+# writable; declare it a volume for persistence across container restarts.
+RUN mkdir -p /data
+VOLUME ["/data"]
+
+EXPOSE 8123
+
+# Bind to localhost by default; override HOST/PORT (e.g. HOST=0.0.0.0) to expose.
+CMD ["sh", "-c", "uvicorn main:app --host \"$HOST\" --port \"$PORT\""]

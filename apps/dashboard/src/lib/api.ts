@@ -266,7 +266,7 @@ export interface Organization {
   name: string
   installationId: number
   accountType?: 'User' | 'Organization' | 'Enterprise' // GitHub account type (personal, org, or enterprise)
-  enterpriseSlug?: string // Enterprise account this org belongs to (e.g. "scheduler-systems-ltd")
+  enterpriseSlug?: string // Enterprise account this org belongs to (e.g. "acme-corp")
   canDelete?: boolean
   installedByGithubId?: number
   installedByLogin?: string

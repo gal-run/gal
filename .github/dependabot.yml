@@ -1,9 +1,15 @@
 ---
 # Dependabot - automated dependency updates
-# Issue #32 | Docs: https://docs.github.com/en/code-security/dependabot
+# Docs: https://docs.github.com/en/code-security/dependabot
+#
+# Security updates (the "Dependabot security updates" repo setting) raise fix PRs
+# for open alerts. The `groups: applies-to: security-updates` blocks below batch
+# those fix PRs (and minor/patch version PRs) so they don't arrive one-at-a-time.
+# NOTE: commit-message `prefix` includes "[ci]" so Dependabot's own commits satisfy
+# the `require-ci-intent` ruleset (which rejects commits lacking [ci]/[skip ci]).
 version: 2
 updates:
-  # GitHub Actions (the only package ecosystem in this docs repo)
+  # GitHub Actions
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -17,5 +23,60 @@ updates:
       - dependencies
       - github-actions
     commit-message:
-      prefix: "deps(ci)"
+      prefix: "deps(ci) [ci]"
       include: scope
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns: ["*"]
+
+  # npm — the app dirs that currently carry open security alerts.
+  # NOTE: packages/gal-code/packages/web is BUN-managed (bun.lock), not npm —
+  # an npm bump there can't update bun.lock and breaks `bun install
+  # --frozen-lockfile` in the gal-code CI job, so it is intentionally excluded.
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/apps/website"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Jerusalem
+    open-pull-requests-limit: 10
+    target-branch: main
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "deps [ci]"
+      include: scope
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
+
+  # Go modules — services workspace (open high-severity alerts)
+  - package-ecosystem: gomod
+    directory: /services
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Jerusalem
+    open-pull-requests-limit: 10
+    target-branch: main
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "deps(go) [ci]"
+      include: scope
+    groups:
+      go-security:
+        applies-to: security-updates
+        patterns: ["*"]
+      go-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]

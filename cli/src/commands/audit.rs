@@ -61,15 +61,18 @@ async fn cmd_log(
     spinner.set_message("Querying audit log...");
     spinner.enable_steady_tick(std::time::Duration::from_millis(100));
 
+    // telemetry-svc filters on `action` and `userId`; `org` is advisory (the
+    // service scopes results by the JWT org claim). See audit_entries/audit_row
+    // below for the matching response projection.
     let mut query = serde_json::json!({
         "org": org,
         "limit": limit,
     });
     if let Some(e) = event {
-        query["event"] = serde_json::json!(e);
+        query["action"] = serde_json::json!(e);
     }
     if let Some(a) = actor {
-        query["actor"] = serde_json::json!(a);
+        query["userId"] = serde_json::json!(a);
     }
 
     match client
@@ -84,8 +87,7 @@ async fn cmd_log(
                 return Ok(());
             }
 
-            let empty = Vec::new();
-            let entries = result.as_array().unwrap_or(&empty);
+            let entries = audit_entries(&result);
             println!(
                 "\n{} Audit log for {} ({})",
                 "Audit Log:".blue().bold(),
@@ -94,25 +96,16 @@ async fn cmd_log(
             );
             println!("{}", "─".repeat(80).dimmed());
 
-            for entry in entries {
-                let ts = entry
-                    .get("timestamp")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("—");
-                let ev = entry
-                    .get("event")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("—");
-                let act = entry
-                    .get("actor")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("—");
-                let details = entry
-                    .get("details")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("");
-
-                println!("  {} {} {} {} {}", "•".cyan(), ts.dimmed(), ev.yellow(), act, details);
+            for entry in &entries {
+                let row = audit_row(entry);
+                println!(
+                    "  {} {} {} {} {}",
+                    "•".cyan(),
+                    row.timestamp.dimmed(),
+                    row.event.yellow(),
+                    row.actor,
+                    row.details
+                );
             }
             println!();
         }
@@ -123,4 +116,105 @@ async fn cmd_log(
     }
 
     Ok(())
+}
+
+/// Extracts the entries array from telemetry-svc's `{ "entries": [...] }` envelope,
+/// falling back to a bare top-level array for forward/backward compatibility.
+fn audit_entries(result: &serde_json::Value) -> Vec<serde_json::Value> {
+    result
+        .get("entries")
+        .and_then(|v| v.as_array())
+        .or_else(|| result.as_array())
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// Display projection of one audit entry. telemetry-svc emits `action` / `userId` /
+/// `userName` with `details` as a JSON object; the older shape used `event` / `actor`
+/// with a string `details`. We accept either so the CLI renders correctly against both.
+struct AuditRow {
+    timestamp: String,
+    event: String,
+    actor: String,
+    details: String,
+}
+
+fn audit_row(entry: &serde_json::Value) -> AuditRow {
+    let str_field =
+        |key: &str| entry.get(key).and_then(|v| v.as_str()).filter(|s| !s.is_empty());
+
+    let timestamp = str_field("timestamp").unwrap_or("—").to_string();
+    let event = str_field("action")
+        .or_else(|| str_field("event"))
+        .unwrap_or("—")
+        .to_string();
+    let actor = str_field("userName")
+        .or_else(|| str_field("userId"))
+        .or_else(|| str_field("actor"))
+        .unwrap_or("—")
+        .to_string();
+    let details = match entry.get("details") {
+        Some(serde_json::Value::String(s)) => s.clone(),
+        Some(serde_json::Value::Null) | None => String::new(),
+        Some(v) => serde_json::to_string(v).unwrap_or_default(),
+    };
+
+    AuditRow {
+        timestamp,
+        event,
+        actor,
+        details,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn maps_telemetry_svc_envelope() {
+        let resp = json!({
+            "entries": [{
+                "timestamp": "2026-06-20T10:00:00Z",
+                "action": "tool_call",
+                "userId": "u_123",
+                "userName": "karabil",
+                "details": {"tool": "bash", "ok": true}
+            }],
+            "total": 1, "limit": 50, "offset": 0
+        });
+        let entries = audit_entries(&resp);
+        assert_eq!(entries.len(), 1);
+        let row = audit_row(&entries[0]);
+        assert_eq!(row.timestamp, "2026-06-20T10:00:00Z");
+        assert_eq!(row.event, "tool_call"); // action -> event
+        assert_eq!(row.actor, "karabil"); // userName -> actor
+        assert!(row.details.contains("bash")); // object -> JSON string
+    }
+
+    #[test]
+    fn falls_back_to_bare_array_and_userid() {
+        let resp = json!([{
+            "timestamp": "t",
+            "action": "x",
+            "userId": "u_1",
+            "details": "plain"
+        }]);
+        let entries = audit_entries(&resp);
+        assert_eq!(entries.len(), 1);
+        let row = audit_row(&entries[0]);
+        assert_eq!(row.event, "x");
+        assert_eq!(row.actor, "u_1"); // no userName -> userId
+        assert_eq!(row.details, "plain"); // string details passthrough
+    }
+
+    #[test]
+    fn empty_entry_uses_placeholders() {
+        let row = audit_row(&json!({}));
+        assert_eq!(row.timestamp, "—");
+        assert_eq!(row.event, "—");
+        assert_eq!(row.actor, "—");
+        assert_eq!(row.details, "");
+    }
 }

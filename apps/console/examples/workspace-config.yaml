@@ -2,13 +2,13 @@ apiVersion: gal/v1
 kind: WorkspaceConfig
 
 metadata:
-  id: scheduler-systems
-  displayName: Scheduler Systems
+  id: gal-run
+  displayName: gal-run
   source: local
   updatedAt: "2026-03-16T12:00:00Z"
 
 github:
-  owner: Scheduler-Systems
+  owner: gal-run
   type: org
 
 defaults:

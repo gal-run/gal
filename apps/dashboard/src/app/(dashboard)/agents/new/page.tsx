@@ -17,6 +17,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { useSelectedWorkspace } from "@/hooks/useSelectedWorkspace";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlags } from "@/contexts/FeatureFlagsContext";
+import { FeatureGate } from "@/components/FeatureGate";
 import { createAgentCard } from "@/lib/agent-card-api";
 import type { CreateAgentCardRequest } from "@/lib/agent-card-api";
 import { getGmailOAuthUrl } from "@/lib/gmail-credential-api";
@@ -53,6 +56,9 @@ const TOOL_OPTIONS = [
 export default function NewAgentPage() {
   const router = useRouter();
   const orgName = useSelectedWorkspace();
+  const { user } = useAuth();
+  const { isPageVisibleForUser } = useFeatureFlags();
+  const userOrgs = user?.organizations ?? [];
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -126,6 +132,14 @@ export default function NewAgentPage() {
       setLoading(false);
     }
   };
+
+  // Route guard (#6513): creating background-agent cards is part of the
+  // internal background-agents surface (same as the parent /agents list). Block
+  // non-internal/non-EE (customer-tier) users who hand-type /agents/new with
+  // the same audience-aware FeatureGate the /agents page uses.
+  if (!isPageVisibleForUser("background-agents", userOrgs, orgName)) {
+    return <FeatureGate pageId="background-agents" />;
+  }
 
   if (!orgName) {
     return (

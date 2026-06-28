@@ -378,8 +378,9 @@ func (s *repoService) handleGitHubWebhook(w http.ResponseWriter, r *http.Request
 // verifyWebhookSignature checks the HMAC-SHA256 signature of a webhook payload.
 func (s *repoService) verifyWebhookSignature(payload []byte, signatureHeader string) bool {
 	if s.githubWebhookSecret == "" {
-		s.log.Warn("GITHUB_WEBHOOK_SECRET not configured — skipping HMAC verification")
-		return true
+		// Fail closed: an unconfigured signing secret must never authenticate a webhook.
+		s.log.Error("GITHUB_WEBHOOK_SECRET not configured — rejecting webhook (fail closed)")
+		return false
 	}
 
 	// Expected format: sha256=hexdigest
@@ -707,7 +708,36 @@ func (s *repoService) listRepos(w http.ResponseWriter, r *http.Request) {
 // REPOS: getRepo
 // ─────────────────────────────────────────────────────────────────────────────
 
+// verifyRepoAccess returns true only if fullName ({owner}/{repo}) exists AND belongs to
+// the caller's org. On any failure it writes 404 (not 403, to avoid confirming existence
+// cross-tenant) and returns false. The shared Firestore store applies no implicit
+// tenancy, so this per-handler check IS the tenant boundary for repo-scoped reads.
+func (s *repoService) verifyRepoAccess(w http.ResponseWriter, r *http.Request, fullName string) bool {
+	orgID := auth.OrgID(r.Context())
+	if orgID == "" {
+		handler.RespondError(w, http.StatusUnauthorized, "missing org", "UNAUTHORIZED")
+		return false
+	}
+	doc, err := s.store.Doc("repositories", fullName).Get(r.Context())
+	if err != nil {
+		handler.RespondError(w, http.StatusNotFound, "repository not found", "NOT_FOUND")
+		return false
+	}
+	var repo Repository
+	doc.DataTo(&repo)
+	if repo.OrgID != orgID {
+		handler.RespondError(w, http.StatusNotFound, "repository not found", "NOT_FOUND")
+		return false
+	}
+	return true
+}
+
 func (s *repoService) getRepo(w http.ResponseWriter, r *http.Request) {
+	orgID := auth.OrgID(r.Context())
+	if orgID == "" {
+		handler.RespondError(w, http.StatusUnauthorized, "missing org", "UNAUTHORIZED")
+		return
+	}
 	owner := chi.URLParam(r, "owner")
 	repoName := chi.URLParam(r, "repo")
 	fullName := fmt.Sprintf("%s/%s", owner, repoName)
@@ -720,6 +750,11 @@ func (s *repoService) getRepo(w http.ResponseWriter, r *http.Request) {
 
 	var repo Repository
 	doc.DataTo(&repo)
+	if repo.OrgID != orgID {
+		// 404 (not 403) — do not confirm another org's repo exists.
+		handler.RespondError(w, http.StatusNotFound, "repository not found", "NOT_FOUND")
+		return
+	}
 	handler.RespondJSON(w, http.StatusOK, repo)
 }
 
@@ -752,8 +787,17 @@ func (s *repoService) scanRepos(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if len(req.FullNames) > 0 {
 		for _, fn := range req.FullNames {
-			doc := s.store.Doc("repositories", fn)
-			doc.Set(r.Context(), map[string]any{"lastScannedAt": now, "updatedAt": now}, gfs.MergeAll)
+			// Only touch repos the caller's org owns — never write to another tenant's doc.
+			d, err := s.store.Doc("repositories", fn).Get(r.Context())
+			if err != nil {
+				continue
+			}
+			var repo Repository
+			d.DataTo(&repo)
+			if repo.OrgID != orgID {
+				continue
+			}
+			s.store.Doc("repositories", fn).Set(r.Context(), map[string]any{"lastScannedAt": now, "updatedAt": now}, gfs.MergeAll)
 		}
 	} else {
 		// Update all repos for this org.
@@ -782,6 +826,10 @@ func (s *repoService) listConfigs(w http.ResponseWriter, r *http.Request) {
 	owner := chi.URLParam(r, "owner")
 	repoName := chi.URLParam(r, "repo")
 	fullName := fmt.Sprintf("%s/%s", owner, repoName)
+
+	if !s.verifyRepoAccess(w, r, fullName) {
+		return
+	}
 
 	iter := s.store.Collection("discoveredConfigs").
 		Where("repoFullName", "==", fullName).
@@ -817,6 +865,10 @@ func (s *repoService) getDiscovery(w http.ResponseWriter, r *http.Request) {
 	repoName := chi.URLParam(r, "repo")
 	fullName := fmt.Sprintf("%s/%s", owner, repoName)
 
+	if !s.verifyRepoAccess(w, r, fullName) {
+		return
+	}
+
 	// Return all discovered configs grouped by platform.
 	iter := s.store.Collection("discoveredConfigs").
 		Where("repoFullName", "==", fullName).
@@ -847,6 +899,10 @@ func (s *repoService) getCompliance(w http.ResponseWriter, r *http.Request) {
 	owner := chi.URLParam(r, "owner")
 	repoName := chi.URLParam(r, "repo")
 	fullName := fmt.Sprintf("%s/%s", owner, repoName)
+
+	if !s.verifyRepoAccess(w, r, fullName) {
+		return
+	}
 
 	iter := s.store.Collection("scanResults").
 		Where("repoFullName", "==", fullName).
@@ -889,6 +945,10 @@ func (s *repoService) getSecurity(w http.ResponseWriter, r *http.Request) {
 	owner := chi.URLParam(r, "owner")
 	repoName := chi.URLParam(r, "repo")
 	fullName := fmt.Sprintf("%s/%s", owner, repoName)
+
+	if !s.verifyRepoAccess(w, r, fullName) {
+		return
+	}
 
 	iter := s.store.Collection("scanResults").
 		Where("repoFullName", "==", fullName).
