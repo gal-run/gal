@@ -2,16 +2,33 @@
 
 `@gal-run/gal-computer-use-mcp` — a [Model Context Protocol](https://modelcontextprotocol.io)
 server that gives AI agents control of the local desktop: screenshots, mouse,
-keyboard, application focus, and Chrome tab inspection on macOS (with partial
-Linux support), plus an **optional** UI-TARS vision-agent path for natural-language
+keyboard, application focus, and Chrome tab inspection on **macOS, Linux, and
+Windows**, plus an **optional** UI-TARS vision-agent path for natural-language
 GUI automation.
 
 ## Tools
 
 ### Core (no native dependencies)
 
-These shell out to OS utilities (`screencapture`, `cliclick`, `osascript` on
-macOS; `import`/`scrot`/`xdotool` on Linux) and work out of the box.
+These shell out to OS-native facilities and work out of the box:
+
+- **macOS** — `screencapture`, `cliclick`, `osascript` (AppleScript / Accessibility).
+- **Linux (X11)** — `scrot`/`import`, `xdotool`, `wmctrl` (with an `xdotool`
+  fallback when `wmctrl` is absent), and **AT-SPI** (via `python3` + GObject
+  introspection) for `computer_set_value` on the focused element.
+- **Windows** — a small self-contained C# helper that is compiled once (via the
+  in-box PowerShell C# compiler) and cached in `%TEMP%`, then invoked per action.
+  It P/Invokes `user32` (`SendInput` Unicode typing, `mouse_event`,
+  `SetCursorPos`), uses `System.Drawing` for screenshots, and **UI Automation**
+  (`ValuePattern`) for `computer_set_value`. Requires Windows PowerShell + .NET
+  Framework 4.x — both present on every Windows 10/11 — so there is nothing to
+  install.
+
+`computer_set_value` uses the real accessibility API on each platform (macOS
+`AXValue`, Linux AT-SPI `EditableText`, Windows UIA `ValuePattern`) and falls
+back to simulated typing when the focused element exposes no settable value.
+The `computer_chrome_*` tools are a macOS AppleScript convenience; for
+cross-platform browser automation use the separate `gal-chrome` MCP (Playwright).
 
 | Tool | Description |
 | --- | --- |
