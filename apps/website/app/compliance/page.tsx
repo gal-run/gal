@@ -450,7 +450,7 @@ function CTASection() {
     <section className="py-20 px-8">
       <div className="max-w-[1376px] mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-black mb-6">
-          Achieve AI compliance today
+          Build toward AI compliance today
         </h2>
         
         <p className="text-lg text-black/60 mb-8 max-w-xl mx-auto">
