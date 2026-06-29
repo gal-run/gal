@@ -311,8 +311,26 @@ fn register_pretooluse_hook(settings_path: &Path, command: &str) -> Result<()> {
 // `gal protect handle` — PreToolUse hook handler (allow/deny a tool call)
 // ---------------------------------------------------------------------------
 
+/// Pure policy evaluation: returns the deny reason if any Block-mode command
+/// rule's match substring appears in the command text, else `None` (allow).
+fn deny_reason<'a>(
+    rule_set: &'a crate::enforcement::RuleSet,
+    command_text: &str,
+) -> Option<&'a str> {
+    use crate::enforcement::RuleMode;
+    rule_set.commands.iter().find_map(|rule| {
+        let blocks = matches!(rule.mode, Some(RuleMode::Block))
+            || (rule.mode.is_none() && rule_set.mode == RuleMode::Block);
+        if blocks && !rule.match_.is_empty() && command_text.contains(&rule.match_) {
+            Some(rule.reason.as_str())
+        } else {
+            None
+        }
+    })
+}
+
 fn cmd_handle(rules_path: &Path) -> Result<()> {
-    use crate::enforcement::{RuleMode, RuleSet};
+    use crate::enforcement::RuleSet;
 
     // 1. Read the Claude Code PreToolUse event from stdin.
     let mut input = String::new();
@@ -339,23 +357,60 @@ fn cmd_handle(rules_path: &Path) -> Result<()> {
         Err(_) => return Ok(()),
     };
 
-    // 3. Evaluate Block-mode command rules against the command text.
-    for rule in &rule_set.commands {
-        let blocks = matches!(rule.mode, Some(RuleMode::Block))
-            || (rule.mode.is_none() && rule_set.mode == RuleMode::Block);
-        if blocks && !rule.match_.is_empty() && command_text.contains(&rule.match_) {
-            let payload = serde_json::json!({
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "permissionDecision": "deny",
-                    "permissionDecisionReason": rule.reason,
-                }
-            });
-            println!("{}", serde_json::to_string(&payload)?);
-            return Ok(());
-        }
+    // 3. Deny if a Block-mode rule matches; otherwise allow silently.
+    if let Some(reason) = deny_reason(&rule_set, &command_text) {
+        let payload = serde_json::json!({
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        });
+        println!("{}", serde_json::to_string(&payload)?);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::deny_reason;
+    use crate::enforcement::{CommandRule, RuleMode, RuleSet};
+
+    fn rule_set(match_: &str, mode: RuleMode) -> RuleSet {
+        let mut rs = RuleSet::empty();
+        rs.commands.push(CommandRule {
+            match_: match_.to_string(),
+            mode: Some(mode),
+            reason: format!("blocked {match_}"),
+            scope: Some("agent".to_string()),
+        });
+        rs
     }
 
-    // 4. No deny matched → allow silently.
-    Ok(())
+    #[test]
+    fn denies_matching_command() {
+        let rs = rule_set("--no-verify", RuleMode::Block);
+        assert_eq!(
+            deny_reason(&rs, "git commit --no-verify -m x"),
+            Some("blocked --no-verify")
+        );
+    }
+
+    #[test]
+    fn allows_benign_command() {
+        let rs = rule_set("--no-verify", RuleMode::Block);
+        assert_eq!(deny_reason(&rs, "git status"), None);
+    }
+
+    #[test]
+    fn warn_mode_does_not_block() {
+        let rs = rule_set("rm -rf", RuleMode::Warn);
+        assert_eq!(deny_reason(&rs, "rm -rf /"), None);
+    }
+
+    #[test]
+    fn empty_match_never_blocks() {
+        let rs = rule_set("", RuleMode::Block);
+        assert_eq!(deny_reason(&rs, "anything at all"), None);
+    }
 }
