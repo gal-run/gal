@@ -97,3 +97,57 @@ happens on the machine doing the demo, not headless:
 ```bash
 python3 -m unittest test_demo_orchestrator -v   # 14 pure tests (plan + message formats)
 ```
+
+## Flagship spec: `examples/protect-deny.json` — GAL denies a dangerous command mid-run
+
+The flagship demo. It records GAL **blocking an agent's command before it runs** — the
+visible payoff of the real, unit-tested `gal protect` deny engine. Every command and every
+piece of on-screen output is the **real** GAL system; nothing is mocked or faked.
+
+The ~26 s flow (one `--no-verify` deny rule, then an agent that tries to bypass it):
+
+1. **"GAL governs what your coding agents are allowed to do."** — clear the terminal.
+2. `gal protect list` — show **no agent deny rule is installed yet**.
+3. `gal protect add --deny "git commit --no-verify" --reason "Agents must not bypass commit hooks"`
+   — the real command, which prints `✓ Deny rule added` and compiles the rule into a
+   Claude Code **PreToolUse hook** (`cli/src/commands/protect.rs`, `cmd_add`).
+4. An agent attempts the blocked command: `git commit --no-verify -m "skip the hooks"`.
+5. GAL's PreToolUse hook fires and **denies** it — the real
+   `{"hookSpecificOutput":{"permissionDecision":"deny", ...}}` payload
+   (`cli/src/commands/protect.rs`, `cmd_handle`). Caption: **"Blocked automatically —
+   before it ran."**
+6. Close: **"Policy as code for coding agents. One command."**
+
+### Why these exact commands/outputs are real (not a mock)
+
+Grounded line-for-line in the deny engine on `feat/protect-deny-command`:
+
+| Demo element | Source |
+| --- | --- |
+| `gal protect add --deny "<pattern>" --reason "<r>"` | `cli/src/commands/protect.rs:33-40` (the `Add` subcommand) |
+| `✓ Deny rule added` confirmation block | `cli/src/commands/protect.rs:232-244` |
+| `permissionDecision: deny` + reason payload | `cli/src/commands/protect.rs:362-369` (`cmd_handle`) |
+| `git commit --no-verify` is a real blocked pattern | `cli/src/commands/protect.rs:392` (deny unit test) — the canonical bypass the doc comment calls out at `:33-36` |
+| Server-side blocklist (`git push`, `npm publish`, …) | `cli/src/enforce_rules.rs:29-41` |
+
+> Note: the `gal protect add --deny` / `handle` implementation lands with the
+> `feat/protect-deny-command` branch. Build that `gal` binary (`cargo build -p gal` /
+> `just build`) and put it on `$PATH` before a live recording, so the terminal shows the
+> real CLI output rather than "command not found". The spec itself is engine-agnostic — it
+> only types text and keystrokes — so it loads and dry-runs today regardless.
+
+### Validate (no recording, no permissions)
+
+```bash
+python3 demo_orchestrator.py examples/protect-deny.json --dry-run   # prints the 26.3s plan, exit 0
+```
+
+### Record it (one Screen-Recording toggle away)
+
+A live run is TCC-gated and takes the foreground — see **"A live run needs the foreground +
+macOS permissions"** above. Once **Screen Recording** (demo-studio) and **Accessibility**
+(GALComputerUse) are granted and the `gal` binary with `protect` is on `$PATH`:
+
+```bash
+python3 demo_orchestrator.py examples/protect-deny.json   # records → protect-deny.mp4
+```

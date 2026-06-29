@@ -1,0 +1,70 @@
+{
+  "name": "gal-protect-deny-demo",
+  "output": "protect-deny.mp4",
+  "cursor": "live",
+  "screen": { "width": 1920, "height": 1080 },
+  "recording": { "fps": 30, "captureAudio": false },
+  "export": { "resolution": { "width": 1920, "height": 1080 }, "quality": "high" },
+  "steps": [
+    {
+      "action": "click", "x": 960, "y": 540, "duration": 1.0,
+      "caption": "GAL governs what your coding agents are allowed to do.",
+      "caption_duration": 3.0
+    },
+    {
+      "action": "type", "text": "clear", "duration": 0.4
+    },
+    {
+      "action": "key", "key": "return", "duration": 1.2,
+      "caption": "A fresh terminal — no protection yet."
+    },
+    {
+      "action": "type", "text": "gal protect list", "duration": 1.6
+    },
+    {
+      "action": "key", "key": "return", "duration": 2.0,
+      "caption": "No agent deny rule is installed."
+    },
+    {
+      "action": "type",
+      "text": "gal protect add --deny \"git commit --no-verify\" --reason \"Agents must not bypass commit hooks\"",
+      "duration": 3.2,
+      "caption": "Add one deny rule — policy as code."
+    },
+    {
+      "action": "key", "key": "return", "duration": 2.6,
+      "caption": "Compiled into a Claude Code PreToolUse hook.",
+      "caption_duration": 3.0,
+      "zoom": { "scale": 1.8, "easing": "ease-in-out", "duration": 3.0 }
+    },
+    {
+      "action": "wait", "duration": 1.0
+    },
+    {
+      "action": "type", "text": "git commit --no-verify -m \"skip the hooks\"", "duration": 2.8,
+      "caption": "Now an agent tries the blocked command."
+    },
+    {
+      "action": "key", "key": "return", "duration": 2.6,
+      "caption": "GAL's PreToolUse hook fires...",
+      "caption_duration": 2.6
+    },
+    {
+      "action": "wait", "duration": 2.4,
+      "caption": "permissionDecision: deny — Agents must not bypass commit hooks",
+      "caption_duration": 3.0,
+      "zoom": { "scale": 2.0, "easing": "ease-in-out", "duration": 3.0 },
+      "x": 700, "y": 620
+    },
+    {
+      "action": "wait", "duration": 2.5,
+      "caption": "Blocked automatically — before it ran.",
+      "caption_duration": 3.0
+    },
+    {
+      "action": "wait", "duration": 3.0,
+      "caption": "Policy as code for coding agents. One command.",
+      "caption_duration": 3.0
+    }
+  ]
+}
