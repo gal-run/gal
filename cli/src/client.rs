@@ -96,10 +96,18 @@ pub struct UserResponse {
     pub name: Option<String>,
     #[serde(default)]
     pub email: Option<String>,
-    #[serde(default)]
+    #[serde(default, rename = "avatarUrl")]
     pub avatar_url: Option<String>,
     #[serde(default)]
     pub organizations: Option<Vec<String>>,
+}
+
+/// Wrapper for the legacy `/auth/me` envelope, which nests the user under
+/// `{ "user": { ... } }` (the prod Express monolith), unlike the flat
+/// `/users/me` shape.
+#[derive(Debug, Deserialize)]
+pub struct AuthMeResponse {
+    pub user: UserResponse,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -517,7 +525,10 @@ impl ApiClient {
     // ─── Auth ───────────────────────────────────────────────────────
 
     pub async fn get_current_user(&self) -> Result<UserResponse> {
-        self.get("/users/me").await
+        // Prod serves the legacy `/auth/me` endpoint (nested `{ user: { .. } }`
+        // envelope), not a flat `/users/me`. Fetch the wrapper and unwrap it.
+        let resp: AuthMeResponse = self.get("/auth/me").await?;
+        Ok(resp.user)
     }
 
     pub async fn get_feature_flags(&self) -> Result<FeatureFlagsResponse> {
@@ -835,4 +846,20 @@ impl ApiClient {
 
 fn urlencoding(s: &str) -> String {
     url::form_urlencoded::byte_serialize(s.as_bytes()).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_legacy_auth_me_envelope() {
+        // Prod `/auth/me` returns a nested `{ user: { .. } }` envelope with the
+        // camelCase `avatarUrl` field. Ensure both deserialize correctly.
+        let json = r#"{"user":{"login":"octocat","name":"Octo","email":"o@x.com","avatarUrl":"http://a","organizations":["acme"]}}"#;
+        let resp: AuthMeResponse = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(resp.user.login, "octocat");
+        assert_eq!(resp.user.organizations, Some(vec!["acme".to_string()]));
+        assert_eq!(resp.user.avatar_url, Some("http://a".to_string()));
+    }
 }
