@@ -91,6 +91,7 @@ impl LocalConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserResponse {
+    #[serde(default)]
     pub login: String,
     #[serde(default)]
     pub name: Option<String>,
@@ -100,14 +101,6 @@ pub struct UserResponse {
     pub avatar_url: Option<String>,
     #[serde(default)]
     pub organizations: Option<Vec<String>>,
-}
-
-/// Wrapper for the legacy `/auth/me` envelope, which nests the user under
-/// `{ "user": { ... } }` (the prod Express monolith), unlike the flat
-/// `/users/me` shape.
-#[derive(Debug, Deserialize)]
-pub struct AuthMeResponse {
-    pub user: UserResponse,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -525,10 +518,11 @@ impl ApiClient {
     // ─── Auth ───────────────────────────────────────────────────────
 
     pub async fn get_current_user(&self) -> Result<UserResponse> {
-        // Prod serves the legacy `/auth/me` endpoint (nested `{ user: { .. } }`
-        // envelope), not a flat `/users/me`. Fetch the wrapper and unwrap it.
-        let resp: AuthMeResponse = self.get("/auth/me").await?;
-        Ok(resp.user)
+        // The live legacy backend returns a nested `{ "user": { .. } }` envelope
+        // with a `login` field; the pending Go cutover serves `/auth/me` as a FLAT
+        // object with no `login`. Accept both shapes via the pure parse helper.
+        let val: serde_json::Value = self.get::<serde_json::Value>("/auth/me").await?;
+        parse_auth_me(val)
     }
 
     pub async fn get_feature_flags(&self) -> Result<FeatureFlagsResponse> {
@@ -848,18 +842,60 @@ fn urlencoding(s: &str) -> String {
     url::form_urlencoded::byte_serialize(s.as_bytes()).collect()
 }
 
+/// Pure transform from a raw `/auth/me` JSON value to a `UserResponse`,
+/// tolerant of both shapes the backend can return:
+///   - the live legacy envelope `{ "user": { .., "login": .. } }`, and
+///   - the pending Go cutover's FLAT object `{ id, email, name, .. }` (no `login`).
+/// When `login` is absent/blank we derive it from `email` (falling back to
+/// `"user"`) so downstream callers always have a non-empty handle.
+fn parse_auth_me(val: serde_json::Value) -> Result<UserResponse> {
+    let inner = val.get("user").cloned().unwrap_or(val);
+    let mut user: UserResponse = serde_json::from_value(inner)
+        .map_err(|e| anyhow!("failed to parse /auth/me response: {e}"))?;
+    if user.login.trim().is_empty() {
+        user.login = user.email.clone().unwrap_or_else(|| "user".to_string());
+    }
+    Ok(user)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn parses_legacy_auth_me_envelope() {
-        // Prod `/auth/me` returns a nested `{ user: { .. } }` envelope with the
-        // camelCase `avatarUrl` field. Ensure both deserialize correctly.
-        let json = r#"{"user":{"login":"octocat","name":"Octo","email":"o@x.com","avatarUrl":"http://a","organizations":["acme"]}}"#;
-        let resp: AuthMeResponse = serde_json::from_str(json).expect("should deserialize");
-        assert_eq!(resp.user.login, "octocat");
-        assert_eq!(resp.user.organizations, Some(vec!["acme".to_string()]));
-        assert_eq!(resp.user.avatar_url, Some("http://a".to_string()));
+    fn parses_legacy_nested_envelope_with_login() {
+        // Live legacy `/auth/me`: nested `{ user: { .. } }` envelope with the
+        // camelCase `avatarUrl` field.
+        let val: serde_json::Value = serde_json::from_str(
+            r#"{"user":{"login":"octocat","name":"Octo","email":"o@x.com","avatarUrl":"http://a","organizations":["acme"]}}"#,
+        )
+        .unwrap();
+        let user = parse_auth_me(val).expect("nested envelope should parse");
+        assert_eq!(user.login, "octocat");
+        assert_eq!(user.avatar_url, Some("http://a".to_string()));
+        assert_eq!(user.organizations, Some(vec!["acme".to_string()]));
+    }
+
+    #[test]
+    fn parses_flat_object_with_login() {
+        // Flat object that still carries `login`.
+        let val: serde_json::Value =
+            serde_json::from_str(r#"{"login":"octocat","email":"o@x.com","avatarUrl":"http://a"}"#)
+                .unwrap();
+        let user = parse_auth_me(val).expect("flat-with-login should parse");
+        assert_eq!(user.login, "octocat");
+    }
+
+    #[test]
+    fn parses_flat_object_without_login_go_cutover() {
+        // Pending Go cutover: FLAT object with NO `login` field. Must NOT error;
+        // `login` is derived from `email`.
+        let val: serde_json::Value = serde_json::from_str(
+            r#"{"id":"u1","email":"o@x.com","name":"Octo","avatarUrl":"http://a","orgId":"org1","role":"member"}"#,
+        )
+        .unwrap();
+        let user = parse_auth_me(val).expect("flat Go-cutover shape must not error");
+        assert_eq!(user.login, "o@x.com");
+        assert_eq!(user.email, Some("o@x.com".to_string()));
     }
 }
