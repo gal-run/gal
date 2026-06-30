@@ -10,7 +10,8 @@
     "apps/console",
     "apps/browser-extension",
     "apps/chrome-extension",
-    "apps/website"
+    "apps/website",
+    "tools/gal-studio"
   ],
   "scripts": {
     "build": "turbo run build",

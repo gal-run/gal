@@ -49,6 +49,7 @@ jobs:
               - 'sdks/**'
               - 'mcp/**'
               - 'apps/**'
+              - 'tools/gal-studio/**'
             cli:
               - 'cli/**'
             agents:
