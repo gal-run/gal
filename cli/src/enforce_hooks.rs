@@ -139,6 +139,29 @@ pub fn build_hook_config(
     }
 }
 
+/// Build a `HookConfigFile` whose handler is the `gal` binary itself
+/// (`gal protect handle --rules <path>`), so no Node.js runtime is required.
+///
+/// This is the self-contained path used by `gal protect add --deny`: the same
+/// binary that installs the rule also evaluates it at PreToolUse time, reading
+/// the compiled rule set from `compiled_rules_path` on every invocation.
+pub fn build_gal_hook_config(gal_bin: &Path, compiled_rules_path: &Path) -> HookConfigFile {
+    let command = format!(
+        "{} protect handle --rules {}",
+        quote_if_needed(&gal_bin.to_string_lossy()),
+        quote_if_needed(&compiled_rules_path.to_string_lossy()),
+    );
+
+    HookConfigFile {
+        pre_tool_use: vec![PreToolUseGroup {
+            hooks: vec![HookEntry {
+                type_: "command".to_string(),
+                command,
+            }],
+        }],
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

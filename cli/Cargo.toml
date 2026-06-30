@@ -75,6 +75,11 @@ url = "2"
 anyhow = "1"
 thiserror = "1"
 
+# Regex matching for deny rules (mirrors the dashboard TS /.../ regex contract)
+regex = "1"
+# Shell-aware tokenizer for git-argv variant matching
+shlex = "1"
+
 # Async trait
 async-trait = "0.1"
 
