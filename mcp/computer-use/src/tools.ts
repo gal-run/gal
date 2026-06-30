@@ -2,6 +2,10 @@ import { execSync } from "child_process";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import os from "os";
+import {
+  winScreenshot, winClick, winType, winKey, winMouseMove, winScroll, winDrag,
+  winScreenSize, winMousePosition,
+} from "./win.js";
 
 const log = (msg: string) =>
   process.stderr.write(`[gal-computer-use] ${msg}\n`);
@@ -22,6 +26,12 @@ export function screenshot(path?: string): string {
     } catch {
       execSync(`scrot ${out}`);
     }
+    return out;
+  }
+
+  if (platform === "win32") {
+    winScreenshot(out);
+    log(`Screenshot saved: ${out}`);
     return out;
   }
 
@@ -62,6 +72,11 @@ export function click(x: number, y: number): string {
     return `Clicked at (${x}, ${y})`;
   }
 
+  if (platform === "win32") {
+    winClick(x, y, "left");
+    return `Clicked at (${x}, ${y})`;
+  }
+
   throw new Error(`Click not supported on ${platform}`);
 }
 
@@ -80,6 +95,11 @@ export function typeText(text: string): string {
     return `Typed: ${text}`;
   }
 
+  if (platform === "win32") {
+    winType(text);
+    return `Typed: ${text}`;
+  }
+
   throw new Error(`Type not supported on ${platform}`);
 }
 
@@ -95,6 +115,11 @@ export function keyPress(key: string): string {
 
   if (platform === "linux") {
     execSync(`xdotool key ${key}`);
+    return `Pressed: ${key}`;
+  }
+
+  if (platform === "win32") {
+    winKey(key);
     return `Pressed: ${key}`;
   }
 
@@ -120,6 +145,11 @@ export function rightClick(x: number, y: number): string {
     return `Right-clicked at (${x}, ${y})`;
   }
 
+  if (platform === "win32") {
+    winClick(x, y, "right");
+    return `Right-clicked at (${x}, ${y})`;
+  }
+
   throw new Error(`Right click not supported on ${platform}`);
 }
 
@@ -139,6 +169,11 @@ export function doubleClick(x: number, y: number): string {
 
   if (platform === "linux") {
     execSync(`xdotool mousemove ${x} ${y} click --repeat 2 1`);
+    return `Double-clicked at (${x}, ${y})`;
+  }
+
+  if (platform === "win32") {
+    winClick(x, y, "left", true);
     return `Double-clicked at (${x}, ${y})`;
   }
 
@@ -311,6 +346,11 @@ export function mouseMove(x: number, y: number): string {
     return `Mouse moved to (${x}, ${y})`;
   }
 
+  if (platform === "win32") {
+    winMouseMove(x, y);
+    return `Mouse moved to (${x}, ${y})`;
+  }
+
   throw new Error(`Mouse move not supported on ${platform}`);
 }
 
@@ -343,6 +383,11 @@ export function scroll(
     return `Scrolled ${direction} ${amount}`;
   }
 
+  if (platform === "win32") {
+    winScroll(amount, direction);
+    return `Scrolled ${direction} ${Math.abs(amount)}`;
+  }
+
   throw new Error(`Scroll not supported on ${platform}`);
 }
 
@@ -368,6 +413,11 @@ export function drag(x1: number, y1: number, x2: number, y2: number): string {
     execSync(
       `xdotool mousemove ${x1} ${y1} mousedown 1 mousemove ${x2} ${y2} mouseup 1`,
     );
+    return `Dragged from (${x1},${y1}) to (${x2},${y2})`;
+  }
+
+  if (platform === "win32") {
+    winDrag(x1, y1, x2, y2);
     return `Dragged from (${x1},${y1}) to (${x2},${y2})`;
   }
 
@@ -430,6 +480,10 @@ export function getScreenSize(): { width: number; height: number } {
     return { width, height };
   }
 
+  if (platform === "win32") {
+    return winScreenSize();
+  }
+
   return { width: 1920, height: 1080 };
 }
 
@@ -463,6 +517,10 @@ export function getMousePosition(): { x: number; y: number } {
     const x = parseInt(result.match(/x:(\d+)/)?.[1] || "0");
     const y = parseInt(result.match(/y:(\d+)/)?.[1] || "0");
     return { x, y };
+  }
+
+  if (platform === "win32") {
+    return winMousePosition();
   }
 
   return { x: 0, y: 0 };
