@@ -1,0 +1,98 @@
+{
+  "name": "API Documentation",
+  "description": "Technical demo showing API endpoint walkthrough",
+  "version": "1.0.0",
+  "output": {
+    "path": "api-demo.mp4",
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps": 30,
+    "quality": "production"
+  },
+  "recording": {
+    "captureAudio": true
+  },
+  "steps": [
+    {
+      "type": "record",
+      "duration": 2
+    },
+    {
+      "type": "text",
+      "text": "API Documentation",
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "Welcome to our API documentation walkthrough.",
+      "duration": 3
+    },
+    {
+      "type": "zoom",
+      "x": 400,
+      "y": 300,
+      "scale": 1.5,
+      "duration": 3
+    },
+    {
+      "type": "click",
+      "x": 400,
+      "y": 300,
+      "duration": 1,
+      "zoom": {
+        "scale": 2
+      }
+    },
+    {
+      "type": "voiceover",
+      "text": "Click on the authentication section to expand it.",
+      "duration": 2
+    },
+    {
+      "type": "keystroke",
+      "keys": "Ctrl+F",
+      "duration": 1.5
+    },
+    {
+      "type": "voiceover",
+      "text": "Use Ctrl+F to search for specific endpoints.",
+      "duration": 2
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 700,
+      "scale": 1.8,
+      "duration": 4
+    },
+    {
+      "type": "voiceover",
+      "text": "The response examples show exactly what data you'll receive.",
+      "duration": 4
+    },
+    {
+      "type": "keystroke",
+      "keys": "Cmd+C",
+      "duration": 1
+    },
+    {
+      "type": "text",
+      "text": "Copied to clipboard!",
+      "duration": 1.5
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 540,
+      "scale": 1,
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "That's how to navigate our API documentation efficiently.",
+      "duration": 3
+    }
+  ]
+}

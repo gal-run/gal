@@ -1,0 +1,106 @@
+{
+  "name": "VS Code Extension Demo",
+  "description": "Demonstrates VS Code extension features",
+  "version": "1.0.0",
+  "output": {
+    "path": "vscode-extension.mp4",
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps": 30,
+    "quality": "high"
+  },
+  "steps": [
+    {
+      "type": "record",
+      "duration": 1
+    },
+    {
+      "type": "text",
+      "text": "GAL Code Extension",
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "Let me show you the GAL Code extension for VS Code.",
+      "duration": 3
+    },
+    {
+      "type": "keystroke",
+      "keys": "Cmd+Shift+P",
+      "duration": 1.5
+    },
+    {
+      "type": "voiceover",
+      "text": "Open the command palette with Cmd+Shift+P.",
+      "duration": 2
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 200,
+      "scale": 1.3,
+      "duration": 3
+    },
+    {
+      "type": "click",
+      "x": 960,
+      "y": 200,
+      "duration": 1
+    },
+    {
+      "type": "voiceover",
+      "text": "Type GAL to find the extension commands.",
+      "duration": 2
+    },
+    {
+      "type": "keystroke",
+      "keys": "Enter",
+      "duration": 1
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 400,
+      "scale": 1.5,
+      "duration": 4
+    },
+    {
+      "type": "voiceover",
+      "text": "The AI agent will analyze your code and suggest improvements.",
+      "duration": 4
+    },
+    {
+      "type": "click",
+      "x": 960,
+      "y": 500,
+      "duration": 1,
+      "zoom": {
+        "scale": 1.8
+      }
+    },
+    {
+      "type": "keystroke",
+      "keys": "Tab",
+      "duration": 1
+    },
+    {
+      "type": "voiceover",
+      "text": "Press Tab to accept suggestions.",
+      "duration": 2
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 540,
+      "scale": 1,
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "The extension integrates seamlessly with your workflow.",
+      "duration": 3
+    }
+  ]
+}

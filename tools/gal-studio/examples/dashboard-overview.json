@@ -1,0 +1,82 @@
+{
+  "name": "Dashboard Overview",
+  "description": "Quick dashboard tour with zoom effects",
+  "version": "1.0.0",
+  "output": {
+    "path": "dashboard-overview.mp4",
+    "resolution": {
+      "width": 1920,
+      "height": 1080
+    },
+    "fps": 30,
+    "quality": "high"
+  },
+  "recording": {
+    "captureAudio": false
+  },
+  "steps": [
+    {
+      "type": "record",
+      "duration": 1
+    },
+    {
+      "type": "text",
+      "text": "Dashboard Overview",
+      "x": 960,
+      "y": 100,
+      "duration": 3
+    },
+    {
+      "type": "zoom",
+      "x": 480,
+      "y": 324,
+      "scale": 1.8,
+      "duration": 4
+    },
+    {
+      "type": "voiceover",
+      "text": "Let's start with the analytics panel on the left side.",
+      "duration": 4
+    },
+    {
+      "type": "click",
+      "x": 480,
+      "y": 324,
+      "duration": 1
+    },
+    {
+      "type": "zoom",
+      "x": 1440,
+      "y": 324,
+      "scale": 1.8,
+      "duration": 4
+    },
+    {
+      "type": "voiceover",
+      "text": "On the right, you'll find the user management section.",
+      "duration": 4
+    },
+    {
+      "type": "keystroke",
+      "keys": "Cmd+K",
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "Press Command K to open the quick action menu anytime.",
+      "duration": 2
+    },
+    {
+      "type": "zoom",
+      "x": 960,
+      "y": 540,
+      "scale": 1,
+      "duration": 2
+    },
+    {
+      "type": "voiceover",
+      "text": "That covers the basics of your dashboard.",
+      "duration": 2
+    }
+  ]
+}

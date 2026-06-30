@@ -1,0 +1,26 @@
+gal-studio
+Copyright 2026 Scheduler Systems Ltd
+
+This product includes software developed at Scheduler Systems Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this software except in compliance with the License. You may obtain a
+copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Provenance
+----------
+gal-studio originated as the standalone "demo-studio" package, which was
+authored by Scheduler Systems Ltd and released under the MIT license. As the
+sole copyright holder, Scheduler Systems Ltd has relicensed this code under
+the Apache License, Version 2.0 for inclusion in the gal monorepo. No
+third-party MIT-only code is incorporated.
+
+Runtime dependency on ffmpeg
+----------------------------
+gal-studio invokes the system `ffmpeg` and `ffprobe` executables (found on the
+host PATH) via child processes; it does not bundle, link, or redistribute any
+ffmpeg binaries or libraries. Install ffmpeg separately (e.g. `brew install
+ffmpeg`, `apt install ffmpeg`). The license terms of your ffmpeg build apply to
+that separately-installed software, not to gal-studio.
