@@ -35,4 +35,7 @@ describe("sendKeysToken", () => {
     assert.equal(sendKeysToken("F5"), "{F5}");
     assert.equal(sendKeysToken("pgdn"), "{PGDN}");
   });
+  it("strips stray braces from an unknown key so the token can't be malformed", () => {
+    assert.equal(sendKeysToken("fo}o"), "{FOO}");
+  });
 });

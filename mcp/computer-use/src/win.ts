@@ -34,7 +34,7 @@ function runPs(script: string): string {
 const MOUSE_PINVOKE = `
 Add-Type -Name M -Namespace GalCU -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool SetCursorPos(int X, int Y);
-[DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, uint data, int extra);
+[DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint dx, uint dy, int data, int extra);
 [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p);
 public struct POINT { public int X; public int Y; }
 '@
@@ -96,9 +96,12 @@ const KEY_MAP: Record<string, string> = {
   Home: "{HOME}", End: "{END}", space: " ",
 };
 
-// Resolve a key name to its SendKeys token. Exported for tests.
+// Resolve a key name to its SendKeys token. Exported for tests. An unknown multi-char key is wrapped as
+// {NAME}; strip braces from it first so a stray "}" can't malform the SendKeys token.
 export function sendKeysToken(key: string): string {
-  return KEY_MAP[key] ?? (key.length === 1 ? escapeSendKeys(key) : `{${key.toUpperCase()}}`);
+  if (KEY_MAP[key]) return KEY_MAP[key];
+  if (key.length === 1) return escapeSendKeys(key);
+  return `{${key.toUpperCase().replace(/[{}]/g, "")}}`;
 }
 
 export function winKey(key: string): void {
