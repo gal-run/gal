@@ -7,6 +7,7 @@ import { VideoProcessor } from '../core/video-processor.js';
 import { DemoScriptRunner } from '../core/demo-runner.js';
 import { WindowDetector } from '../core/window-detector.js';
 import { ScreenCapture } from '../core/screen-capture.js';
+import { DesktopFrame } from '../effects/desktop-frame.js';
 import { readFile, writeFile, access } from 'fs/promises';
 import { join, basename } from 'path';
 
@@ -456,6 +457,36 @@ program
     console.log(chalk.blue('Starting MCP server...'));
     console.log(chalk.gray('Connect via stdio transport\n'));
     import('../mcp/server.js');
+  });
+
+program
+  .command('desktop-frame <input>')
+  .description('Composite a recording as a macOS window floating on a real desktop wallpaper (headless "Screen Studio" look)')
+  .requiredOption('-b, --background <path>', 'Wallpaper/background image (a real desktop screenshot for the authentic look)')
+  .option('-o, --output <path>', 'Output file path', 'framed.mp4')
+  .option('--canvas <WxH>', 'Canvas size', '2560x1600')
+  .option('--window <WxH>', 'Window size (incl. title bar)', '1600x1048')
+  .option('--blur <sigma>', 'Background blur (0 = crisp)', '9')
+  .option('--dim <delta>', 'Background brightness delta (negative = dimmer)', '-0.12')
+  .action(async (input, options) => {
+    try {
+      const [cw, ch] = String(options.canvas).split('x').map(Number);
+      const [ww, wh] = String(options.window).split('x').map(Number);
+      console.log(chalk.blue('Rendering desktop-frame composite...'));
+      const out = await new DesktopFrame().render({
+        input,
+        output: options.output,
+        background: options.background,
+        canvasWidth: cw, canvasHeight: ch,
+        windowWidth: ww, windowHeight: wh,
+        backgroundBlur: parseFloat(options.blur),
+        backgroundDim: parseFloat(options.dim),
+      });
+      console.log(chalk.green(`✓ Framed video: ${out}`));
+    } catch (error: any) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
   });
 
 program.parse();
