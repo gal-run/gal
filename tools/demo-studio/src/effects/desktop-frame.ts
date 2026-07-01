@@ -34,7 +34,12 @@ export const DesktopFrameConfigSchema = z.object({
   shadowOpacity: z.number().min(0).max(1).default(0.63),
   shadowBlur: z.number().nonnegative().default(46),
   fps: z.number().int().positive().default(60),
+  /** x264 rate factor: lower = higher quality (0 = lossless). Keep low for crisp terminal text. */
   crf: z.number().int().min(0).max(51).default(20),
+  /** x264 preset: slower = better quality/compression. */
+  preset: z.string().default('medium'),
+  /** Pixel format. yuv420p is universally compatible; yuv444p keeps full chroma for colored text. */
+  pixFmt: z.string().default('yuv420p'),
 });
 
 export type DesktopFrameConfig = z.input<typeof DesktopFrameConfigSchema>;
@@ -76,7 +81,7 @@ export class DesktopFrame {
         '-filter_complex', filter,
         '-map', '[out]',
         '-r', String(c.fps),
-        '-c:v', 'libx264', '-crf', String(c.crf), '-pix_fmt', 'yuv420p',
+        '-c:v', 'libx264', '-preset', c.preset, '-crf', String(c.crf), '-pix_fmt', c.pixFmt,
         '-movflags', '+faststart',
         c.output,
       ];

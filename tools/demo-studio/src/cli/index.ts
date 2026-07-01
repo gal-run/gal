@@ -468,6 +468,10 @@ program
   .option('--window <WxH>', 'Window size (incl. title bar)', '1600x1048')
   .option('--blur <sigma>', 'Background blur (0 = crisp)', '9')
   .option('--dim <delta>', 'Background brightness delta (negative = dimmer)', '-0.12')
+  .option('--crf <n>', 'x264 quality: lower = crisper (0 = lossless)', '20')
+  .option('--preset <name>', 'x264 preset (slower = better)', 'medium')
+  .option('--pix-fmt <fmt>', 'Pixel format (yuv420p compatible, yuv444p full chroma)', 'yuv420p')
+  .option('--titlebar <px>', 'Title-bar height in px', '48')
   .action(async (input, options) => {
     try {
       const [cw, ch] = String(options.canvas).split('x').map(Number);
@@ -479,8 +483,12 @@ program
         background: options.background,
         canvasWidth: cw, canvasHeight: ch,
         windowWidth: ww, windowHeight: wh,
+        titleBar: parseInt(options.titlebar, 10),
         backgroundBlur: parseFloat(options.blur),
         backgroundDim: parseFloat(options.dim),
+        crf: parseInt(options.crf, 10),
+        preset: options.preset,
+        pixFmt: options.pixFmt,
       });
       console.log(chalk.green(`✓ Framed video: ${out}`));
     } catch (error: any) {
