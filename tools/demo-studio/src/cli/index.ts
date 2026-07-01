@@ -8,6 +8,7 @@ import { DemoScriptRunner } from '../core/demo-runner.js';
 import { WindowDetector } from '../core/window-detector.js';
 import { ScreenCapture } from '../core/screen-capture.js';
 import { DesktopFrame } from '../effects/desktop-frame.js';
+import { AutoZoom } from '../effects/auto-zoom.js';
 import { readFile, writeFile, access } from 'fs/promises';
 import { join, basename } from 'path';
 
@@ -491,6 +492,33 @@ program
         pixFmt: options.pixFmt,
       });
       console.log(chalk.green(`✓ Framed video: ${out}`));
+    } catch (error: any) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('zoom <input>')
+  .description('Apply a native cinematic auto-zoom (Screen Studio-style push-in toward the action)')
+  .option('-o, --output <path>', 'Output file path', 'zoomed.mp4')
+  .option('--scale <n>', 'Max zoom factor (1 = none; keep 1.2-1.4)', '1.3')
+  .option('--target <x,y>', 'Zoom focus point as fractions 0..1', '0.5,0.5')
+  .option('--ease <n>', 'Ease exponent (1=linear, >1=slow start)', '1.5')
+  .option('--crf <n>', 'x264 quality (lower = crisper)', '16')
+  .action(async (input, options) => {
+    try {
+      const [tx, ty] = String(options.target).split(',').map(Number);
+      console.log(chalk.blue('Rendering auto-zoom...'));
+      const out = await new AutoZoom().render({
+        input,
+        output: options.output,
+        scale: parseFloat(options.scale),
+        targetX: tx, targetY: ty,
+        ease: parseFloat(options.ease),
+        crf: parseInt(options.crf, 10),
+      });
+      console.log(chalk.green(`✓ Zoomed video: ${out}`));
     } catch (error: any) {
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
