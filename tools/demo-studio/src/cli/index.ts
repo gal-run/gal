@@ -504,7 +504,9 @@ program
   .option('-o, --output <path>', 'Output file path', 'zoomed.mp4')
   .option('--scale <n>', 'Max zoom factor (1 = none; keep 1.2-1.4)', '1.3')
   .option('--target <x,y>', 'Zoom focus point as fractions 0..1', '0.5,0.5')
-  .option('--ease <n>', 'Ease exponent (1=linear, >1=slow start)', '1.5')
+  .option('--ease <n>', 'Ease exponent for steady mode (1=linear, >1=slow start)', '1.5')
+  .option('--at <seconds>', 'EVENT mode: zoom in at this time (full view before), hold, ease out')
+  .option('--ramp <seconds>', 'Event ease-in/out duration', '1.4')
   .option('--crf <n>', 'x264 quality (lower = crisper)', '16')
   .action(async (input, options) => {
     try {
@@ -516,6 +518,8 @@ program
         scale: parseFloat(options.scale),
         targetX: tx, targetY: ty,
         ease: parseFloat(options.ease),
+        atSec: options.at !== undefined ? parseFloat(options.at) : undefined,
+        rampSec: parseFloat(options.ramp),
         crf: parseInt(options.crf, 10),
       });
       console.log(chalk.green(`✓ Zoomed video: ${out}`));

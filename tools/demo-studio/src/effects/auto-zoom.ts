@@ -17,8 +17,15 @@ export const AutoZoomConfigSchema = z.object({
   /** Zoom focus point, fraction of width/height (0..1). Center on the region the action lands in. */
   targetX: z.number().min(0).max(1).default(0.5),
   targetY: z.number().min(0).max(1).default(0.5),
-  /** Easing exponent for the push-in: 1 = linear, >1 = slow start / accelerate (ease-in). */
+  /** Easing exponent for the steady push-in: 1 = linear, >1 = slow start / accelerate (ease-in). */
   ease: z.number().min(0.25).max(4).default(1.5),
+  /**
+   * EVENT-DRIVEN zoom (how Screen Studio / Cap actually behave — not a constant push-in):
+   * hold full view, then smoothly zoom IN at `atSec`, HOLD, and ease OUT near the end.
+   * When set, this overrides the steady push-in. `rampSec` is the ease-in/out duration.
+   */
+  atSec: z.number().min(0).optional(),
+  rampSec: z.number().min(0.1).max(5).default(1.4),
   crf: z.number().int().min(0).max(51).default(16),
   preset: z.string().default('medium'),
   pixFmt: z.string().default('yuv420p'),
@@ -31,10 +38,26 @@ export class AutoZoom {
   async render(configInput: AutoZoomConfig): Promise<string> {
     const c = AutoZoomConfigSchema.parse(configInput);
     const { fps, width, height, totalFrames } = await this.probe(c.input);
+    const duration = totalFrames / fps;
 
-    // zoom(on) = 1 + (scale-1) * (on/total)^ease  — starts at 1.0 (no crop), eases toward `scale`.
     const gain = (c.scale - 1).toFixed(4);
-    const z = `1+${gain}*pow(on/${totalFrames}\\,${c.ease})`;
+    let z: string;
+    if (c.atSec !== undefined) {
+      // Event-driven envelope: 0 before the event, smoothstep ease-IN over rampSec, HOLD at 1,
+      // smoothstep ease-OUT over the last rampSec. ffmpeg min() is BINARY — nest it, never min(a,b,c).
+      const fs = Math.round(c.atSec * fps);
+      const fi = Math.round((c.atSec + c.rampSec) * fps);
+      const fe = Math.round(Math.max(c.atSec + c.rampSec, duration - c.rampSec) * fps);
+      const fo = totalFrames;
+      const ri = Math.max(1, fi - fs);
+      const ro = Math.max(1, fo - fe);
+      const le = `max(0\\,min(min((on-${fs})/${ri}\\,(${fo}-on)/${ro})\\,1))`;
+      const env = `(${le})*(${le})*(3-2*(${le}))`;
+      z = `1+${gain}*(${env})`;
+    } else {
+      // Steady push-in: 1 + (scale-1)*(on/total)^ease.
+      z = `1+${gain}*pow(on/${totalFrames}\\,${c.ease})`;
+    }
     // Keep the target point fixed while the window shrinks around it.
     const x = `iw*${c.targetX}-(iw/zoom)/2`;
     const y = `ih*${c.targetY}-(ih/zoom)/2`;
