@@ -9,6 +9,7 @@ import { WindowDetector } from '../core/window-detector.js';
 import { ScreenCapture } from '../core/screen-capture.js';
 import { DesktopFrame } from '../effects/desktop-frame.js';
 import { AutoZoom } from '../effects/auto-zoom.js';
+import { CursorPolish, type CursorSample } from '../effects/cursor-polish.js';
 import { readFile, writeFile, access } from 'fs/promises';
 import { join, basename } from 'path';
 
@@ -523,6 +524,55 @@ program
         crf: parseInt(options.crf, 10),
       });
       console.log(chalk.green(`✓ Zoomed video: ${out}`));
+    } catch (error: any) {
+      console.error(chalk.red(`Error: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('cursor <input>')
+  .description('Overlay a spring-smoothed pointer with click ripples/spotlight + motion blur (Cap/Screen Studio-style cursor polish)')
+  .requiredOption('--cursor-path <file.json>', 'JSON file: array of {t,x,y,click?} samples (x/y are 0..1 fractions of the frame)')
+  .option('-o, --output <path>', 'Output file path', 'cursor.mp4')
+  .option('--tension <n>', 'Spring stiffness (higher = snappier)', '170')
+  .option('--friction <n>', 'Spring damping (higher = less overshoot)', '26')
+  .option('--mass <n>', 'Cursor mass (higher = heavier/laggier)', '1')
+  .option('--cursor-scale <px>', 'Pointer height in px', '44')
+  .option('--ripple-radius <px>', 'Peak click-ripple radius in px', '80')
+  .option('--ripple-duration <seconds>', 'Click-ripple lifetime', '0.6')
+  .option('--spotlight-radius <px>', 'Click-spotlight radius in px', '46')
+  .option('--no-motion-blur', 'Disable speed-proportional motion blur')
+  .option('--crf <n>', 'x264 quality (lower = crisper)', '18')
+  .option('--preset <name>', 'x264 preset (slower = better)', 'medium')
+  .action(async (input, options) => {
+    try {
+      let cursorPath: CursorSample[];
+      try {
+        const raw = await readFile(options.cursorPath, 'utf-8');
+        cursorPath = JSON.parse(raw);
+      } catch (e: any) {
+        console.error(chalk.red(`Failed to read --cursor-path ${options.cursorPath}: ${e.message}`));
+        process.exit(1);
+        return;
+      }
+      console.log(chalk.blue('Rendering cursor polish...'));
+      const out = await new CursorPolish().render({
+        input,
+        output: options.output,
+        cursorPath,
+        tension: parseFloat(options.tension),
+        friction: parseFloat(options.friction),
+        mass: parseFloat(options.mass),
+        cursorScale: parseInt(options.cursorScale, 10),
+        rippleRadius: parseFloat(options.rippleRadius),
+        rippleDurationSec: parseFloat(options.rippleDuration),
+        spotlightRadius: parseFloat(options.spotlightRadius),
+        motionBlur: options.motionBlur !== false,
+        crf: parseInt(options.crf, 10),
+        preset: options.preset,
+      });
+      console.log(chalk.green(`✓ Cursor-polished video: ${out}`));
     } catch (error: any) {
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
